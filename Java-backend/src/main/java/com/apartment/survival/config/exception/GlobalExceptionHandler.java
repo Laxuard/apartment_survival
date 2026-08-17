@@ -33,28 +33,28 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         var servletRequest = ((ServletWebRequest) request).getRequest();
 
         Map<String, String> fieldErrors = new LinkedHashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(fe ->
-                fieldErrors.put(fe.getField(), fe.getDefaultMessage()));
+        ex.getBindingResult().getFieldErrors().forEach(fe -> fieldErrors.put(fe.getField(), fe.getDefaultMessage()));
 
         ProblemDetail problem = exceptionTranslator.buildProblemDetail(
-                HttpStatus.BAD_REQUEST, 
-                "validation-failed", 
-                "Input validation failed", 
-                servletRequest.getRequestURI(), 
-                Map.of("invalid_params", fieldErrors)
-        );
+                HttpStatus.BAD_REQUEST,
+                "validation-failed",
+                "Input validation failed",
+                servletRequest.getRequestURI(),
+                Map.of("invalid_params", fieldErrors));
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
     }
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ProblemDetail> handleAuthenticationException(AuthenticationException ex, HttpServletRequest request) {
+    public ResponseEntity<ProblemDetail> handleAuthenticationException(AuthenticationException ex,
+            HttpServletRequest request) {
         ProblemDetail problem = exceptionTranslator.translate(ex, request.getRequestURI());
         return ResponseEntity.status(problem.getStatus()).body(problem);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ProblemDetail> handleAccessDeniedException(AccessDeniedException ex, HttpServletRequest request) {
+    public ResponseEntity<ProblemDetail> handleAccessDeniedException(AccessDeniedException ex,
+            HttpServletRequest request) {
         ProblemDetail problem = exceptionTranslator.translate(ex, request.getRequestURI());
         return ResponseEntity.status(problem.getStatus()).body(problem);
     }
@@ -66,13 +66,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(ConcurrencyFailureException.class)
-    public ResponseEntity<ProblemDetail> handleConcurrencyFailure(ConcurrencyFailureException ex, HttpServletRequest request) {
+    public ResponseEntity<ProblemDetail> handleConcurrencyFailure(ConcurrencyFailureException ex,
+            HttpServletRequest request) {
         ProblemDetail problem = exceptionTranslator.translate(ex, request.getRequestURI());
         return ResponseEntity.status(problem.getStatus()).body(problem);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ProblemDetail> handleDataIntegrityViolation(DataIntegrityViolationException ex, HttpServletRequest request) {
+    public ResponseEntity<ProblemDetail> handleDataIntegrityViolation(DataIntegrityViolationException ex,
+            HttpServletRequest request) {
         ProblemDetail problem = exceptionTranslator.translate(ex, request.getRequestURI());
         return ResponseEntity.status(problem.getStatus()).body(problem);
     }
@@ -84,8 +86,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @Override
-    protected ResponseEntity<Object> handleExceptionInternal(
-            @NonNull Exception ex,
+    protected ResponseEntity<Object> createResponseEntity(
             Object body,
             @NonNull HttpHeaders headers,
             @NonNull HttpStatusCode statusCode,
@@ -95,6 +96,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             exceptionTranslator.addMetadata(problem, null);
         }
 
-        return super.handleExceptionInternal(ex, body, headers, statusCode, request);
+        return super.createResponseEntity(body, headers, statusCode, request);
     }
 }

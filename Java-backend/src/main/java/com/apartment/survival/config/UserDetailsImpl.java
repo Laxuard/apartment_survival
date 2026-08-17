@@ -17,6 +17,7 @@ public class UserDetailsImpl implements UserDetails {
 
     private final UUID userId;
     private final String email;
+    private final String username;
     private final String password;
     private final boolean enabled;
     private final boolean accountNonLocked;
@@ -25,15 +26,16 @@ public class UserDetailsImpl implements UserDetails {
     public UserDetailsImpl(User user) {
         this.userId = user.getId();
         this.email = user.getEmail();
-        this.password = user.getPassword();
         this.enabled = user.isEnabled();
+        this.username = user.getUsername();
+        this.password = user.getPassword();
         this.accountNonLocked = !user.isAccountLocked();
         this.authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
     }
 
     @Override
     public String getUsername() {
-        return this.email;
+        return this.username;
     }
 
     @Override

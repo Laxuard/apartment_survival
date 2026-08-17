@@ -6,9 +6,12 @@ import com.apartment.survival.iam.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
-    
+
     Optional<User> findByEmail(String email);
     Optional<User> findByUsername(String username);
     Optional<User> findByEmailOrUsername(String email, String username);
+
+    Boolean existsByEmail(String email);
+    Boolean existsByUsername(String username);
 
 }

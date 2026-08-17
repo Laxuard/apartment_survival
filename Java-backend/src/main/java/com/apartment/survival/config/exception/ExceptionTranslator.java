@@ -1,5 +1,10 @@
 package com.apartment.survival.config.exception;
 
+import java.net.URI;
+import java.util.Map;
+import java.util.Arrays;
+import java.time.Instant;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Component;
@@ -10,16 +15,10 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.BadCredentialsException;
 
-import java.net.URI;
-import java.util.Map;
-import java.util.Arrays;
-import java.time.Instant;
-import java.util.stream.Collectors;
-
 @Component
 public class ExceptionTranslator {
 
-    private static final String BASE_URL = "survival:";
+    private static final URI BLANK_TYPE = URI.create("about:blank");
 
     public ProblemDetail translate(Exception ex, String path) {
         if (ex instanceof BaseException baseEx) {
@@ -56,7 +55,7 @@ public class ExceptionTranslator {
                     path, null);
         }
 
-        if (ex instanceof IllegalArgumentException || ex instanceof IllegalStateException) {
+        if (ex instanceof IllegalArgumentException) {
             return buildProblemDetail(HttpStatus.BAD_REQUEST, "bad-request", ex.getMessage(), path, null);
         }
 
@@ -66,7 +65,7 @@ public class ExceptionTranslator {
 
     public ProblemDetail buildProblemDetail(HttpStatus status, String errorCode, String detail, String path, Map<String, Object> properties) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
-        problem.setType(URI.create(BASE_URL + errorCode));
+        problem.setType(BLANK_TYPE);
         problem.setTitle(toTitle(errorCode));
         problem.setInstance(URI.create(path));
 
@@ -74,8 +73,11 @@ public class ExceptionTranslator {
     }
 
     public ProblemDetail addMetadata(ProblemDetail problem, Map<String, Object> additionalProperties) {
+        if (problem.getType() == null) {
+            problem.setType(BLANK_TYPE);
+        }
         problem.setProperty("timestamp", Instant.now().toString());
-        
+
         if (additionalProperties != null) {
             additionalProperties.forEach(problem::setProperty);
         }
