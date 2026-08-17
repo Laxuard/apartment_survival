@@ -1,8 +1,10 @@
 package com.apartment.survival.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.session.SessionRegistryImpl;
@@ -20,7 +22,10 @@ import org.springframework.security.config.annotation.authentication.configurati
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final HandlerExceptionResolver handlerExceptionResolver;
     
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) {
@@ -31,11 +36,13 @@ public class SecurityConfig {
         http.formLogin(login -> login.disable());
         http.httpBasic(basic -> basic.disable());
 
-        http.sessionManagement(session -> session
-            .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-            .maximumSessions(3)
-            .maxSessionsPreventsLogin(true)
-            .sessionRegistry(sessionRegistry())
+        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
+
+        http.exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint((request, response, authException) ->
+                        handlerExceptionResolver.resolveException(request, response, null, authException))
+                .accessDeniedHandler((request, response, accessDeniedException) ->
+                        handlerExceptionResolver.resolveException(request, response, null, accessDeniedException))
             );
 
         http.authorizeHttpRequests(auth -> auth
