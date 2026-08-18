@@ -5,9 +5,9 @@ import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.MappingConstants;
 import com.apartment.survival.iam.model.User;
+import com.apartment.survival.iam.security.UserDetailsImpl;
 import com.apartment.survival.iam.dto.AuthRequest;
 import com.apartment.survival.iam.dto.AuthResponse;
-import com.apartment.survival.config.UserDetailsImpl;
 
 @Mapper(
     componentModel = MappingConstants.ComponentModel.SPRING,

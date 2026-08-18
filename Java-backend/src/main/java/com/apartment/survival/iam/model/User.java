@@ -1,31 +1,24 @@
 package com.apartment.survival.iam.model;
 
-import lombok.*;
-import java.util.UUID;
-import java.time.Instant;
 import jakarta.persistence.*;
-import com.github.f4b6a3.uuid.UuidCreator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+
+import com.apartment.survival.common.model.BaseEntity;
 
 @Entity
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "users", indexes = {
     @Index(name = "idx_users_email", columnList = "email", unique = true),
     @Index(name = "idx_users_username", columnList = "username", unique = true)
 })
-@EntityListeners(AuditingEntityListener.class)
-public class User {
+public class User extends BaseEntity {
 
-    @Id
-    @Column(name = "id", nullable = false, updatable = false)
-    private UUID id;
-
+    // === Credentials & Identity ===
     @Column(nullable = false, unique = true, length = 50)
     private String username;
 
@@ -52,21 +45,4 @@ public class User {
     @Builder.Default
     @Column(nullable = false)
     private boolean deleted = false;
-
-    // === Auditing ===
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private Instant updatedAt;
-
-    @PrePersist
-    public void prePersist() {
-        // Generates a standard java.util.UUID compliant with RFC 9562 UUIDv7
-        if (this.id == null) {
-            this.id = UuidCreator.getTimeOrderedEpoch();
-        }
-    }
 }

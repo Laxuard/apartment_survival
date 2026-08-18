@@ -20,14 +20,14 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.apartment.survival.config.UserDetailsImpl;
-import com.apartment.survival.config.exception.type.DuplicateResourceException;
-import com.apartment.survival.config.exception.type.ResourceNotFoundException;
+import com.apartment.survival.common.exception.type.DuplicateResourceException;
+import com.apartment.survival.common.exception.type.ResourceNotFoundException;
 import com.apartment.survival.iam.dto.AuthRequest;
 import com.apartment.survival.iam.dto.AuthResponse;
 import com.apartment.survival.iam.mapper.UserMapper;
 import com.apartment.survival.iam.model.User;
 import com.apartment.survival.iam.repository.UserRepository;
+import com.apartment.survival.iam.security.UserDetailsImpl;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {

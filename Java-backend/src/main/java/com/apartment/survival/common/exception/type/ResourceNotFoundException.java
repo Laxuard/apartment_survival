@@ -1,7 +1,8 @@
-package com.apartment.survival.config.exception.type;
+package com.apartment.survival.common.exception.type;
 
 import org.springframework.http.HttpStatus;
-import com.apartment.survival.config.exception.BaseException;
+
+import com.apartment.survival.common.exception.BaseException;
 
 public class ResourceNotFoundException extends BaseException {
     public ResourceNotFoundException(String message) {

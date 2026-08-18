@@ -4,17 +4,20 @@ import lombok.RequiredArgsConstructor;
 import com.apartment.survival.iam.model.User;
 import org.springframework.stereotype.Service;
 import jakarta.servlet.http.HttpServletRequest;
+
+import com.apartment.survival.common.exception.type.DuplicateResourceException;
+import com.apartment.survival.common.exception.type.ResourceNotFoundException;
 import com.apartment.survival.iam.dto.AuthRequest;
 import com.apartment.survival.iam.dto.AuthResponse;
 import com.apartment.survival.iam.mapper.UserMapper;
-import com.apartment.survival.config.UserDetailsImpl;
+
 import org.springframework.security.core.Authentication;
 import com.apartment.survival.iam.repository.UserRepository;
+import com.apartment.survival.iam.security.UserDetailsImpl;
+
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.context.SecurityContextHolder;
-import com.apartment.survival.config.exception.type.ResourceNotFoundException;
-import com.apartment.survival.config.exception.type.DuplicateResourceException;
 
 @Service
 @RequiredArgsConstructor

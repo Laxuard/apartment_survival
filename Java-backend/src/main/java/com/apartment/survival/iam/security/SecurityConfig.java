@@ -1,4 +1,4 @@
-package com.apartment.survival.config;
+package com.apartment.survival.iam.security;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

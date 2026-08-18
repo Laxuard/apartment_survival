@@ -22,10 +22,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.apartment.survival.config.SecuritySessionHelper;
-import com.apartment.survival.config.exception.ExceptionTranslator;
+import com.apartment.survival.common.exception.ExceptionTranslator;
 import com.apartment.survival.iam.dto.AuthRequest;
 import com.apartment.survival.iam.dto.AuthResponse;
+import com.apartment.survival.iam.security.SecuritySessionHelper;
 import com.apartment.survival.iam.service.AuthService;
 
 import jakarta.servlet.http.HttpServletRequest;

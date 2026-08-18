@@ -6,10 +6,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import com.apartment.survival.iam.dto.AuthRequest;
 import com.apartment.survival.iam.dto.AuthResponse;
+import com.apartment.survival.iam.security.SecuritySessionHelper;
 import com.apartment.survival.iam.service.AuthService;
-import com.apartment.survival.config.SecuritySessionHelper;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

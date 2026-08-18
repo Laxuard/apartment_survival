@@ -1,4 +1,4 @@
-package com.apartment.survival.config;
+package com.apartment.survival.iam.security;
 
 import lombok.RequiredArgsConstructor;
 import com.apartment.survival.iam.model.User;

@@ -1,4 +1,4 @@
-package com.apartment.survival.config;
+package com.apartment.survival.iam.security;
 
 import java.util.List;
 import jakarta.servlet.http.Cookie;

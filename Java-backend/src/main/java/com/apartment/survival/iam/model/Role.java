@@ -1,6 +1,6 @@
 package com.apartment.survival.iam.model;
 
 public enum Role {
-    USER,
-    ADMIN
+    USER,   // Standard platform user
+    ADMIN   // System-wide platform administrator
 }

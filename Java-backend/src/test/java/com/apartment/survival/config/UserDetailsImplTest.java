@@ -12,6 +12,7 @@ import org.springframework.security.core.GrantedAuthority;
 
 import com.apartment.survival.iam.model.Role;
 import com.apartment.survival.iam.model.User;
+import com.apartment.survival.iam.security.UserDetailsImpl;
 
 class UserDetailsImplTest {
 

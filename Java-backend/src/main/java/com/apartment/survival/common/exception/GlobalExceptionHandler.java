@@ -1,4 +1,4 @@
-package com.apartment.survival.config.exception;
+package com.apartment.survival.common.exception;
 
 import java.util.Map;
 import java.util.LinkedHashMap;

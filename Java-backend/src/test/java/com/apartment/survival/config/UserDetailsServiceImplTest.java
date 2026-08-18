@@ -22,6 +22,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import com.apartment.survival.iam.model.Role;
 import com.apartment.survival.iam.model.User;
 import com.apartment.survival.iam.repository.UserRepository;
+import com.apartment.survival.iam.security.UserDetailsServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
 class UserDetailsServiceImplTest {

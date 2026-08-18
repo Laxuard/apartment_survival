@@ -1,4 +1,4 @@
-package com.apartment.survival.config;
+package com.apartment.survival.common.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
