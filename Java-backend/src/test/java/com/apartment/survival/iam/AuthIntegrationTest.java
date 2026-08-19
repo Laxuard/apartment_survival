@@ -73,7 +73,7 @@ class AuthIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.id").isNotEmpty())
+                    .andExpect(jsonPath("$.userId").isNotEmpty())
                     .andExpect(jsonPath("$.email").value(EMAIL))
                     .andExpect(jsonPath("$.username").value(USERNAME))
                     .andReturn();

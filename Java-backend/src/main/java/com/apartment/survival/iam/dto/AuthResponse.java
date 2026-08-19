@@ -4,14 +4,13 @@ import java.util.UUID;
 
 public interface AuthResponse {
 
-    public record UserSummary(
-        UUID id,
+    record UserSummary(
+        UUID userId,
         String email,
         String username
     ) {}
 
-    public record Message(
+    record Message(
         String message
     ) {}
-
 }

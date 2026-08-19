@@ -1,5 +1,6 @@
 package com.apartment.survival.iam.mapper;
 
+import org.mapstruct.Builder;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
@@ -11,15 +12,16 @@ import com.apartment.survival.iam.dto.AuthResponse;
 
 @Mapper(
     componentModel = MappingConstants.ComponentModel.SPRING,
-    unmappedTargetPolicy = ReportingPolicy.IGNORE
+    unmappedTargetPolicy = ReportingPolicy.IGNORE,
+    builder = @Builder(disableBuilder = true)
 )
 public interface UserMapper {
 
-    // User Entity -> AuthResponse.UserSummary
+    // User Entity -> AuthResponse.UserSummary (maps id -> userId)
+    @Mapping(target = "userId", source = "id")
     AuthResponse.UserSummary toSummary(User user);
 
-    // UserDetailsImpl (Security Context) -> AuthResponse.UserSummary (maps userId -> id)
-    @Mapping(target = "id", source = "userId")
+    // UserDetailsImpl (Security Context) -> AuthResponse.UserSummary
     AuthResponse.UserSummary toSummary(UserDetailsImpl userDetails);
 
     // AuthRequest.Register -> User Entity (password encoding & role handled in service)

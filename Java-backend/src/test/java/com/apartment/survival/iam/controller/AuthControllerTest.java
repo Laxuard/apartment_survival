@@ -79,7 +79,7 @@ class AuthControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.id").value(USER_ID.toString()))
+                    .andExpect(jsonPath("$.userId").value(USER_ID.toString()))
                     .andExpect(jsonPath("$.email").value(EMAIL))
                     .andExpect(jsonPath("$.username").value(USERNAME));
 
@@ -121,7 +121,7 @@ class AuthControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.id").value(USER_ID.toString()))
+                    .andExpect(jsonPath("$.userId").value(USER_ID.toString()))
                     .andExpect(jsonPath("$.email").value(EMAIL))
                     .andExpect(jsonPath("$.username").value(USERNAME));
 
