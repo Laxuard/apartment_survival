@@ -1,11 +1,12 @@
 package com.apartment.survival.household.model;
 
+import java.util.UUID;
+
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import com.apartment.survival.common.model.BaseEntity;
-import com.apartment.survival.iam.model.User;
 
 @Entity
 @Getter
@@ -25,7 +26,7 @@ import com.apartment.survival.iam.model.User;
 )
 public class HouseholdMember extends BaseEntity {
 
-    // === Tenant & User References ===
+    // === Tenant Reference ===
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
         name = "household_id", 
@@ -34,13 +35,9 @@ public class HouseholdMember extends BaseEntity {
     )
     private Household household;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-        name = "user_id", 
-        nullable = false, 
-        foreignKey = @ForeignKey(name = "fk_household_members_user")
-    )
-    private User user;
+    // === User ID Reference (DDD Bounded Context decoupled from IAM) ===
+    @Column(name = "user_id", nullable = false, updatable = false)
+    private UUID userId;
 
     // === Membership Details ===
     @Builder.Default

@@ -1,9 +1,10 @@
 package com.apartment.survival.household.service;
 
-import java.time.ZoneId;
-import java.util.Currency;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,8 +19,8 @@ import com.apartment.survival.household.model.HouseholdMember;
 import com.apartment.survival.household.model.HouseholdRole;
 import com.apartment.survival.household.repository.HouseholdMemberRepository;
 import com.apartment.survival.household.repository.HouseholdRepository;
-import com.apartment.survival.iam.model.User;
-import com.apartment.survival.iam.repository.UserRepository;
+import com.apartment.survival.iam.api.UserPublicApi;
+import com.apartment.survival.iam.api.UserPublicDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class HouseholdService {
 
-    private final UserRepository userRepository;
+    private final UserPublicApi userPublicApi; // DDD: Bounded context interaction via public API
     private final HouseholdMapper householdMapper;
     private final HouseholdRepository householdRepository;
     private final HouseholdMemberRepository memberRepository;
@@ -35,20 +36,14 @@ public class HouseholdService {
     // === 1. Create Household ===
     @Transactional
     public HouseholdResponse.Summary create(HouseholdRequest.Create request, UUID creatorUserId) {
-        User creator = userRepository.findById(creatorUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + creatorUserId));
+        if (!userPublicApi.existsById(creatorUserId)) {
+            throw new ResourceNotFoundException("User not found: " + creatorUserId);
+        }
 
         Household household = householdMapper.toEntity(request);
 
-        if (household.getCurrency() == null) {
-            household.setCurrency(Currency.getInstance("MAD"));
-        }
-        if (household.getTimezone() == null) {
-            household.setTimezone(ZoneId.of("Africa/Casablanca"));
-        }
-
         HouseholdMember adminMember = HouseholdMember.builder()
-                .user(creator)
+                .userId(creatorUserId)
                 .role(HouseholdRole.ADMIN)
                 .build();
 
@@ -74,7 +69,22 @@ public class HouseholdService {
         Household household = householdRepository.findActiveWithMembers(householdId)
                 .orElseThrow(() -> new ResourceNotFoundException("Active household not found: " + householdId));
 
-        return householdMapper.toDetail(household);
+        Set<UUID> memberUserIds = household.getMembers().stream()
+                .map(HouseholdMember::getUserId)
+                .collect(Collectors.toSet());
+
+        Map<UUID, UserPublicDto> userProfiles = userPublicApi.findAllByIds(memberUserIds);
+
+        List<HouseholdResponse.MemberSummary> memberSummaries = household.getMembers().stream()
+                .map(member -> {
+                    UserPublicDto profile = userProfiles.get(member.getUserId());
+                    String username = profile != null ? profile.username() : "Unknown User";
+                    String email = profile != null ? profile.email() : "";
+                    return householdMapper.toMemberSummary(member, username, email);
+                })
+                .toList();
+
+        return householdMapper.toDetail(household, memberSummaries);
     }
 
     // === 4. Update Household Settings ===
@@ -86,7 +96,7 @@ public class HouseholdService {
         if (request.maxMembers() != null) {
             long currentMemberCount = memberRepository.countByHouseholdId(householdId);
             if (request.maxMembers() < currentMemberCount) {
-                throw new BadRequestException("Max capacity (" + request.maxMembers() 
+                throw new BadRequestException("Max capacity (" + request.maxMembers()
                         + ") cannot be lower than current member count (" + currentMemberCount + ")");
             }
         }
@@ -106,7 +116,8 @@ public class HouseholdService {
 
     // === 6. Update Member Role or Nickname ===
     @Transactional
-    public HouseholdResponse.MemberSummary updateMember(UUID householdId, UUID targetUserId, HouseholdRequest.UpdateMember request) {
+    public HouseholdResponse.MemberSummary updateMember(UUID householdId, UUID targetUserId,
+            HouseholdRequest.UpdateMember request) {
         HouseholdMember member = memberRepository.findByActiveHouseholdIdAndUserId(householdId, targetUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Active membership not found for user: " + targetUserId));
 
@@ -120,7 +131,11 @@ public class HouseholdService {
         member.setRole(request.role());
         member.setNickname(request.nickname() == null || request.nickname().isBlank() ? null : request.nickname().trim());
 
-        return householdMapper.toMemberSummary(member);
+        UserPublicDto profile = userPublicApi.findById(targetUserId).orElse(null);
+        String username = profile != null ? profile.username() : "Unknown User";
+        String email = profile != null ? profile.email() : "";
+
+        return householdMapper.toMemberSummary(member, username, email);
     }
 
     // === 7. Remove Member or Self-Leave ===

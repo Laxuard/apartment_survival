@@ -1,4 +1,4 @@
-package com.apartment.survival.config;
+package com.apartment.survival.iam.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,8 +32,6 @@ import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.web.authentication.session.SessionAuthenticationException;
 import org.springframework.security.web.context.SecurityContextRepository;
 
-import com.apartment.survival.iam.security.SecuritySessionHelper;
-import com.apartment.survival.iam.security.UserDetailsImpl;
 
 @ExtendWith(MockitoExtension.class)
 class SecuritySessionHelperTest {

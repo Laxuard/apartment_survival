@@ -26,7 +26,6 @@ public interface HouseholdRequest {
     ) {}
 
     record Update(
-        @NotBlank(message = "Household name is required")
         @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
         String name,
 

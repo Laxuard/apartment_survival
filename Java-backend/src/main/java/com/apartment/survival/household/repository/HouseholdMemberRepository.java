@@ -15,17 +15,17 @@ public interface HouseholdMemberRepository extends JpaRepository<HouseholdMember
     // === Membership Existence Checks ===
 
     @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM HouseholdMember m " +
-           "WHERE m.household.id = :householdId AND m.user.id = :userId AND m.household.archived = false")
+           "WHERE m.household.id = :householdId AND m.userId = :userId AND m.household.archived = false")
     boolean isMember(@Param("householdId") UUID householdId, @Param("userId") UUID userId);
 
     @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM HouseholdMember m " +
-           "WHERE m.household.id = :householdId AND m.user.id = :userId AND m.role = :role AND m.household.archived = false")
+           "WHERE m.household.id = :householdId AND m.userId = :userId AND m.role = :role AND m.household.archived = false")
     boolean hasRole(@Param("householdId") UUID householdId, @Param("userId") UUID userId, @Param("role") HouseholdRole role);
 
     // === Finder Queries ===
 
     @Query("SELECT m FROM HouseholdMember m " +
-           "WHERE m.household.id = :householdId AND m.user.id = :userId AND m.household.archived = false")
+           "WHERE m.household.id = :householdId AND m.userId = :userId AND m.household.archived = false")
     Optional<HouseholdMember> findByActiveHouseholdIdAndUserId(@Param("householdId") UUID householdId, @Param("userId") UUID userId);
 
     @Query("SELECT COUNT(m) FROM HouseholdMember m WHERE m.household.id = :householdId")

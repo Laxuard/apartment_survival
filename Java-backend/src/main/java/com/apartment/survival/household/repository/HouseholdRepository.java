@@ -16,13 +16,16 @@ public interface HouseholdRepository extends JpaRepository<Household, UUID> {
     @Query("SELECT h FROM Household h WHERE h.id = :householdId AND h.archived = false")
     Optional<Household> findActive(@Param("householdId") UUID householdId);
 
-    // 2. Get household with all roommates & user details (for Detail view)
-    @Query("SELECT DISTINCT h FROM Household h LEFT JOIN FETCH h.members m LEFT JOIN FETCH m.user " +
+    // 2. Get household with all roommates (for Detail view)
+    @Query("SELECT DISTINCT h FROM Household h " +
+           "LEFT JOIN FETCH h.members m " +
            "WHERE h.id = :householdId AND h.archived = false")
     Optional<Household> findActiveWithMembers(@Param("householdId") UUID householdId);
 
     // 3. Get all active households for a user
-    @Query("SELECT DISTINCT h FROM Household h JOIN h.members m LEFT JOIN FETCH h.members allMembers " +
-           "WHERE m.user.id = :userId AND h.archived = false")
+    @Query("SELECT DISTINCT h FROM Household h " +
+           "JOIN h.members m " +
+           "LEFT JOIN FETCH h.members allMembers " +
+           "WHERE m.userId = :userId AND h.archived = false")
     List<Household> findAllActiveByUser(@Param("userId") UUID userId);
 }

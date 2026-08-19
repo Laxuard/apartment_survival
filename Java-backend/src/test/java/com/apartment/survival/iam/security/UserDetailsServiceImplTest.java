@@ -1,4 +1,4 @@
-package com.apartment.survival.config;
+package com.apartment.survival.iam.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -22,7 +22,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import com.apartment.survival.iam.model.Role;
 import com.apartment.survival.iam.model.User;
 import com.apartment.survival.iam.repository.UserRepository;
-import com.apartment.survival.iam.security.UserDetailsServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
 class UserDetailsServiceImplTest {

@@ -1,5 +1,7 @@
 package com.apartment.survival.household.mapper;
 
+import java.util.List;
+
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Builder;
 import org.mapstruct.Mapper;
@@ -27,26 +29,29 @@ public interface HouseholdMapper {
     @Mapping(target = "memberCount", expression = "java(household.getMembers() != null ? household.getMembers().size() : 0)")
     HouseholdResponse.Summary toSummary(Household household);
 
-    @Mapping(target = "householdId", source = "id")
-    HouseholdResponse.Detail toDetail(Household household);
+    @Mapping(target = "householdId", source = "household.id")
+    @Mapping(target = "members", source = "members")
+    HouseholdResponse.Detail toDetail(Household household, List<HouseholdResponse.MemberSummary> members);
 
-    @Mapping(target = "userId", source = "user.id")
-    @Mapping(target = "username", source = "user.username")
-    @Mapping(target = "email", source = "user.email")
-    @Mapping(target = "role", source = "role")
-    @Mapping(target = "nickname", source = "nickname")
-    @Mapping(target = "joinedAt", source = "createdAt")
-    HouseholdResponse.MemberSummary toMemberSummary(HouseholdMember member);
+    @Mapping(target = "userId", source = "member.userId")
+    @Mapping(target = "username", source = "username")
+    @Mapping(target = "email", source = "email")
+    @Mapping(target = "role", source = "member.role")
+    @Mapping(target = "nickname", source = "member.nickname")
+    @Mapping(target = "joinedAt", source = "member.createdAt")
+    HouseholdResponse.MemberSummary toMemberSummary(HouseholdMember member, String username, String email);
 
     // === Request DTO -> Entity ===
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "members", ignore = true)
     @Mapping(target = "avatarUrl", ignore = true)
-    @Mapping(target = "maxMembers", ignore = true)
-    @Mapping(target = "archived", constant = "false")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "maxMembers", ignore = true)
+    @Mapping(target = "archived", constant = "false")
+    @Mapping(target = "currency", defaultExpression = "java(java.util.Currency.getInstance(\"MAD\"))")
+    @Mapping(target = "timezone", defaultExpression = "java(java.time.ZoneId.of(\"Africa/Casablanca\"))")
     Household toEntity(HouseholdRequest.Create request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
