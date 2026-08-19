@@ -44,4 +44,67 @@ class HouseholdModelTest {
         assertThat(admin.isAdmin()).isTrue();
         assertThat(regular.isAdmin()).isFalse();
     }
+
+    @Test
+    @DisplayName("Should correctly evaluate isValid() on HouseholdInvite")
+    void invite_IsValid() {
+        HouseholdInvite validInvite = HouseholdInvite.builder()
+                .type(InviteType.LINK)
+                .status(InviteStatus.PENDING)
+                .expiresAt(java.time.Instant.now().plusSeconds(3600))
+                .maxUses(5)
+                .usedCount(2)
+                .build();
+
+        HouseholdInvite expiredInvite = HouseholdInvite.builder()
+                .type(InviteType.LINK)
+                .status(InviteStatus.PENDING)
+                .expiresAt(java.time.Instant.now().minusSeconds(3600))
+                .build();
+
+        HouseholdInvite maxedInvite = HouseholdInvite.builder()
+                .type(InviteType.LINK)
+                .status(InviteStatus.PENDING)
+                .expiresAt(java.time.Instant.now().plusSeconds(3600))
+                .maxUses(2)
+                .usedCount(2)
+                .build();
+
+        HouseholdInvite acceptedInvite = HouseholdInvite.builder()
+                .type(InviteType.DIRECT_USER)
+                .status(InviteStatus.ACCEPTED)
+                .expiresAt(java.time.Instant.now().plusSeconds(3600))
+                .build();
+
+        assertThat(validInvite.isValid()).isTrue();
+        assertThat(expiredInvite.isValid()).isFalse();
+        assertThat(maxedInvite.isValid()).isFalse();
+        assertThat(acceptedInvite.isValid()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Should correctly increment usage and transition status when limit is reached")
+    void invite_IncrementUsage() {
+        HouseholdInvite linkInvite = HouseholdInvite.builder()
+                .type(InviteType.LINK)
+                .status(InviteStatus.PENDING)
+                .maxUses(2)
+                .usedCount(1)
+                .build();
+
+        linkInvite.incrementUsage();
+        assertThat(linkInvite.getUsedCount()).isEqualTo(2);
+        assertThat(linkInvite.getStatus()).isEqualTo(InviteStatus.EXPIRED);
+
+        HouseholdInvite directInvite = HouseholdInvite.builder()
+                .type(InviteType.DIRECT_USER)
+                .status(InviteStatus.PENDING)
+                .maxUses(1)
+                .usedCount(0)
+                .build();
+
+        directInvite.incrementUsage();
+        assertThat(directInvite.getUsedCount()).isEqualTo(1);
+        assertThat(directInvite.getStatus()).isEqualTo(InviteStatus.ACCEPTED);
+    }
 }

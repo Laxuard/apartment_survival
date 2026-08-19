@@ -78,8 +78,12 @@ public class HouseholdService {
         List<HouseholdResponse.MemberSummary> memberSummaries = household.getMembers().stream()
                 .map(member -> {
                     UserPublicDto profile = userProfiles.get(member.getUserId());
-                    String username = profile != null ? profile.username() : "Unknown User";
-                    String email = profile != null ? profile.email() : "";
+                    String username = "Unknown User";
+                    String email = "";
+                    if (profile != null) {
+                        username = profile.username();
+                        email = profile.email();
+                    }
                     return householdMapper.toMemberSummary(member, username, email);
                 })
                 .toList();
@@ -129,11 +133,20 @@ public class HouseholdService {
         }
 
         member.setRole(request.role());
-        member.setNickname(request.nickname() == null || request.nickname().isBlank() ? null : request.nickname().trim());
+
+        String nickname = null;
+        if (request.nickname() != null && !request.nickname().isBlank()) {
+            nickname = request.nickname().trim();
+        }
+        member.setNickname(nickname);
 
         UserPublicDto profile = userPublicApi.findById(targetUserId).orElse(null);
-        String username = profile != null ? profile.username() : "Unknown User";
-        String email = profile != null ? profile.email() : "";
+        String username = "Unknown User";
+        String email = "";
+        if (profile != null) {
+            username = profile.username();
+            email = profile.email();
+        }
 
         return householdMapper.toMemberSummary(member, username, email);
     }

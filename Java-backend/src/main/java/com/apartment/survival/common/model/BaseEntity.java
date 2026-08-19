@@ -37,6 +37,11 @@ public abstract class BaseEntity {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    // === Optimistic Concurrency Control ===
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @PrePersist
     public void prePersist() {
         if (this.id == null) {

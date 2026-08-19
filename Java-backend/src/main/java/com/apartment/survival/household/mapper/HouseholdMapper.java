@@ -13,7 +13,9 @@ import org.mapstruct.ReportingPolicy;
 
 import com.apartment.survival.household.dto.HouseholdRequest;
 import com.apartment.survival.household.dto.HouseholdResponse;
+import com.apartment.survival.household.dto.InviteResponse;
 import com.apartment.survival.household.model.Household;
+import com.apartment.survival.household.model.HouseholdInvite;
 import com.apartment.survival.household.model.HouseholdMember;
 
 @Mapper(
@@ -61,4 +63,26 @@ public interface HouseholdMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(HouseholdRequest.Update request, @MappingTarget Household household);
+
+    // === Invite Response Mappings ===
+
+    @Mapping(target = "inviteId", source = "invite.id")
+    @Mapping(target = "type", source = "invite.type")
+    @Mapping(target = "status", source = "invite.status")
+    @Mapping(target = "code", source = "invite.code")
+    @Mapping(target = "targetUsername", source = "targetUsername")
+    @Mapping(target = "maxUses", source = "invite.maxUses")
+    @Mapping(target = "usedCount", source = "invite.usedCount")
+    @Mapping(target = "expiresAt", source = "invite.expiresAt")
+    @Mapping(target = "createdAt", source = "invite.createdAt")
+    InviteResponse.HouseholdInviteSummary toInviteSummary(HouseholdInvite invite, String targetUsername);
+
+    @Mapping(target = "inviteId", source = "invite.id")
+    @Mapping(target = "householdId", source = "invite.household.id")
+    @Mapping(target = "householdName", source = "invite.household.name")
+    @Mapping(target = "householdDescription", source = "invite.household.description")
+    @Mapping(target = "invitedByUsername", source = "invitedByUsername")
+    @Mapping(target = "expiresAt", source = "invite.expiresAt")
+    @Mapping(target = "createdAt", source = "invite.createdAt")
+    InviteResponse.UserInboxInvite toInboxInvite(HouseholdInvite invite, String invitedByUsername);
 }

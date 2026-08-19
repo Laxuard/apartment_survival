@@ -40,6 +40,20 @@ public class UserPublicApiImpl implements UserPublicApi {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<UserPublicDto> findByUsername(String username) {
+        if (username == null || username.isBlank()) {
+            return Optional.empty();
+        }
+
+        return userRepository.findByUsername(username.trim())
+                .filter(User::isEnabled)
+                .filter(u -> !u.isAccountLocked())
+                .filter(u -> !u.isDeleted())
+                .map(u -> new UserPublicDto(u.getId(), u.getUsername(), u.getEmail()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Map<UUID, UserPublicDto> findAllByIds(Set<UUID> userIds) {
         if (userIds == null || userIds.isEmpty()) {
             return Map.of();

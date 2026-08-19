@@ -183,4 +183,60 @@ class HouseholdMapperTest {
             assertThat(household.getCurrency()).isEqualTo(MAD);
         }
     }
+
+    @Nested
+    @DisplayName("Invite Mappings")
+    class InviteMappingTests {
+
+        @Test
+        @DisplayName("Should map HouseholdInvite to HouseholdInviteSummary DTO")
+        void toInviteSummary_Success() {
+            var invite = com.apartment.survival.household.model.HouseholdInvite.builder()
+                    .id(UUID.randomUUID())
+                    .type(com.apartment.survival.household.model.InviteType.DIRECT_USER)
+                    .status(com.apartment.survival.household.model.InviteStatus.PENDING)
+                    .code(null)
+                    .maxUses(1)
+                    .usedCount(0)
+                    .expiresAt(Instant.now().plusSeconds(3600))
+                    .createdAt(Instant.now())
+                    .build();
+
+            var summary = mapper.toInviteSummary(invite, "Bob");
+
+            assertThat(summary).isNotNull();
+            assertThat(summary.inviteId()).isEqualTo(invite.getId());
+            assertThat(summary.type()).isEqualTo(invite.getType());
+            assertThat(summary.status()).isEqualTo(invite.getStatus());
+            assertThat(summary.targetUsername()).isEqualTo("Bob");
+            assertThat(summary.maxUses()).isEqualTo(1);
+            assertThat(summary.usedCount()).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("Should map HouseholdInvite to UserInboxInvite DTO")
+        void toInboxInvite_Success() {
+            var household = Household.builder()
+                    .id(HOUSEHOLD_ID)
+                    .name("Sunshine Villa")
+                    .description("Beach Apt")
+                    .build();
+
+            var invite = com.apartment.survival.household.model.HouseholdInvite.builder()
+                    .id(UUID.randomUUID())
+                    .household(household)
+                    .expiresAt(Instant.now().plusSeconds(3600))
+                    .createdAt(Instant.now())
+                    .build();
+
+            var inbox = mapper.toInboxInvite(invite, "Alice");
+
+            assertThat(inbox).isNotNull();
+            assertThat(inbox.inviteId()).isEqualTo(invite.getId());
+            assertThat(inbox.householdId()).isEqualTo(HOUSEHOLD_ID);
+            assertThat(inbox.householdName()).isEqualTo("Sunshine Villa");
+            assertThat(inbox.householdDescription()).isEqualTo("Beach Apt");
+            assertThat(inbox.invitedByUsername()).isEqualTo("Alice");
+        }
+    }
 }

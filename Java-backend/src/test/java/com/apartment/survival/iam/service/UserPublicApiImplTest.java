@@ -125,7 +125,66 @@ class UserPublicApiImplTest {
     }
 
     // ==========================================
-    // 3. FIND ALL BY IDS (BATCH LOOKUP)
+    // 3. FIND BY USERNAME
+    // ==========================================
+
+    @Nested
+    @DisplayName("findByUsername()")
+    class FindByUsernameTests {
+
+        @Test
+        @DisplayName("Should return UserPublicDto when user exists, is active, non-locked, and not deleted")
+        void findByUsername_ActiveUser_Success() {
+            User activeUser = User.builder()
+                    .id(USER_ID_1)
+                    .username("Laxuard")
+                    .email("laxuard@gmail.com")
+                    .enabled(true)
+                    .accountLocked(false)
+                    .deleted(false)
+                    .build();
+
+            when(userRepository.findByUsername("Laxuard")).thenReturn(Optional.of(activeUser));
+
+            Optional<UserPublicDto> result = userPublicApi.findByUsername("Laxuard");
+
+            assertThat(result).isPresent();
+            assertThat(result.get().userId()).isEqualTo(USER_ID_1);
+            assertThat(result.get().username()).isEqualTo("Laxuard");
+            assertThat(result.get().email()).isEqualTo("laxuard@gmail.com");
+        }
+
+        @Test
+        @DisplayName("Should return empty when username is null or blank without querying repository")
+        void findByUsername_NullOrBlank_ReturnsEmpty() {
+            assertThat(userPublicApi.findByUsername(null)).isEmpty();
+            assertThat(userPublicApi.findByUsername("")).isEmpty();
+            assertThat(userPublicApi.findByUsername("   ")).isEmpty();
+            verifyNoInteractions(userRepository);
+        }
+
+        @Test
+        @DisplayName("Should return empty when user is locked or soft-deleted")
+        void findByUsername_LockedOrDeleted_ReturnsEmpty() {
+            User lockedUser = User.builder()
+                    .id(USER_ID_1)
+                    .username("Laxuard")
+                    .email("laxuard@gmail.com")
+                    .enabled(true)
+                    .accountLocked(true)
+                    .deleted(false)
+                    .build();
+
+            when(userRepository.findByUsername("Laxuard")).thenReturn(Optional.of(lockedUser));
+
+            Optional<UserPublicDto> result = userPublicApi.findByUsername("Laxuard");
+
+            assertThat(result).isEmpty();
+        }
+    }
+
+    // ==========================================
+    // 4. FIND ALL BY IDS (BATCH LOOKUP)
     // ==========================================
 
     @Nested

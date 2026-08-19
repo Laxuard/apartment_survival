@@ -11,5 +11,7 @@ public interface UserPublicApi {
 
     Optional<UserPublicDto> findById(UUID userId);
 
+    Optional<UserPublicDto> findByUsername(String username);
+
     Map<UUID, UserPublicDto> findAllByIds(Set<UUID> userIds);
 }
