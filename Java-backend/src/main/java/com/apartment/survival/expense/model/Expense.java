@@ -21,8 +21,8 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "expenses", indexes = {
-        @Index(name = "idx_expenses_household_date", columnList = "household_id, expense_date"),
-        @Index(name = "idx_expenses_payer", columnList = "paid_by_user_id"),
+        @Index(name = "idx_expenses_household_deleted_date", columnList = "household_id, deleted, expense_date"),
+        @Index(name = "idx_expenses_household_payer", columnList = "household_id, paid_by_user_id, deleted"),
         @Index(name = "idx_expenses_category", columnList = "category")
 })
 public class Expense extends BaseEntity {
@@ -67,6 +67,12 @@ public class Expense extends BaseEntity {
     @Column(nullable = false)
     private boolean deleted = false;
 
+    // === Derived / Computed (Persisted on split change to avoid @Formula N+1
+    // subqueries) ===
+    @Builder.Default
+    @Column(name = "participant_count", nullable = false)
+    private int participantCount = 0;
+
     // === Relationships ===
     @Builder.Default
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -76,16 +82,19 @@ public class Expense extends BaseEntity {
     public void addSplit(ExpenseSplit split) {
         splits.add(split);
         split.setExpense(this);
+        this.participantCount = splits.size();
     }
 
     public void removeSplit(ExpenseSplit split) {
         splits.remove(split);
         split.setExpense(null);
+        this.participantCount = splits.size();
     }
 
     public void clearSplits() {
         for (ExpenseSplit split : new HashSet<>(splits)) {
             removeSplit(split);
         }
+        this.participantCount = 0;
     }
 }

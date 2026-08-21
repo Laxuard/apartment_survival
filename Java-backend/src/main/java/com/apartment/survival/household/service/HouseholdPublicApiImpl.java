@@ -1,5 +1,7 @@
 package com.apartment.survival.household.service;
 
+import java.util.AbstractMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -30,6 +32,15 @@ public class HouseholdPublicApiImpl implements HouseholdPublicApi {
             return false;
         }
         return memberRepository.isMember(householdId, userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isAdmin(UUID householdId, UUID userId) {
+        if (householdId == null || userId == null) {
+            return false;
+        }
+        return memberRepository.hasRole(householdId, userId, com.apartment.survival.household.model.HouseholdRole.ADMIN);
     }
 
     @Override
@@ -69,5 +80,26 @@ public class HouseholdPublicApiImpl implements HouseholdPublicApi {
                         .map(HouseholdMember::getUserId)
                         .collect(Collectors.toSet()))
                 .orElse(Set.of());
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public Map.Entry<HouseholdPublicDto, Set<UUID>> findWithMemberIds(UUID householdId) {
+        return householdRepository.findActiveWithMembers(householdId)
+                .map(h -> {
+                    HouseholdPublicDto dto = new HouseholdPublicDto(
+                            h.getId(),
+                            h.getName(),
+                            h.getCurrency(),
+                            h.getTimezone(),
+                            h.isArchived(),
+                            h.getMaxMembers()
+                    );
+                    Set<UUID> memberIds = h.getMembers().stream()
+                            .map(HouseholdMember::getUserId)
+                            .collect(Collectors.toSet());
+                    return (Map.Entry<HouseholdPublicDto, Set<UUID>>) new AbstractMap.SimpleImmutableEntry<>(dto, memberIds);
+                })
+                .orElseThrow(() -> new com.apartment.survival.common.exception.type.ResourceNotFoundException(
+                        "Active household not found: " + householdId));
     }
 }

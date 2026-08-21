@@ -20,9 +20,9 @@ import com.apartment.survival.common.model.BaseEntity;
 @Table(
     name = "settlements",
     indexes = {
-        @Index(name = "idx_settlements_household", columnList = "household_id"),
-        @Index(name = "idx_settlements_payer", columnList = "payer_user_id"),
-        @Index(name = "idx_settlements_recipient", columnList = "recipient_user_id")
+        @Index(name = "idx_settlements_household_date", columnList = "household_id, settled_at"),
+        @Index(name = "idx_settlements_household_payer", columnList = "household_id, payer_user_id"),
+        @Index(name = "idx_settlements_household_recipient", columnList = "household_id, recipient_user_id")
     }
 )
 public class Settlement extends BaseEntity {

@@ -38,10 +38,12 @@ class ExpenseModelTest {
         expense.addSplit(split);
         assertThat(expense.getSplits()).contains(split);
         assertThat(split.getExpense()).isEqualTo(expense);
+        assertThat(expense.getParticipantCount()).isEqualTo(1);
 
         expense.removeSplit(split);
         assertThat(expense.getSplits()).doesNotContain(split);
         assertThat(split.getExpense()).isNull();
+        assertThat(expense.getParticipantCount()).isEqualTo(0);
     }
 
     @Test
@@ -63,9 +65,11 @@ class ExpenseModelTest {
         expense.addSplit(split1);
         expense.addSplit(split2);
         assertThat(expense.getSplits()).hasSize(2);
+        assertThat(expense.getParticipantCount()).isEqualTo(2);
 
         expense.clearSplits();
         assertThat(expense.getSplits()).isEmpty();
+        assertThat(expense.getParticipantCount()).isEqualTo(0);
         assertThat(split1.getExpense()).isNull();
         assertThat(split2.getExpense()).isNull();
     }
