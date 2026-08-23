@@ -1,0 +1,62 @@
+/* Apartment Survival Design Tokens */
+:root {
+  /* Surface & Background */
+  --canvas: #F6F1E7;
+  --card: #FFFFFF;
+  --border: #E8DFCF;
+  --border-strong: #DCCFB4;
+
+  /* Typography Colors */
+  --text: #2B2420;
+  --muted: #8A7F6E;
+
+  /* Brand Accents */
+  --oak: #C1793D;
+  --oak-hover: #A8632C;
+  --oak-tint: #F6E8D6;
+  --sage: #6B7A5E;
+  --sage-tint: #EAEFE3;
+
+  /* Status Colors */
+  --positive-bg: #E3EFE1;
+  --positive-text: #3F6E52;
+  --negative-bg: #FBEAE3;
+  --negative-text: #B5482F;
+  --warn-bg: #FBF0DC;
+  --warn-text: #7A4F00;
+
+  /* Radii & Shadows */
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 1px 2px rgba(43, 36, 32, 0.04), 0 1px 1px rgba(43, 36, 32, 0.03);
+  --shadow-md: 0 4px 12px rgba(43, 36, 32, 0.10);
+  --card-rim: none;
+
+  /* Fonts */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  --font-serif: 'Fraunces', Georgia, serif;
+}
+
+[data-mode="dark"], .dark {
+  --canvas: #1D1913;
+  --card: #241E17;
+  --border: rgba(246, 232, 214, 0.08);
+  --border-strong: #463C2D;
+  --text: #F1E9DA;
+  --muted: #A99C86;
+  --oak: #E0954F;
+  --oak-hover: #EDA968;
+  --oak-tint: #3A2B1C;
+  --sage: #93A382;
+  --sage-tint: #2A2E23;
+  --card-rim: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  --positive-bg: #20301F;
+  --positive-text: #7CC199;
+  --negative-bg: #3A2019;
+  --negative-text: #E38C71;
+  --warn-bg: #332B18;
+  --warn-text: #F0C040;
+  --shadow: none;
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+}

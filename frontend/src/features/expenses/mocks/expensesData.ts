@@ -1,0 +1,58 @@
+import type { Expense } from '../types';
+
+export const MOCK_EXPENSES: Expense[] = [
+  {
+    id: 'groceries',
+    description: 'Groceries',
+    amount: 80.0,
+    currency: 'MAD',
+    payerId: 'user-1',
+    payerName: 'Laxuard',
+    category: 'GROCERIES',
+    splitMethod: 'EQUAL',
+    splits: [
+      { userId: 'user-1', userName: 'Laxuard', amount: 26.68 },
+      { userId: 'user-2', userName: 'Bob', amount: 26.66 },
+      { userId: 'user-3', userName: 'Alice', amount: 26.66 },
+    ],
+    createdAt: 'today',
+    userShare: 26.68,
+    auditInfo: 'Logged today at 2:15 PM via Web',
+  },
+  {
+    id: 'wifi',
+    description: 'Wifi bill',
+    amount: 45.0,
+    currency: 'MAD',
+    payerId: 'user-1',
+    payerName: 'you',
+    category: 'UTILITIES',
+    splitMethod: 'EQUAL',
+    splits: [
+      { userId: 'user-1', userName: 'Laxuard', amount: 15.0 },
+      { userId: 'user-2', userName: 'Bob', amount: 15.0 },
+      { userId: 'user-3', userName: 'Alice', amount: 15.0 },
+    ],
+    createdAt: 'yesterday',
+    userShare: 15.0,
+    auditInfo: 'Logged yesterday at 9:40 AM via Web',
+  },
+  {
+    id: 'dinner',
+    description: 'Dinner',
+    amount: 120.0,
+    currency: 'MAD',
+    payerId: 'user-2',
+    payerName: 'Bob',
+    category: 'HOUSEHOLD',
+    splitMethod: 'EQUAL',
+    splits: [
+      { userId: 'user-1', userName: 'Laxuard', amount: 0.0 },
+      { userId: 'user-2', userName: 'Bob', amount: 60.0 },
+      { userId: 'user-3', userName: 'Alice', amount: 60.0 },
+    ],
+    createdAt: '2 days ago',
+    userShare: 0.0,
+    auditInfo: 'Logged 2 days ago at 8:05 PM via Web',
+  },
+];
