@@ -7,9 +7,32 @@ import { useThemeStore } from '@/stores/useThemeStore';
 const App: React.FC = () => {
   const mode = useThemeStore((state) => state.mode);
 
-  // Synchronize data-mode attribute on body
+  // Synchronize dynamic light/dark/system theme to body & root HTML
   useEffect(() => {
-    document.body.dataset.mode = mode;
+    const applyTheme = (isDark: boolean) => {
+      const activeTheme = isDark ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-mode', activeTheme);
+      document.body.dataset.mode = activeTheme;
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
+
+    if (mode === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      applyTheme(mediaQuery.matches);
+
+      const handleChange = (e: MediaQueryListEvent) => {
+        applyTheme(e.matches);
+      };
+
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    } else {
+      applyTheme(mode === 'dark');
+    }
   }, [mode]);
 
   return (

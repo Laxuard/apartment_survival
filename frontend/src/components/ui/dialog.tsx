@@ -29,7 +29,7 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-black/45 backdrop-blur-[2px] duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 z-50 bg-black/60 transition-opacity duration-150 data-open:opacity-100 data-closed:opacity-0 pointer-events-auto",
         className
       )}
       {...props}
@@ -51,7 +51,7 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-lg)] bg-[var(--card)] p-6 text-[var(--text)] border border-[var(--border)] shadow-xl duration-150 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-[var(--card)] p-6 text-[var(--text)] border border-[var(--border-strong)] shadow-2xl transition-all duration-150 transform-gpu data-open:scale-100 data-open:opacity-100 data-closed:scale-95 data-closed:opacity-0 outline-none",
           className
         )}
         {...props}
@@ -60,7 +60,7 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="absolute top-4 right-4 p-1.5 rounded-md text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--sage-tint)] transition-colors cursor-pointer"
+            className="absolute top-4 right-4 p-1.5 rounded-lg text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--sage-tint)] transition-colors cursor-pointer"
           >
             <XIcon size={16} />
             <span className="sr-only">Close</span>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { toast } from 'sonner';
 import {
   IconPlus,
   IconShoppingCart,
@@ -10,21 +11,23 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
-import { useHouseholdStore } from '@/stores/useHouseholdStore';
-import {
-  usePantryItemsQuery,
-  useAdjustStockMutation,
-  useToggleGroceryMutation,
-  useAddPantryItemMutation,
-} from '../hooks/usePantryQueries';
+import { usePantryStock } from '../hooks/usePantryStock';
+import type { PantryItem } from '../types';
 
 export const PantryPage: React.FC = () => {
-  const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
-  const { data: items = [], isLoading } = usePantryItemsQuery(activeHouseholdId);
-
-  const adjustStockMutation = useAdjustStockMutation(activeHouseholdId);
-  const toggleGroceryMutation = useToggleGroceryMutation(activeHouseholdId);
-  const addPantryItemMutation = useAddPantryItemMutation(activeHouseholdId);
+  const {
+    items,
+    isLoading,
+    totalCount,
+    criticalCount,
+    groceryCount,
+    adjustQuantity,
+    toggleGrocery,
+    addItem,
+    isAddingItem,
+    getStockProgress,
+    getStockBadge,
+  } = usePantryStock();
 
   const [filter, setFilter] = useState<'ALL' | 'CRITICAL' | 'STOCKED'>('ALL');
   const [search, setSearch] = useState('');
@@ -37,7 +40,7 @@ export const PantryPage: React.FC = () => {
   const [newItemUnit] = useState('units');
 
   const filteredItems = useMemo(() => {
-    return items.filter((item) => {
+    return items.filter((item: PantryItem) => {
       const matchesSearch =
         item.name.toLowerCase().includes(search.toLowerCase()) ||
         item.category.toLowerCase().includes(search.toLowerCase());
@@ -48,48 +51,47 @@ export const PantryPage: React.FC = () => {
     });
   }, [items, filter, search]);
 
-  const handleAdjustQuantity = (id: string, delta: number) => {
-    adjustStockMutation.mutate({ itemId: id, delta });
-  };
-
   const handleToggleGrocery = (id: string, currentStatus?: boolean) => {
-    toggleGroceryMutation.mutate({ itemId: id, onList: !currentStatus });
+    const item = items.find((i: PantryItem) => i.id === id);
+    toggleGrocery(id, currentStatus);
+    if (!currentStatus) {
+      toast.success(`Added ${item?.name || 'item'} to Grocery Checklist`, {
+        icon: '🛒',
+      });
+    } else {
+      toast.info(`Removed ${item?.name || 'item'} from Grocery Checklist`);
+    }
   };
 
-  const handleAddItem = (e: React.FormEvent) => {
+  const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItemName.trim()) return;
 
-    addPantryItemMutation.mutate(
-      {
+    try {
+      await addItem({
         name: newItemName.trim(),
         category: newItemCategory,
         quantity: newItemQuantity,
         unit: newItemUnit,
-        iconName: 'coffee',
-      },
-      {
-        onSuccess: () => {
-          setNewItemName('');
-          setIsAddModalOpen(false);
-        },
-      }
-    );
+      });
+      toast.success(`Added "${newItemName.trim()}" to pantry inventory`);
+      setNewItemName('');
+      setIsAddModalOpen(false);
+    } catch {
+      toast.error('Failed to add pantry item');
+    }
   };
 
-  const criticalCount = items.filter((i) => i.status === 'out' || i.status === 'low').length;
-  const groceryCount = items.filter((i) => i.onGroceryList).length;
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in pb-12">
       {/* 3 Prominent Summary Metrics (Elevated & spacious, saving vertical header space) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div
           onClick={() => setFilter('ALL')}
-          className={`bg-[var(--card)] border rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5 cursor-pointer transition-all ${
+          className={`bg-[var(--card)] border rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5 cursor-pointer ${
             filter === 'ALL'
               ? 'border-[var(--oak)] ring-1 ring-[var(--oak)]/20'
-              : 'border-[var(--border)] hover:border-[var(--border-strong)]'
+              : 'border-[var(--border)]'
           }`}
         >
           <div className="flex items-center justify-between text-xs font-medium text-[var(--muted)]">
@@ -97,16 +99,16 @@ export const PantryPage: React.FC = () => {
             <IconShoppingCart size={18} className="text-[var(--oak)]" />
           </div>
           <div className="mono font-bold text-2xl text-[var(--text)]">
-            {items.length} <span className="text-xs font-normal text-[var(--muted)]">supplies</span>
+            {totalCount} <span className="text-xs font-normal text-[var(--muted)]">supplies</span>
           </div>
         </div>
 
         <div
           onClick={() => setFilter('CRITICAL')}
-          className={`bg-[var(--card)] border rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5 cursor-pointer transition-all ${
+          className={`bg-[var(--card)] border rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5 cursor-pointer ${
             filter === 'CRITICAL'
               ? 'border-[var(--warn-text)] ring-1 ring-[var(--warn-text)]/20'
-              : 'border-[var(--border)] hover:border-[var(--border-strong)]'
+              : 'border-[var(--border)]'
           }`}
         >
           <div className="flex items-center justify-between text-xs font-medium text-[var(--muted)]">
@@ -120,7 +122,7 @@ export const PantryPage: React.FC = () => {
 
         <div
           onClick={() => setFilter('ALL')}
-          className="bg-[var(--card)] border border-[var(--border)] hover:border-[var(--border-strong)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5 transition-all"
+          className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5 cursor-pointer"
         >
           <div className="flex items-center justify-between text-xs font-medium text-[var(--muted)]">
             <span>On Grocery List</span>
@@ -161,7 +163,7 @@ export const PantryPage: React.FC = () => {
                       : 'bg-[var(--canvas)] text-[var(--muted)] hover:text-[var(--text)] border border-[var(--border)]'
                   }`}
                 >
-                  All ({items.length})
+                  All ({totalCount})
                 </button>
                 <button
                   type="button"
@@ -207,11 +209,11 @@ export const PantryPage: React.FC = () => {
               No pantry items found matching your filter.
             </div>
           ) : (
-            filteredItems.map((item) => {
+            filteredItems.map((item: PantryItem) => {
               const isAdded = !!item.onGroceryList;
               const qty = item.quantity ?? (item.status === 'out' ? 0 : 2);
-              const fillWidth = item.status === 'out' ? 5 : item.status === 'low' ? 35 : 85;
-              const fillClass = item.status === 'out' ? 'low' : item.status === 'low' ? 'half' : 'full';
+              const progress = getStockProgress(item.status);
+              const badge = getStockBadge(item);
 
               return (
                 <div key={item.id} className="stock-row py-3.5 px-4 sm:px-5 flex items-center justify-between gap-3 hover:bg-[var(--sage-tint)] transition-colors">
@@ -229,7 +231,7 @@ export const PantryPage: React.FC = () => {
                     
                     {/* Stock meter */}
                     <div className="stock-meter w-full">
-                      <div className={`stock-meter-fill ${fillClass}`} style={{ width: `${fillWidth}%` }} />
+                      <div className={`stock-meter-fill ${progress.fillClass}`} style={{ width: `${progress.percentage}%` }} />
                     </div>
                   </div>
 
@@ -237,7 +239,7 @@ export const PantryPage: React.FC = () => {
                   <div className="w-[82px] h-8 flex items-center justify-between bg-[var(--canvas)] border border-[var(--border)] rounded-xl px-1 shrink-0 select-none">
                     <button
                       type="button"
-                      onClick={() => handleAdjustQuantity(item.id, -1)}
+                      onClick={() => adjustQuantity(item.id, -1)}
                       className="btn-spring w-6 h-6 rounded-lg flex items-center justify-center hover:bg-[var(--card)] text-[var(--text)] cursor-pointer text-xs font-bold shrink-0"
                       aria-label="Decrease quantity"
                     >
@@ -251,7 +253,7 @@ export const PantryPage: React.FC = () => {
                     </span>
                     <button
                       type="button"
-                      onClick={() => handleAdjustQuantity(item.id, 1)}
+                      onClick={() => adjustQuantity(item.id, 1)}
                       className="btn-spring w-6 h-6 rounded-lg flex items-center justify-center hover:bg-[var(--card)] text-[var(--text)] cursor-pointer text-xs font-bold shrink-0"
                       aria-label="Increase quantity"
                     >
@@ -261,15 +263,9 @@ export const PantryPage: React.FC = () => {
 
                   {/* Fixed-width Status Badge: Fixed 76px container */}
                   <span
-                    className={`w-[76px] text-center inline-flex items-center justify-center py-1 rounded-md text-xs font-semibold shrink-0 select-none ${
-                      item.status === 'out'
-                        ? 'bg-[var(--negative-bg)] text-[var(--negative-text)] pulse-subtle'
-                        : item.status === 'low'
-                        ? 'bg-[var(--warn-bg)] text-[var(--warn-text)]'
-                        : 'bg-[var(--positive-bg)] text-[var(--positive-text)]'
-                    }`}
+                    className={`w-[76px] text-center inline-flex items-center justify-center py-1 rounded-md text-xs font-semibold shrink-0 select-none ${badge.badgeClass}`}
                   >
-                    {item.badgeLabel}
+                    {badge.label}
                   </span>
 
                   {/* Grocery List Toggle Button: Fixed 32px */}
@@ -359,10 +355,10 @@ export const PantryPage: React.FC = () => {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={addPantryItemMutation.isPending}
+                  disabled={isAddingItem}
                   className="btn-tactile bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs cursor-pointer px-4"
                 >
-                  {addPantryItemMutation.isPending ? 'Saving...' : 'Save Item'}
+                  {isAddingItem ? 'Saving...' : 'Save Item'}
                 </Button>
               </div>
             </form>

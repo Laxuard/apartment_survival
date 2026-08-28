@@ -1,135 +1,102 @@
 import React from 'react';
-import { IconPlus, IconArrowsExchange, IconTrendingUp, IconUsers } from '@tabler/icons-react';
+import { IconPlus, IconTrendingUp, IconArrowsExchange } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { useUIStore } from '@/stores/useUIStore';
-import { useHouseholdStore } from '@/stores/useHouseholdStore';
-import { useRoommatesQuery } from '@/features/roommates';
+import { useHouseholdLedger } from '@/features/roommates';
 
 interface HeroBalanceProps {
   amount?: number;
   currency?: string;
-  isOwed?: boolean;
   lentAmount?: number;
   borrowedAmount?: number;
-  nudgeText?: string;
 }
 
 export const HeroBalance: React.FC<HeroBalanceProps> = ({
   amount: propAmount,
   currency: customCurrency,
-  isOwed: propIsOwed,
   lentAmount: propLent,
   borrowedAmount: propBorrowed,
-  nudgeText: propNudge,
 }) => {
-  const { openModal } = useUIStore();
-  const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
-  const { getActiveCurrency } = useHouseholdStore();
-  const currency = customCurrency || getActiveCurrency();
+  const { openModal, openSettleModal } = useUIStore();
+  const ledger = useHouseholdLedger(customCurrency);
 
-  const { data: roommates = [] } = useRoommatesQuery(activeHouseholdId, currency);
-
-  // Derive dynamic lending & borrowing sums from roommate balances if props not explicitly provided
-  const owingRoommates = roommates.filter((r) => r.balance > 0);
-  const owedRoommates = roommates.filter((r) => r.balance < 0);
-
-  const dynamicLent = owingRoommates.reduce((acc, curr) => acc + curr.balance, 0);
-  const dynamicBorrowed = owedRoommates.reduce((acc, curr) => acc + Math.abs(curr.balance), 0);
-  const dynamicNet = dynamicLent - dynamicBorrowed;
-
-  const finalAmount = propAmount !== undefined ? propAmount : dynamicNet;
-  const finalLent = propLent !== undefined ? propLent : dynamicLent;
-  const finalBorrowed = propBorrowed !== undefined ? propBorrowed : dynamicBorrowed;
-  const finalIsOwed = propIsOwed !== undefined ? propIsOwed : finalAmount >= 0;
-
-  // Dynamically compute the nudge text from live roommates
-  const dynamicNudge =
-    owingRoommates.length > 0
-      ? owingRoommates
-          .map(
-            (r) =>
-              `${r.name} owes ${r.balance.toFixed(2)} ${currency}${
-                r.overdueDays ? ` (${r.overdueDays}d overdue)` : ''
-              }`
-          )
-          .join(' · ')
-      : finalAmount < 0
-      ? 'All your flatmates are settled up!'
-      : 'All debts are settled!';
-
-  const displayNudge = propNudge || dynamicNudge;
+  const finalAmount = propAmount !== undefined ? propAmount : ledger.userNetBalance;
+  const finalLent = propLent !== undefined ? propLent : ledger.totalLent;
+  const finalBorrowed = propBorrowed !== undefined ? propBorrowed : ledger.totalBorrowed;
   const formattedAmount = `${finalAmount > 0 ? '+' : ''}${finalAmount.toFixed(2)}`;
 
-  // Calculate distribution percentages for visual bar
   const totalFlow = finalLent + finalBorrowed;
   const lentPct = totalFlow > 0 ? Math.round((finalLent / totalFlow) * 100) : 50;
 
   return (
-    <div className="hero-card relative overflow-hidden transition-all duration-200">
-      <div className="hero-left flex-1 space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="hero-label uppercase tracking-wider text-[11px] font-semibold text-[var(--muted)]">
-            Net balance
-          </div>
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[var(--sage-tint)] text-[var(--sage)]">
+    <div className="rounded-3xl border border-[var(--border-strong)] bg-gradient-to-r from-[var(--oak-tint)] via-[var(--card)] to-[var(--sage-tint)]/70 p-6 sm:p-7 relative overflow-hidden shadow-md shrink-0 before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:bg-gradient-to-r before:from-[var(--oak)] before:via-[var(--border-strong)] before:to-[var(--sage)]">
+      {/* 1. Header Row inside Banner */}
+      <div className="flex items-center justify-between pb-3.5 mb-2 border-b border-[var(--border)]/60">
+        <div className="flex items-center gap-2.5">
+          <span className="uppercase tracking-wider text-xs font-bold text-[var(--muted)]">
+            {ledger.statusLabel}
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[var(--sage-tint)] text-[var(--sage)] border border-[var(--sage)]/40 shadow-2xs">
             <IconTrendingUp size={13} />
             Healthy Ledger
           </span>
         </div>
+        <span className="text-xs text-[var(--muted)] hidden sm:inline-block font-medium">
+          {finalAmount > 0
+            ? `${lentPct}% of space ledger in your favor`
+            : finalAmount === 0
+            ? 'All household accounts settled'
+            : 'Open debt pending settlement'}
+        </span>
+      </div>
 
-        <div
-          className={`hero-amount mono font-bold tracking-tight text-3xl sm:text-4xl ${
-            finalAmount > 0
-              ? 'text-[var(--positive-text)]'
-              : finalAmount < 0
-              ? 'text-[var(--negative-text)]'
-              : 'text-[var(--text)]'
-          }`}
-        >
-          {formattedAmount}
-          <span className="currency font-normal text-xs ml-1.5 text-[var(--muted)]">{currency}</span>
-        </div>
-
-        <div className="hero-sub flex items-center gap-2 text-xs font-medium text-[var(--muted)]">
-          <span
-            className={`inline-block w-2 h-2 rounded-full ${
-              finalAmount === 0
-                ? 'bg-[var(--muted)]'
-                : finalIsOwed
-                ? 'bg-[var(--sage)]'
-                : 'bg-[var(--oak)]'
-            } animate-pulse`}
-            aria-hidden="true"
-          />
-          {finalAmount === 0
-            ? 'All accounts are completely settled'
-            : finalIsOwed
-            ? 'You are owed money in total'
-            : 'You owe money in total'}
-        </div>
-
-        {/* Visual Ledger Distribution Bar */}
-        <div className="pt-2 max-w-sm space-y-1.5">
-          <div className="flex justify-between text-[11px] text-[var(--muted)]">
-            <span className="text-[var(--sage)] font-medium">
-              Lent: +{finalLent.toFixed(2)} {currency}
+      {/* 2. Main Content Row: Metric (Left) + Center Flow Panel (Center) + Actions (Right) */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        {/* Left Financial Metric */}
+        <div className="space-y-1 min-w-0 lg:w-1/3">
+          <div className="flex items-baseline gap-2.5">
+            <span
+              className={`mono font-bold tracking-tight text-3xl sm:text-4xl md:text-5xl ${
+                finalAmount > 0
+                  ? 'text-[var(--positive-text)]'
+                  : finalAmount < 0
+                  ? 'text-[var(--negative-text)]'
+                  : 'text-[var(--text)]'
+              }`}
+            >
+              {formattedAmount}
             </span>
-            <span className="text-[var(--oak)] font-medium">
-              Borrowed: {finalBorrowed.toFixed(2)} {currency}
+            <span className="font-normal text-sm sm:text-base text-[var(--muted)]">{ledger.currency}</span>
+          </div>
+          <div className="text-xs text-[var(--muted)] font-medium">
+            Net balance across active flatmates
+          </div>
+        </div>
+
+        {/* Center Flow Sparkline Panel */}
+        <div className="w-full lg:max-w-sm space-y-2 shrink-0">
+          <div className="flex justify-between text-xs text-[var(--muted)] font-mono px-0.5">
+            <span className="text-[var(--sage)] font-semibold flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[var(--sage)] inline-block shadow-2xs" />
+              Lent: +{finalLent.toFixed(2)} {ledger.currency}
+            </span>
+            <span className="text-[var(--oak)] font-semibold flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[var(--oak)] inline-block shadow-2xs" />
+              Borrowed: {finalBorrowed.toFixed(2)} {ledger.currency}
             </span>
           </div>
-          <div className="h-1.5 w-full bg-[var(--border)] rounded-full overflow-hidden flex">
+          <div className="h-3 w-full bg-[var(--canvas)] border border-[var(--border-strong)] rounded-full overflow-hidden flex shadow-inner">
             {totalFlow === 0 ? (
               <div className="bg-[var(--border-strong)] h-full w-full opacity-60" title="Settled" />
             ) : (
               <>
                 <div
-                  className="bg-[var(--sage)] h-full transition-all duration-500 ease-out"
+                  className="bg-gradient-to-r from-[var(--sage)] to-[#7BC098] h-full transition-all duration-500 ease-out shadow-sm"
                   style={{ width: `${lentPct}%` }}
                   title={`Lent: ${lentPct}%`}
                 />
                 <div
-                  className="bg-[var(--oak)] h-full transition-all duration-500 ease-out"
+                  className="bg-gradient-to-r from-[var(--oak)] to-[var(--rust)] h-full transition-all duration-500 ease-out shadow-sm"
                   style={{ width: `${100 - lentPct}%` }}
                   title={`Borrowed: ${100 - lentPct}%`}
                 />
@@ -138,31 +105,25 @@ export const HeroBalance: React.FC<HeroBalanceProps> = ({
           </div>
         </div>
 
-        {displayNudge && (
-          <div className="hero-nudge text-xs text-[var(--muted)] border-t border-[var(--border)] pt-2.5 mt-2 flex items-center gap-1.5">
-            <IconUsers size={14} className="text-[var(--oak)] shrink-0" />
-            <span className="truncate">{displayNudge}</span>
-          </div>
-        )}
-      </div>
+        {/* Right Quick Actions */}
+        <div className="flex items-center justify-start lg:justify-end gap-3 shrink-0 lg:w-1/3">
+          <Button
+            onClick={() => openModal('expense')}
+            className="btn-tactile bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs sm:text-sm font-semibold shadow-sm cursor-pointer px-5 py-2.5 h-11 rounded-xl flex items-center gap-2"
+          >
+            <IconPlus size={17} aria-hidden="true" />
+            <span>Log expense</span>
+          </Button>
 
-      <div className="hero-actions flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 self-end sm:self-center">
-        <Button
-          onClick={() => openModal('expense')}
-          className="btn-tactile bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white font-semibold shadow-sm cursor-pointer px-4 py-2"
-        >
-          <IconPlus size={16} aria-hidden="true" className="mr-1.5" />
-          <span>Log expense</span>
-        </Button>
-
-        <Button
-          variant="outline"
-          onClick={() => openModal('settle')}
-          className="btn-tactile border-[var(--border-strong)] bg-[var(--card)] hover:bg-[var(--sage-tint)] text-[var(--text)] cursor-pointer px-4 py-2"
-        >
-          <IconArrowsExchange size={16} aria-hidden="true" className="mr-1.5 text-[var(--sage)]" />
-          <span>Settle up</span>
-        </Button>
+          <Button
+            variant="outline"
+            onClick={() => openSettleModal()}
+            className="btn-tactile border border-[var(--border-strong)] bg-[var(--card)] hover:bg-[var(--canvas)] text-[var(--text)] text-xs sm:text-sm font-semibold cursor-pointer px-5 py-2.5 h-11 rounded-xl shadow-2xs flex items-center gap-2"
+          >
+            <IconArrowsExchange size={17} aria-hidden="true" className="text-[var(--muted)]" />
+            <span>Record payment</span>
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -32,7 +34,8 @@ const CATEGORIES = [
 ];
 
 export const ExpenseModal: React.FC = () => {
-  const { activeModal, closeModal } = useUIStore();
+  const navigate = useNavigate();
+  const { activeModal, expensePrefill, closeModal } = useUIStore();
   const isOpen = activeModal === 'expense';
   const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
   const { getActiveHousehold, getActiveCurrency } = useHouseholdStore();
@@ -47,6 +50,24 @@ export const ExpenseModal: React.FC = () => {
   const [category, setCategory] = useState<string>('GROCERIES');
   const [splitMethod, setSplitMethod] = useState<'EQUAL' | 'EXACT' | 'PERCENTAGE'>('EQUAL');
   const [validationError, setValidationError] = useState('');
+
+  // Keep state in sync with prefill only on open change
+  const [prevOpen, setPrevOpen] = useState(false);
+  if (isOpen !== prevOpen) {
+    setPrevOpen(isOpen);
+    if (isOpen && expensePrefill) {
+      setAmount(expensePrefill.amount ? expensePrefill.amount.toString() : '');
+      setTitle(expensePrefill.title || '');
+      setCategory(expensePrefill.category || 'GROCERIES');
+      setValidationError('');
+    } else if (!isOpen) {
+      setAmount('');
+      setTitle('');
+      setCategory('GROCERIES');
+      setSplitMethod('EQUAL');
+      setValidationError('');
+    }
+  }
 
   const createExpenseMutation = useCreateExpenseMutation(activeHouseholdId);
 
@@ -65,11 +86,14 @@ export const ExpenseModal: React.FC = () => {
     }
     setValidationError('');
 
+    const expenseTitle = title.trim();
+    const expenseCategory = category;
+
     createExpenseMutation.mutate(
       {
-        title: title.trim(),
+        title: expenseTitle,
         amount: numAmount,
-        category,
+        category: expenseCategory,
         splitType: splitMethod,
         expenseDate: new Date().toISOString(),
       },
@@ -78,7 +102,20 @@ export const ExpenseModal: React.FC = () => {
           closeModal();
           setAmount('');
           setTitle('');
-          setValidationError('');
+
+          if (expenseCategory === 'GROCERIES') {
+            toast.success(`Logged grocery expense: ${expenseTitle}`, {
+              description: `Total: ${numAmount.toFixed(2)} ${currency} (${perPersonShare.toFixed(2)} / flatmate)`,
+              action: {
+                label: 'Restock in Pantry 🛒',
+                onClick: () => navigate('/pantry'),
+              },
+            });
+          } else {
+            toast.success(`Logged expense: ${expenseTitle}`, {
+              description: `Total: ${numAmount.toFixed(2)} ${currency} (${perPersonShare.toFixed(2)} / flatmate)`,
+            });
+          }
         },
       }
     );

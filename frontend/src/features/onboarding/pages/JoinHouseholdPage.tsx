@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { IconArrowLeft, IconUserPlus } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useJoinHouseholdMutation } from '@/features/households/api/useHouseholdsQuery';
+import { useJoinHouseholdMutation } from '@/features/households';
 
 export const JoinHouseholdPage: React.FC = () => {
   const [code, setCode] = useState('');

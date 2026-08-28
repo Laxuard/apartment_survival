@@ -9,7 +9,7 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
-import { useCreateHouseholdMutation } from '@/features/households/api/useHouseholdsQuery';
+import { useCreateHouseholdMutation } from '@/features/households';
 
 const CURRENCY_OPTIONS = [
   { value: 'MAD', label: 'MAD (Moroccan Dirham)' },

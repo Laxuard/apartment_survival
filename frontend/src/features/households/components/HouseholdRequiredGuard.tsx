@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useHouseholdsQuery } from '../api/useHouseholdsQuery';
+import { useHouseholdsQuery } from '../hooks/useHouseholdsQueries';
 import { useHouseholdStore } from '@/stores/useHouseholdStore';
 import { LoadingScreen } from '@/components/common/LoadingScreen';
 

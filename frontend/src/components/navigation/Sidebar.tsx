@@ -16,8 +16,8 @@ import {
 } from '@tabler/icons-react';
 import { useHouseholdStore } from '@/stores/useHouseholdStore';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { usePantryItemsQuery } from '@/features/pantry';
-import { useRoommatesQuery } from '@/features/roommates';
+import { usePantryStock } from '@/features/pantry';
+import { useHouseholdLedger } from '@/features/roommates';
 import { useQueryClient } from '@tanstack/react-query';
 
 export const Sidebar: React.FC = () => {
@@ -31,14 +31,14 @@ export const Sidebar: React.FC = () => {
     useHouseholdStore();
   const activeHousehold = getActiveHousehold();
 
-  // Dynamic feature queries
-  const { data: pantryItems = [] } = usePantryItemsQuery(activeHouseholdId);
-  const { data: roommates = [] } = useRoommatesQuery(activeHouseholdId);
+  // Dynamic unified feature hooks & centralized ledger
+  const pantryStock = usePantryStock();
+  const ledger = useHouseholdLedger();
 
   // Dynamic calculations
-  const lowPantryCount = pantryItems.filter((i) => i.status === 'low' || i.status === 'out').length;
-  const userNetBalance = roommates.reduce((acc, curr) => acc + curr.balance, 0);
-  const memberCount = roommates.length || activeHousehold?.memberCount || 0;
+  const lowPantryCount = pantryStock.criticalCount;
+  const userNetBalance = ledger.userNetBalance;
+  const memberCount = ledger.memberCount;
 
   const navItems = [
     { to: '/', label: 'Dashboard', icon: IconLayoutDashboard },

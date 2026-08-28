@@ -1,19 +1,19 @@
+export type MemberRole = 'ADMIN' | 'MEMBER';
+
 export interface Roommate {
   id: string;
   name: string;
   email: string;
   avatarInitial: string;
   avatarColor: 'oak' | 'sage';
-  balance: number; // positive = owes you, negative = you owe them
+  balance: number; // positive = owes you / credit, negative = you owe them / debt, 0 = settled
   currency: string;
-  role: 'ADMIN' | 'MEMBER';
+  role: MemberRole;
+  isCurrentUser?: boolean;
+  joinDate?: string;
   overdueDays?: number;
-}
-
-export interface InviteRoommateDto {
-  name: string;
-  email: string;
-  role: 'ADMIN' | 'MEMBER';
+  pendingDays?: number;
+  pendingReason?: string;
 }
 
 export interface DirectSettlementPath {
@@ -25,4 +25,12 @@ export interface DirectSettlementPath {
   amount: number;
   currency: string;
   contextText: string;
+}
+
+export type InviteChannel = 'link' | 'qr' | 'direct';
+
+export interface InviteRoommateDto {
+  name: string;
+  email: string;
+  role: MemberRole;
 }

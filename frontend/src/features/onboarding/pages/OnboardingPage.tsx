@@ -1,28 +1,16 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { IconPlus, IconUserPlus, IconMail } from '@tabler/icons-react';
-import { usePendingInvitesQuery } from '@/features/households/api/useHouseholdsQuery';
-import { householdsApi } from '@/features/households/api/householdsApi';
-import { useHouseholdStore } from '@/stores/useHouseholdStore';
-import { useQueryClient } from '@tanstack/react-query';
+import { usePendingInvitesQuery, useAcceptInviteMutation } from '@/features/households';
 
 export const OnboardingPage: React.FC = () => {
   const { data: pendingInvites = [] } = usePendingInvitesQuery();
-  const addHousehold = useHouseholdStore((s) => s.addHousehold);
+  const acceptInviteMutation = useAcceptInviteMutation();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const handleAcceptInvite = async (inviteId: string) => {
     try {
-      const joined = await householdsApi.acceptDirectInvite(inviteId);
-      addHousehold({
-        id: joined.householdId,
-        name: joined.name,
-        role: 'MEMBER',
-        currency: typeof joined.currency === 'string' ? joined.currency : 'MAD',
-        memberCount: joined.memberCount,
-      });
-      queryClient.invalidateQueries({ queryKey: ['user', 'households'] });
+      await acceptInviteMutation.mutateAsync(inviteId);
       navigate('/', { replace: true });
     } catch (err) {
       console.error('Failed to accept invite', err);
@@ -57,10 +45,11 @@ export const OnboardingPage: React.FC = () => {
               </div>
               <button
                 type="button"
+                disabled={acceptInviteMutation.isPending}
                 onClick={() => handleAcceptInvite(invite.inviteId)}
-                className="btn-primary px-3 py-1.5 text-xs rounded-lg whitespace-nowrap cursor-pointer"
+                className="btn-primary px-3 py-1.5 text-xs rounded-lg whitespace-nowrap cursor-pointer disabled:opacity-50"
               >
-                Accept & Enter
+                {acceptInviteMutation.isPending ? 'Joining...' : 'Accept & Enter'}
               </button>
             </div>
           ))}

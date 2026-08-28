@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   IconCoffee,
   IconEgg,
@@ -9,108 +10,126 @@ import {
   IconMilk,
   IconAlertTriangle,
 } from '@tabler/icons-react';
-import { useHouseholdStore } from '@/stores/useHouseholdStore';
-import {
-  usePantryItemsQuery,
-  useToggleGroceryMutation,
-} from '@/features/pantry/hooks/usePantryQueries';
+import { usePantryStock, type PantryItem } from '@/features/pantry';
 
 const getItemIcon = (iconName: string) => {
   switch (iconName) {
     case 'coffee':
-      return <IconCoffee size={15} />;
+      return <IconCoffee size={17} />;
     case 'egg':
-      return <IconEgg size={15} />;
+      return <IconEgg size={17} />;
     case 'droplet':
-      return <IconDroplet size={15} />;
+      return <IconDroplet size={17} />;
     case 'bread':
-      return <IconBread size={15} />;
+      return <IconBread size={17} />;
     case 'milk':
-      return <IconMilk size={15} />;
+      return <IconMilk size={17} />;
     default:
-      return <IconCoffee size={15} />;
+      return <IconCoffee size={17} />;
   }
 };
 
 export const RestockAlertsCard: React.FC = () => {
-  const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
-  const { data: pantryItems = [] } = usePantryItemsQuery(activeHouseholdId);
-  const toggleGroceryMutation = useToggleGroceryMutation(activeHouseholdId);
+  const navigate = useNavigate();
+  const {
+    items: pantryItems,
+    criticalCount,
+    totalCount,
+    toggleGrocery,
+    getStockBadge,
+  } = usePantryStock();
 
-  const urgentCount = pantryItems.filter((i) => i.status === 'out').length;
-
-  const handleToggle = (id: string, currentStatus?: boolean) => {
-    toggleGroceryMutation.mutate({ itemId: id, onList: !currentStatus });
-  };
+  // Show top 3 critical/low supplies
+  const displayItems = [...pantryItems]
+    .sort((a, b) => {
+      const order: Record<string, number> = { out: 0, low: 1, medium: 2, high: 3, in_stock: 4 };
+      return (order[a.status] ?? 5) - (order[b.status] ?? 5);
+    })
+    .slice(0, 3);
 
   return (
-    <section className="card-custom card-interactive transition-all duration-200" aria-labelledby="stock-title">
-      <div className="card-head">
+    <section className="card-custom flex flex-col shadow-sm" aria-labelledby="stock-title">
+      <div className="p-3.5 sm:p-4 border-b border-[var(--border)] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
-          <h2 className="card-title-custom" id="stock-title">
+          <h2 className="card-title-custom text-sm sm:text-base font-bold text-[var(--text)]" id="stock-title">
             Restock alerts
           </h2>
-          {urgentCount > 0 && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--negative-bg)] text-[var(--negative-text)] pulse-subtle">
-              <IconAlertTriangle size={11} />
-              {urgentCount} Critical
+          {criticalCount > 0 ? (
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[var(--negative-bg)] text-[var(--negative-text)]">
+              <IconAlertTriangle size={12} />
+              {criticalCount} Critical
             </span>
+          ) : (
+            <span className="text-xs text-[var(--muted)]">{totalCount} items</span>
           )}
         </div>
-        <div className="card-title-sub">{pantryItems.length} tracked items</div>
+        <button
+          type="button"
+          onClick={() => navigate('/pantry')}
+          className="text-xs sm:text-sm font-semibold text-[var(--oak)] hover:underline cursor-pointer"
+        >
+          View Pantry &rarr;
+        </button>
       </div>
 
-      <div className="divide-y divide-[var(--border)]">
-        {pantryItems.map((item) => {
+      <div className="p-3.5 sm:p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {displayItems.map((item: PantryItem) => {
           const isAdded = !!item.onGroceryList;
-          const fillWidth = item.status === 'out' ? 5 : item.status === 'low' ? 30 : 75;
-          const fillClass = item.status === 'out' ? 'low' : item.status === 'low' ? 'half' : 'full';
+          const badge = getStockBadge(item);
 
           return (
-            <div className="stock-row" key={item.id}>
-              <div className="row-icon-box shrink-0" aria-hidden="true">
-                {getItemIcon(item.iconName)}
-              </div>
-              
-              <div className="stock-name flex-1 min-w-0 pr-1">
-                <div className="flex items-center justify-between text-[13px] font-medium text-[var(--text)] mb-1">
-                  <span className="truncate">{item.name}</span>
-                  <span className="text-[11px] text-[var(--muted)] font-normal ml-2 shrink-0">{item.category}</span>
+            <div
+              key={item.id}
+              onClick={() => navigate('/pantry')}
+              className="p-3.5 rounded-2xl bg-[var(--canvas)] border border-[var(--border)] flex flex-col justify-between space-y-3 hover:border-[var(--border-strong)] transition-all cursor-pointer group"
+              title="Click to view item in Pantry"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-[var(--card)] text-[var(--oak)] flex items-center justify-center text-xs shrink-0 border border-[var(--border)]">
+                  {getItemIcon(item.iconName)}
                 </div>
-                <div className="stock-meter w-full">
-                  <div 
-                    className={`stock-meter-fill ${fillClass}`} 
-                    style={{ width: `${fillWidth}%` }} 
-                    title={`Stock: ${fillWidth}%`}
-                  />
+                <div className="min-w-0">
+                  <div className="text-xs sm:text-sm font-bold text-[var(--text)] truncate group-hover:text-[var(--oak)] transition-colors">
+                    {item.name}
+                  </div>
+                  <div className="text-xs text-[var(--muted)] truncate mt-0.5">
+                    {item.category}
+                  </div>
                 </div>
               </div>
 
-              <span
-                className={`w-[76px] text-center inline-flex items-center justify-center py-1 rounded-md text-xs font-semibold shrink-0 select-none ${
-                  item.status === 'out'
-                    ? 'bg-[var(--negative-bg)] text-[var(--negative-text)] pulse-subtle'
-                    : item.status === 'low'
-                    ? 'bg-[var(--warn-bg)] text-[var(--warn-text)]'
-                    : 'bg-[var(--positive-bg)] text-[var(--positive-text)]'
-                }`}
-              >
-                {item.badgeLabel}
-              </span>
+              <div className="flex items-center justify-between gap-2 pt-1 border-t border-[var(--border)]/60">
+                <span className={`px-2 py-0.5 rounded-md text-[10.5px] font-bold select-none ${badge.badgeClass}`}>
+                  {badge.label}
+                </span>
 
-              <button
-                type="button"
-                className={`btn-ghost-add btn-spring shrink-0 w-8 h-8 rounded-lg cursor-pointer flex items-center justify-center ${isAdded ? 'added bg-[var(--positive-bg)] text-[var(--positive-text)] border-[var(--positive-text)] shadow-xs' : ''}`}
-                aria-label={`Add ${item.name} to grocery list`}
-                title={isAdded ? 'Added to list' : 'Add to grocery list'}
-                onClick={() => handleToggle(item.id, item.onGroceryList)}
-              >
-                {isAdded ? (
-                  <IconCheck size={14} aria-hidden="true" className="animate-check-pop" />
-                ) : (
-                  <IconPlus size={14} aria-hidden="true" />
-                )}
-              </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleGrocery(item.id, item.onGroceryList);
+                  }}
+                  className={`btn-spring px-2.5 py-1 rounded-lg border text-xs font-semibold cursor-pointer flex items-center gap-1 transition-all ${
+                    isAdded
+                      ? 'bg-[var(--positive-bg)] text-[var(--positive-text)] border-[var(--positive-text)] shadow-xs'
+                      : 'border-[var(--border-strong)] bg-[var(--card)] hover:bg-[var(--oak)] hover:border-[var(--oak)] hover:text-white text-[var(--text)] shadow-2xs'
+                  }`}
+                  aria-label={`Add ${item.name} to grocery checklist`}
+                  title={isAdded ? 'Added to checklist' : 'Add to grocery checklist'}
+                >
+                  {isAdded ? (
+                    <>
+                      <IconCheck size={12} aria-hidden="true" />
+                      <span>Added</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconPlus size={12} aria-hidden="true" />
+                      <span>List</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           );
         })}

@@ -1,4 +1,6 @@
 export * from './types';
 export * from './api/householdsApi';
-export * from './api/useHouseholdsQuery';
-
+export * from './hooks/useHouseholdsQueries';
+export * from './hooks/useHouseholdMetrics';
+export * from './utils/householdCalculations';
+export * from './components/HouseholdRequiredGuard';

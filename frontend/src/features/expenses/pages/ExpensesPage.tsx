@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { toast } from 'sonner';
 import {
   IconPlus,
   IconReceipt2,
@@ -11,6 +12,7 @@ import {
   IconWallet,
   IconPigMoney,
   IconScale,
+  IconDownload,
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { useUIStore } from '@/stores/useUIStore';
@@ -41,7 +43,7 @@ const getCategoryInfo = (category: string) => {
 };
 
 export const ExpensesPage: React.FC = () => {
-  const { openModal, openReceipt } = useUIStore();
+  const { openModal, openSettleModal, openReceipt } = useUIStore();
   const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
 
   const { data: expenses = [], isLoading } = useExpensesQuery(activeHouseholdId);
@@ -66,11 +68,42 @@ export const ExpensesPage: React.FC = () => {
   const { getActiveCurrency } = useHouseholdStore();
   const currency = getActiveCurrency();
 
+  const handleExportCSV = () => {
+    if (expenses.length === 0) {
+      toast.info('No expenses to export');
+      return;
+    }
+    const headers = ['ID', 'Date', 'Description', 'Category', 'Amount', 'Currency', 'Paid By', 'Your Share'];
+    const rows = expenses.map((e) => [
+      `"${e.id}"`,
+      `"${e.createdAt || ''}"`,
+      `"${e.description.replace(/"/g, '""')}"`,
+      `"${e.category || ''}"`,
+      e.amount.toFixed(2),
+      `"${currency}"`,
+      `"${e.payerName.replace(/"/g, '""')}"`,
+      (e.userShare || 0).toFixed(2),
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `apartment-expenses-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success('Downloaded expenses statement as CSV', {
+      icon: '📥',
+    });
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in pb-12">
       {/* 3 Prominent Summary Metric Cards (Elevated & spacious, saving vertical header space) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-[var(--card)] border border-[var(--border)] hover:border-[var(--border-strong)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5 transition-all">
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5">
           <div className="flex items-center justify-between text-xs font-medium text-[var(--muted)]">
             <span>Total Apartment Spend</span>
             <IconWallet size={18} className="text-[var(--oak)]" />
@@ -80,7 +113,7 @@ export const ExpensesPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-[var(--card)] border border-[var(--border)] hover:border-[var(--border-strong)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5 transition-all">
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5">
           <div className="flex items-center justify-between text-xs font-medium text-[var(--muted)]">
             <span>Your Total Share</span>
             <IconPigMoney size={18} className="text-[var(--sage)]" />
@@ -90,7 +123,7 @@ export const ExpensesPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-[var(--card)] border border-[var(--border)] hover:border-[var(--border-strong)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5 transition-all">
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5">
           <div className="flex items-center justify-between text-xs font-medium text-[var(--muted)]">
             <span>Total Transactions</span>
             <IconScale size={18} className="text-[var(--muted)]" />
@@ -118,10 +151,26 @@ export const ExpensesPage: React.FC = () => {
               />
             </div>
 
-            <div className="flex items-center gap-3 self-center sm:self-auto">
-              <div className="text-xs text-[var(--muted)]">
-                Showing <span className="font-semibold text-[var(--text)]">{filteredExpenses.length}</span> of {expenses.length}
-              </div>
+            <div className="flex items-center gap-2 self-center sm:self-auto">
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="btn-spring flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[var(--border)] hover:bg-[var(--canvas)] text-xs font-semibold text-[var(--text)] cursor-pointer shadow-2xs transition-all"
+                title="Download CSV spreadsheet"
+              >
+                <IconDownload size={14} className="text-[var(--oak)]" />
+                <span className="hidden sm:inline">Export CSV</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openSettleModal()}
+                className="btn-spring flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--card)] hover:bg-[var(--canvas)] text-xs font-semibold text-[var(--text)] cursor-pointer shadow-2xs transition-all"
+                title="Record an offline payment"
+              >
+                <span>Record Payment</span>
+              </button>
+
               <Button
                 onClick={() => openModal('expense')}
                 className="btn-tactile bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs cursor-pointer shadow-sm px-3.5 py-1.5 rounded-xl"

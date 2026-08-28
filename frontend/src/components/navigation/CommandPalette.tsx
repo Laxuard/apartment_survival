@@ -25,7 +25,7 @@ interface PaletteItem {
 }
 
 export const CommandPalette: React.FC = () => {
-  const { isPaletteOpen, togglePalette, openModal } = useUIStore();
+  const { isPaletteOpen, togglePalette, openModal, openSettleModal } = useUIStore();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
 
@@ -86,11 +86,11 @@ export const CommandPalette: React.FC = () => {
     },
     {
       id: 'action-settle',
-      label: 'Settle up',
+      label: 'Record Payment (Settle Tab)',
       icon: IconArrowsExchange,
       action: () => {
         togglePalette(false);
-        openModal('settle');
+        openSettleModal();
       },
     },
     {
