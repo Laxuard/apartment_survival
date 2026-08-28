@@ -51,7 +51,7 @@ export const useExpensesQuery = (householdId: string | null) => {
           splits: [],
           createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'today',
         }));
-      } catch (err) {
+      } catch {
         // Graceful fallback to mock data if backend is offline
         return MOCK_EXPENSES;
       }
@@ -68,7 +68,7 @@ export const useBalancesQuery = (householdId: string | null) => {
       if (!householdId) return null;
       try {
         return await expensesApi.getBalances(householdId);
-      } catch (err) {
+      } catch {
         return null;
       }
     },

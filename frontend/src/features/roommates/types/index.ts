@@ -9,3 +9,20 @@ export interface Roommate {
   role: 'ADMIN' | 'MEMBER';
   overdueDays?: number;
 }
+
+export interface InviteRoommateDto {
+  name: string;
+  email: string;
+  role: 'ADMIN' | 'MEMBER';
+}
+
+export interface DirectSettlementPath {
+  id: string;
+  debtorName: string;
+  debtorAvatar: string;
+  debtorColor: 'oak' | 'sage';
+  creditorName: string;
+  amount: number;
+  currency: string;
+  contextText: string;
+}

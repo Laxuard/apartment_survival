@@ -22,7 +22,7 @@ export const useHouseholdsQuery = () => {
           currency: typeof s.currency === 'string' ? s.currency : 'MAD',
           memberCount: s.memberCount,
         }));
-      } catch (err) {
+      } catch {
         // Fallback to local store during initial setup/offline
         return storeHouseholds;
       }
@@ -83,7 +83,7 @@ export const usePendingInvitesQuery = () => {
     queryFn: async () => {
       try {
         return await householdsApi.getMyPendingInvites();
-      } catch (err) {
+      } catch {
         return [];
       }
     },

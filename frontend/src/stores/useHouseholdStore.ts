@@ -26,11 +26,13 @@ interface HouseholdState {
 
   // Selectors
   getActiveHousehold: () => HouseholdMembership | null;
+  getActiveCurrency: () => string;
 
   // Actions
   setHouseholds: (list: HouseholdMembership[]) => void;
   setActiveHousehold: (id: string) => void;
   addHousehold: (household: HouseholdMembership) => void;
+  updateActiveHousehold: (data: Partial<HouseholdMembership>) => void;
 }
 
 export const useHouseholdStore = create<HouseholdState>()(
@@ -48,6 +50,11 @@ export const useHouseholdStore = create<HouseholdState>()(
         );
       },
 
+      getActiveCurrency: () => {
+        const { getActiveHousehold } = get();
+        return getActiveHousehold()?.currency || 'MAD';
+      },
+
       setHouseholds: (households) =>
         set({
           households,
@@ -60,6 +67,13 @@ export const useHouseholdStore = create<HouseholdState>()(
         set((state) => ({
           households: [...state.households, household],
           activeHouseholdId: household.id,
+        })),
+
+      updateActiveHousehold: (data) =>
+        set((state) => ({
+          households: state.households.map((h) =>
+            h.id === state.activeHouseholdId ? { ...h, ...data } : h
+          ),
         })),
     }),
     {

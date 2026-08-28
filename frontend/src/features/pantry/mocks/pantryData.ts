@@ -7,7 +7,10 @@ export const MOCK_PANTRY_ITEMS: PantryItem[] = [
     category: 'Beverages',
     status: 'out',
     badgeLabel: 'Out',
+    quantity: 0,
+    unit: 'bags',
     iconName: 'coffee',
+    onGroceryList: true,
   },
   {
     id: 'eggs',
@@ -18,6 +21,7 @@ export const MOCK_PANTRY_ITEMS: PantryItem[] = [
     quantity: 2,
     unit: 'pcs',
     iconName: 'egg',
+    onGroceryList: true,
   },
   {
     id: 'oil',
@@ -25,6 +29,9 @@ export const MOCK_PANTRY_ITEMS: PantryItem[] = [
     category: 'Cooking',
     status: 'low',
     badgeLabel: 'Low',
+    quantity: 1,
+    unit: 'bottle',
     iconName: 'droplet',
+    onGroceryList: false,
   },
 ];

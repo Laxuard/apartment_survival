@@ -3,12 +3,11 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from '@/app/layouts/AppLayout';
 import { AuthLayout } from '@/app/layouts/AuthLayout';
 import { OnboardingLayout } from '@/app/layouts/OnboardingLayout';
-import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute';
-import { PublicOnlyRoute } from '@/features/auth/components/PublicOnlyRoute';
+import { ProtectedRoute, PublicOnlyRoute } from '@/features/auth';
 import { HouseholdRequiredGuard } from '@/features/households/components/HouseholdRequiredGuard';
 import { LoadingScreen } from '@/components/common/LoadingScreen';
 
-// ─── Lazy Loaded Feature Pages ────────────────────────────────────────────────
+// ─── Lazy Loaded Feature Pages (Individual Chunk Isolation) ──────────────────
 const DashboardPage = lazy(() =>
   import('@/features/dashboard/pages/DashboardPage').then((m) => ({
     default: m.DashboardPage,

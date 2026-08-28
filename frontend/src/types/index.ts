@@ -16,5 +16,6 @@ export interface HouseholdMembership {
   name: string;
   role: Role;
   currency: string;
+  splitAlgorithm?: 'DEBT_SIMPLIFIED' | 'DIRECT';
   memberCount: number;
 }

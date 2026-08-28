@@ -4,10 +4,8 @@ import { Sidebar } from '@/components/navigation/Sidebar';
 import { Topbar } from '@/components/navigation/Topbar';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { CommandPalette } from '@/components/navigation/CommandPalette';
-import { ExpenseModal } from '@/features/expenses/components/ExpenseModal';
-import { SettleModal } from '@/features/expenses/components/SettleModal';
-import { InviteModal } from '@/features/roommates/components/InviteModal';
-import { ReceiptDrawer } from '@/features/expenses/components/ReceiptDrawer';
+import { ExpenseModal, SettleModal, ReceiptDrawer } from '@/features/expenses';
+import { InviteModal } from '@/features/roommates';
 
 export const AppLayout: React.FC = () => {
   return (
