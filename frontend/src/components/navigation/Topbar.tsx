@@ -46,7 +46,7 @@ export const Topbar: React.FC<TopbarProps> = ({ notifications: propNotifs }) => 
   const billsSummary = useBillsSummary();
   const { data: expenses = [] } = useExpensesQuery(activeHouseholdId);
 
-  const userInitial = (currentUser?.name || 'Laxuard').charAt(0).toUpperCase();
+  const userInitial = (currentUser?.name || 'User').charAt(0).toUpperCase();
 
   // Aggregate live smart notifications if not passed in props
   const notifications = useMemo(() => {
@@ -174,7 +174,7 @@ export const Topbar: React.FC<TopbarProps> = ({ notifications: propNotifs }) => 
                   {userInitial}
                 </div>
               </TooltipTrigger>
-              <TooltipContent>{currentUser?.name || 'Laxuard'} (You · Admin)</TooltipContent>
+              <TooltipContent>{currentUser?.name || 'User'} (You · Admin)</TooltipContent>
             </Tooltip>
 
             {/* Flatmate Peers */}

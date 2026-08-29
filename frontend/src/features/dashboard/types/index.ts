@@ -4,7 +4,3 @@ export interface DashboardMetrics {
   isOwed: boolean;
   nudgeText: string;
 }
-
-export interface ActivityDemoState {
-  state: 'live' | 'skeleton' | 'empty';
-}

@@ -74,7 +74,7 @@ export const Sidebar: React.FC = () => {
 
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
   const userName = user?.name || 'User';
-  const userEmail = user?.email || 'user@apartment.com';
+  const userEmail = user?.email || '';
 
   const handleSignOut = () => {
     logout();
@@ -106,7 +106,7 @@ export const Sidebar: React.FC = () => {
               </div>
               <div className="min-w-0">
                 <div className="font-serif font-bold text-sm text-[var(--text)] truncate leading-tight">
-                  {activeHousehold?.name || 'Apartment 4B'}
+                  {activeHousehold?.name || 'My Household'}
                 </div>
                 <div className="text-[11px] text-[var(--muted)] truncate flex items-center gap-1.5 mt-0.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--sage)] shrink-0" />

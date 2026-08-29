@@ -12,24 +12,17 @@ export const PENDING_INVITES_KEY = ['user', 'invites'];
  * Fetch and synchronize user household memberships with backend.
  */
 export const useHouseholdsQuery = () => {
-  const storeHouseholds = useHouseholdStore((s) => s.households);
-
   return useQuery<HouseholdMembership[]>({
     queryKey: HOUSEHOLDS_QUERY_KEY,
     queryFn: async () => {
-      try {
-        const summaries = await householdsApi.getMyHouseholds();
-        return summaries.map((s) => ({
-          id: s.householdId,
-          name: s.name,
-          role: 'ADMIN' as const,
-          currency: typeof s.currency === 'string' ? s.currency : 'MAD',
-          memberCount: s.memberCount,
-        }));
-      } catch {
-        // Fallback to local store during initial setup/offline
-        return storeHouseholds;
-      }
+      const summaries = await householdsApi.getMyHouseholds();
+      return summaries.map((s) => ({
+        id: s.householdId,
+        name: s.name,
+        role: 'ADMIN' as const,
+        currency: typeof s.currency === 'string' ? s.currency : 'MAD',
+        memberCount: s.memberCount,
+      }));
     },
     staleTime: 1000 * 60 * 2,
   });

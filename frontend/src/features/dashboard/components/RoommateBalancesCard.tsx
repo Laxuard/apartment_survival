@@ -13,7 +13,7 @@ export const RoommateBalancesCard: React.FC = () => {
   const ledger = useHouseholdLedger();
 
   const handleWhatsAppReminder = (name: string, amount: number) => {
-    const aptName = activeHousehold?.name || 'Apartment 4B';
+    const aptName = activeHousehold?.name || 'our household';
     const text = `Hey ${name}, just checking in on our ${aptName} tab. You currently have an open balance of ${amount.toFixed(2)} ${ledger.currency}. Whenever you get a chance!`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank', 'noopener,noreferrer');

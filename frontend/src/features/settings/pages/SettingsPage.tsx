@@ -54,15 +54,15 @@ export const SettingsPage: React.FC = () => {
       {/* Tab 1: Household Space Parameters */}
       {activeTab === 'household' && (
         <HouseholdSettingsTab
-          apartmentName={activeHousehold?.name || 'Apartment 4B'}
+          apartmentName={activeHousehold?.name || ''}
           onApartmentNameChange={updateHouseholdName}
           description={activeHousehold?.description || ''}
           onDescriptionChange={updateDescription}
-          monthlyBudget={activeHousehold?.monthlyBudget ?? 6000}
+          monthlyBudget={activeHousehold?.monthlyBudget ?? 0}
           onMonthlyBudgetChange={updateMonthlyBudget}
           capacity={activeHousehold?.capacity ?? 4}
           onCapacityChange={updateCapacity}
-          memberCount={activeHousehold?.memberCount ?? 3}
+          memberCount={activeHousehold?.memberCount ?? 1}
           userBalance={userBalance}
           wifiSsid={activeHousehold?.wifiSsid || ''}
           onWifiSsidChange={updateWifiSsid}
@@ -86,8 +86,8 @@ export const SettingsPage: React.FC = () => {
       {activeTab === 'profile' && (
         <ProfileSettingsTab
           key={user?.id || user?.email || 'profile'}
-          initialName={user?.name || 'Laxuard'}
-          initialEmail={user?.email || 'laxuard@apartment4b.com'}
+          initialName={user?.name || ''}
+          initialEmail={user?.email || ''}
           onSaveProfile={saveProfile}
           profileFeedback={profileFeedback}
           onChangePassword={changePassword}

@@ -26,9 +26,9 @@ export const WelcomeKitModal: React.FC<WelcomeKitModalProps> = ({
   isOpen,
   onClose,
   apartmentName,
-  description = '3-Bedroom Apartment in Maarif',
-  wifiSsid = 'Apartment4B_5G',
-  wifiPassword = 'secret_password',
+  description = '',
+  wifiSsid = '',
+  wifiPassword = '',
 }) => {
   if (!isOpen) return null;
 

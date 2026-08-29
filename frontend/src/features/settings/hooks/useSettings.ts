@@ -33,7 +33,7 @@ export const useSettings = () => {
   // Update Household Parameters (Instant live sync)
   const updateHouseholdName = useCallback(
     (name: string) => {
-      updateActiveHousehold({ name: name.trim() || 'Apartment 4B' });
+      updateActiveHousehold({ name: name.trim() || 'Apartment' });
       triggerSavePulse();
     },
     [updateActiveHousehold, triggerSavePulse]
@@ -150,7 +150,7 @@ export const useSettings = () => {
 
   // Copy Household Invite Link
   const copyInviteLink = useCallback(() => {
-    const inviteUrl = `${window.location.origin}/invite/${activeHousehold?.id || 'apt-4b'}`;
+    const inviteUrl = `${window.location.origin}/invite/${activeHousehold?.id || ''}`;
     navigator.clipboard.writeText(inviteUrl);
     setCopiedInvite(true);
     setTimeout(() => setCopiedInvite(false), 2000);

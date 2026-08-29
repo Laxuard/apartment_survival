@@ -27,14 +27,14 @@ interface InviteHubCardProps {
 export const InviteHubCard: React.FC<InviteHubCardProps> = ({
   inviteChannel,
   onChannelChange,
-  householdName = 'Apartment 4B',
+  householdName = 'our household',
   householdId,
   openSlots,
   copiedInvite,
   onCopyInvite,
   onWhatsAppInvite,
 }) => {
-  const inviteUrl = `${window.location.origin}/invite/${householdId || 'apt-4b'}`;
+  const inviteUrl = `${window.location.origin}/invite/${householdId || ''}`;
   const [directInput, setDirectInput] = useState('');
 
   const handleCopy = () => {
@@ -201,7 +201,7 @@ export const InviteHubCard: React.FC<InviteHubCardProps> = ({
 
       {/* Footer Info */}
       <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between text-[11px] text-[var(--muted)]">
-        <span>Invite Code: <strong className="text-[var(--text)] uppercase">{householdId || 'APT-4B'}</strong></span>
+        <span>Invite Code: <strong className="text-[var(--text)] uppercase">{householdId || 'INVITE'}</strong></span>
         <span className="text-[10px] bg-[var(--canvas)] px-1.5 py-0.5 rounded border border-[var(--border)]">
           7d Expiry
         </span>

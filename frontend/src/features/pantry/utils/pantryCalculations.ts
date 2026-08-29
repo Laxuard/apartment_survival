@@ -64,7 +64,7 @@ export const getStockBadge = (item: PantryItem): StockBadgeInfo => {
 export const calculatePantryMetrics = (items: PantryItem[]): PantryMetrics => {
   const criticalItems = items.filter((i) => i.status === 'out' || i.status === 'low');
   const stockedItems = items.filter((i) => i.status === 'in_stock');
-  const groceryListItems = items.filter((i) => !i.onGroceryList);
+  const groceryListItems = items.filter((i) => i.onGroceryList);
 
   return {
     totalCount: items.length,

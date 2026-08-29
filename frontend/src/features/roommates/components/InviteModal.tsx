@@ -33,7 +33,7 @@ export const InviteModal: React.FC = () => {
   const [error, setError] = useState('');
   const [isSent, setIsSent] = useState(false);
 
-  const inviteUrl = `${window.location.origin}/invite/${activeHouseholdId || 'apt-invite'}`;
+  const inviteUrl = `${window.location.origin}/invite/${activeHouseholdId || ''}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(inviteUrl);

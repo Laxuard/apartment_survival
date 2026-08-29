@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { HouseholdMembership } from '@/types';
-import { MOCK_HOUSEHOLDS } from '@/mocks';
-
 interface HouseholdState {
   households: HouseholdMembership[];
   activeHouseholdId: string | null;
@@ -21,8 +19,8 @@ interface HouseholdState {
 export const useHouseholdStore = create<HouseholdState>()(
   persist(
     (set, get) => ({
-      households: MOCK_HOUSEHOLDS,
-      activeHouseholdId: 'apt-4b',
+      households: [],
+      activeHouseholdId: null,
 
       getActiveHousehold: () => {
         const { households, activeHouseholdId } = get();

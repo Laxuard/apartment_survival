@@ -47,7 +47,7 @@ export const KickConfirmationModal: React.FC<KickConfirmationModalProps> = ({
             </div>
           </div>
           <AlertDialogDescription>
-            Are you sure you want to remove <strong>{member.name}</strong> from Apartment 4B? They will immediately lose access to shared grocery checklists, settlement tabs, and house notes. Their current balance of <strong>{member.balance.toFixed(2)} {member.currency}</strong> will be archived.
+            Are you sure you want to remove <strong>{member.name}</strong> from this household? They will immediately lose access to shared grocery checklists, settlement tabs, and house notes. Their current balance of <strong>{member.balance.toFixed(2)} {member.currency}</strong> will be archived.
           </AlertDialogDescription>
         </AlertDialogHeader>
 

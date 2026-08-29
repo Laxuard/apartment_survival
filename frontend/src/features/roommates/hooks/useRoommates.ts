@@ -49,7 +49,7 @@ export const useRoommates = () => {
 
   // Copy Invite URL
   const copyInviteLink = useCallback(() => {
-    const inviteUrl = `${window.location.origin}/invite/${activeHouseholdId || 'apt-4b'}`;
+    const inviteUrl = `${window.location.origin}/invite/${activeHouseholdId || ''}`;
     navigator.clipboard.writeText(inviteUrl);
     setCopiedInvite(true);
     setTimeout(() => setCopiedInvite(false), 2000);
@@ -57,8 +57,8 @@ export const useRoommates = () => {
 
   // Send WhatsApp Invite
   const sendWhatsAppInvite = useCallback(() => {
-    const aptName = activeHousehold?.name || 'Apartment 4B';
-    const inviteUrl = `${window.location.origin}/invite/${activeHouseholdId || 'apt-4b'}`;
+    const aptName = activeHousehold?.name || 'our household';
+    const inviteUrl = `${window.location.origin}/invite/${activeHouseholdId || ''}`;
     const text = `Hey! Join our ${aptName} living space on Apartment Survival to track shared expenses, groceries, and WiFi: ${inviteUrl}`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -67,7 +67,7 @@ export const useRoommates = () => {
   // WhatsApp Debt Nudge
   const triggerWhatsAppNudge = useCallback(
     (debtorName: string, amount: number) => {
-      const aptName = activeHousehold?.name || 'Apartment 4B';
+      const aptName = activeHousehold?.name || 'our household';
       const text = `Hey ${debtorName}, just checking in on our ${aptName} tab. You currently have an unsettled balance of ${amount.toFixed(2)} ${currency}. Whenever you get a chance!`;
       const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
       window.open(url, '_blank', 'noopener,noreferrer');

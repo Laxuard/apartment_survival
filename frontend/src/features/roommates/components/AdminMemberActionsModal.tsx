@@ -96,7 +96,7 @@ export const AdminMemberActionsModal: React.FC<AdminMemberActionsModalProps> = (
           </div>
 
           <p className="text-xs text-[var(--muted)] leading-relaxed">
-            Are you sure you want to remove <strong>{member.name}</strong> from Apartment 4B? They will lose access to shared grocery checklists, settlement tabs, and house notes. Their current balance of <strong>{member.balance.toFixed(2)} {member.currency}</strong> will be archived.
+            Are you sure you want to remove <strong>{member.name}</strong> from this household? They will lose access to shared grocery checklists, settlement tabs, and house notes. Their current balance of <strong>{member.balance.toFixed(2)} {member.currency}</strong> will be archived.
           </p>
 
           <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[var(--border)]">

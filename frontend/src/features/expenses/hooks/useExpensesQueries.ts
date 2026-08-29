@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { expensesApi } from '../api/expensesApi';
-import { MOCK_EXPENSES } from '../mocks/expensesData';
 import type {
   Expense,
   ExpenseCategory,
@@ -37,24 +36,19 @@ export const useExpensesQuery = (householdId: string | null) => {
     queryKey: ['households', householdId, 'expenses'],
     queryFn: async () => {
       if (!householdId) return [];
-      try {
-        const data = await expensesApi.getExpenses(householdId);
-        return data.map((item) => ({
-          id: item.expenseId,
-          description: item.title,
-          amount: Number(item.amount),
-          currency: item.currency || 'MAD',
-          payerId: item.paidByUserId,
-          payerName: item.paidByUsername,
-          category: parseCategory(item.category),
-          splitMethod: parseSplitMethod(item.splitType),
-          splits: [],
-          createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'today',
-        }));
-      } catch {
-        // Graceful fallback to mock data if backend is offline
-        return MOCK_EXPENSES;
-      }
+      const data = await expensesApi.getExpenses(householdId);
+      return data.map((item) => ({
+        id: item.expenseId,
+        description: item.title,
+        amount: Number(item.amount),
+        currency: item.currency || 'MAD',
+        payerId: item.paidByUserId,
+        payerName: item.paidByUsername,
+        category: parseCategory(item.category),
+        splitMethod: parseSplitMethod(item.splitType),
+        splits: [],
+        createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'today',
+      }));
     },
     enabled: !!householdId,
     staleTime: 1000 * 60 * 1,
@@ -66,11 +60,7 @@ export const useBalancesQuery = (householdId: string | null) => {
     queryKey: ['households', householdId, 'balances'],
     queryFn: async () => {
       if (!householdId) return null;
-      try {
-        return await expensesApi.getBalances(householdId);
-      } catch {
-        return null;
-      }
+      return await expensesApi.getBalances(householdId);
     },
     enabled: !!householdId,
     staleTime: 1000 * 60 * 1,

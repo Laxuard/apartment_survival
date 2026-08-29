@@ -58,7 +58,7 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
   capacity,
   onCapacityChange,
   memberCount,
-  userBalance = 450,
+  userBalance = 0,
   wifiSsid,
   onWifiSsidChange,
   wifiPassword,
@@ -155,7 +155,7 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
                 value={apartmentName}
                 onChange={(e) => onApartmentNameChange(e.target.value)}
                 className="w-full bg-[var(--canvas)] text-[var(--text)] text-xs rounded-xl px-3.5 py-2.5 border border-[var(--border)] focus:outline-none focus:border-[var(--oak)] font-medium transition-colors"
-                placeholder="e.g. Apartment 4B"
+                placeholder="e.g. Skyline Flat"
                 required
               />
             </div>
@@ -422,7 +422,7 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
                 value={wifiSsid}
                 onChange={(e) => onWifiSsidChange(e.target.value)}
                 className="w-full bg-[var(--canvas)] text-[var(--text)] text-xs rounded-xl px-3.5 py-2.5 border border-[var(--border)] focus:outline-none focus:border-[var(--oak)] font-medium"
-                placeholder="e.g. Apartment4B_5G"
+                placeholder="e.g. Home_WiFi"
               />
             </div>
           </div>
