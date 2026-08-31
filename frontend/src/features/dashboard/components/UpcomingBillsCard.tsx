@@ -1,35 +1,18 @@
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useBillsSummary, type Bill } from '@/features/bills';
+import { useUIStore } from '@/stores/useUIStore';
+import { IconBolt, IconCalendarDue, IconPlus } from '@tabler/icons-react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { IconWifi, IconHome, IconBolt, IconDroplet, IconCalendarDue } from '@tabler/icons-react';
-import { useBillsSummary } from '@/features/bills';
-import { useHouseholdLedger } from '@/features/roommates';
-import { useUIStore } from '@/stores/useUIStore';
-import { Skeleton } from '@/components/ui/skeleton';
-
-const getBillIcon = (iconName: string) => {
-  switch (iconName) {
-    case 'wifi':
-      return <IconWifi size={17} />;
-    case 'home':
-      return <IconHome size={17} />;
-    case 'bolt':
-      return <IconBolt size={17} />;
-    case 'water':
-      return <IconDroplet size={17} />;
-    default:
-      return <IconHome size={17} />;
-  }
-};
 
 export const UpcomingBillsCard: React.FC = () => {
   const navigate = useNavigate();
-  const { bills, isLoading, currency } = useBillsSummary();
-  const ledger = useHouseholdLedger();
-  const { openExpenseModal } = useUIStore();
-  const memberCount = Math.max(1, ledger.memberCount || 1);
+  const { bills = [], isLoading, currency } = useBillsSummary();
+  const { openModal, openExpenseModal } = useUIStore();
 
-  const handlePayBill = (bill: { title: string; amount: number; iconName: string }) => {
+  const handlePayBill = (bill: Bill) => {
     const category = bill.iconName === 'home' ? 'RENT' : 'UTILITIES';
     openExpenseModal({
       title: bill.title,
@@ -42,105 +25,133 @@ export const UpcomingBillsCard: React.FC = () => {
   };
 
   return (
-    <section className="card-custom flex flex-col shadow-sm" aria-labelledby="bills-title">
-      <div className="p-3.5 sm:p-4 border-b border-[var(--border)] flex items-center justify-between shrink-0">
+    <section
+      className="min-h-[190px] bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius)] p-5 flex flex-col shadow-sm select-none"
+      aria-labelledby="bills-title"
+    >
+      {/* 1. Header with Whisper Divider (Persistently rendered) */}
+      <div className="flex justify-between items-center pb-4 mb-4 border-b border-[var(--border)]/40 dark:border-white/5">
         <div className="flex items-center gap-2">
-          <h2 className="card-title-custom text-sm sm:text-base font-bold text-[var(--text)]" id="bills-title">
-            Upcoming bills
-          </h2>
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--muted)]">
-            <IconCalendarDue size={14} />
+          <h3 className="text-sm font-semibold text-[var(--text)]" id="bills-title">
+            Upcoming Bills
+          </h3>
+          <span className="inline-flex items-center gap-1 text-[11px] text-[var(--muted)] font-medium">
+            <IconCalendarDue size={13} />
             Auto-split
           </span>
         </div>
         <button
           type="button"
           onClick={() => navigate('/settings')}
-          className="text-xs sm:text-sm font-semibold text-[var(--oak)] hover:underline cursor-pointer"
+          className="text-xs text-[var(--oak)] hover:text-[var(--oak-hover)] font-medium cursor-pointer"
         >
           Manage &rarr;
         </button>
       </div>
 
-      <div className="divide-y divide-[var(--border)]">
+      {/* 2. Time-Oriented List Body with Height-Matched Skeletons */}
+      <div className="flex-1 flex flex-col justify-center">
         {isLoading ? (
-          <div className="space-y-3 p-4">
-            {[1, 2].map((i) => (
-              <div key={i} className="flex items-center justify-between py-1">
-                <div className="flex items-center gap-3.5">
-                  <Skeleton className="w-9 h-9 rounded-xl" />
+          // 3-row skeleton matching exact empty/populated height (~190px)
+          <div className="flex-1 flex flex-col justify-center space-y-3 py-1">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center justify-between p-1">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-12 h-12 rounded-lg skeleton-warm shrink-0" />
                   <div className="space-y-1.5">
-                    <Skeleton className="w-24 h-3.5" />
-                    <Skeleton className="w-16 h-2.5" />
+                    <Skeleton className="w-28 h-3.5 skeleton-warm" />
+                    <Skeleton className="w-16 h-2.5 skeleton-warm" />
                   </div>
                 </div>
                 <div className="space-y-1.5 text-right">
-                  <Skeleton className="w-16 h-4 ml-auto" />
-                  <Skeleton className="w-20 h-2.5 ml-auto" />
+                  <Skeleton className="w-16 h-4 skeleton-warm ml-auto" />
+                  <Skeleton className="w-12 h-3 skeleton-warm ml-auto" />
                 </div>
               </div>
             ))}
           </div>
         ) : bills.length === 0 ? (
-          <div className="text-center py-6 text-xs sm:text-sm text-[var(--muted)]">No upcoming bills due.</div>
+          // Perfectly Centered N=0 Empty State
+          <div className="animate-fade-up flex-1 flex flex-col items-center justify-center text-center space-y-2 my-auto py-2">
+            <div className="w-12 h-12 rounded-xl bg-[var(--canvas)] border border-[var(--border)] text-[var(--muted)] flex items-center justify-center">
+              <IconBolt size={22} />
+            </div>
+            <div className="space-y-0.5 max-w-xs">
+              <div className="font-bold text-xs text-[var(--text)]">No recurring bills</div>
+              <p className="text-[11px] text-[var(--muted)]">
+                Add monthly rent or Wi-Fi to automate split schedules.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => openModal('expense')}
+              className="mt-4 btn-tactile bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-[11px] font-semibold px-3 py-1.5 h-7 rounded-lg shadow-sm cursor-pointer inline-flex items-center gap-1"
+            >
+              <IconPlus size={13} />
+              <span>Set Up First Bill</span>
+            </Button>
+          </div>
         ) : (
-          bills.slice(0, 2).map((bill) => {
-            const share = bill.amount / memberCount;
-            const isUrgent =
-              bill.dueText.toLowerCase().includes('tomorrow') ||
-              bill.dueText.toLowerCase().includes('3 days') ||
-              (bill.dueDays && bill.dueDays <= 3);
-            const billCurrency = bill.currency || currency;
+          <div className="flex-1 flex flex-col justify-between">
+            <div className="flex flex-col gap-2">
+              {bills.slice(0, 2).map((bill, index) => {
+                const parts = (bill.dueText || '').split(' ');
+                const month = parts[0]?.toUpperCase() || 'DUE';
+                const day = parts[1] || '01';
 
-            return (
-              <div
-                className="p-3.5 sm:p-4 flex items-center justify-between gap-3.5 hover:bg-[var(--sage-tint)]/60 transition-colors"
-                key={bill.id}
-              >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="w-9 h-9 rounded-xl bg-[var(--canvas)] text-[var(--oak)] flex items-center justify-center shrink-0 border border-[var(--border)]">
-                    {getBillIcon(bill.iconName)}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-xs sm:text-sm text-[var(--text)] truncate">
+                return (
+                  <div
+                    key={bill.id}
+                    onClick={() => handlePayBill(bill)}
+                    style={{ animationDelay: `${index * 45}ms` }}
+                    className="animate-fade-up flex items-center justify-between gap-3 p-2 -mx-2 rounded-lg hover:bg-[var(--canvas)]/80 dark:hover:bg-white/[0.03] cursor-pointer group transition-all duration-200"
+                    title={`Click to record payment & split for ${bill.title}`}
+                  >
+                    {/* Left: Calendar Date Square (48x48) + Bill Name */}
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-[var(--canvas)] border border-[var(--border)] group-hover:border-[var(--oak)]/50 group-hover:bg-[var(--oak-tint)]/20 transition-all shrink-0">
+                        <span className="text-[10px] uppercase text-[var(--muted)] group-hover:text-[var(--oak)] font-semibold leading-none transition-colors">
+                          {month}
+                        </span>
+                        <span className="text-sm font-bold text-[var(--text)] leading-none mt-1 font-mono">
+                          {day}
+                        </span>
+                      </div>
+                      <span className="text-xs font-semibold text-[var(--text)] group-hover:text-[var(--oak)] transition-colors truncate">
                         {bill.title}
                       </span>
-                      {isUrgent && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[var(--warn-bg)] text-[var(--warn-text)] shrink-0">
-                          Due Soon
-                        </span>
-                      )}
                     </div>
-                    <div className="text-xs text-[var(--muted)] mt-0.5">{bill.dueText}</div>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="text-right">
-                    <div className="row-amount mono font-bold text-xs sm:text-sm text-[var(--text)]">
-                      {bill.amount.toFixed(2)}
-                      <span className="currency font-normal text-xs ml-1 text-[var(--muted)]">
-                        {billCurrency}
-                      </span>
-                    </div>
-                    <div className="text-xs text-[var(--muted)] font-medium">
-                      ~{share.toFixed(2)} / person
+                    {/* Right: Exact Typographic Stack matching Recent Activity */}
+                    <div className="flex flex-col items-end text-right shrink-0 ml-2">
+                      <div className="font-mono text-sm font-semibold text-[var(--text)]">
+                        {bill.amount.toFixed(2)}{' '}
+                        <span className="font-normal text-xs text-[var(--muted)]">{bill.currency || currency}</span>
+                      </div>
+                      <div className="font-mono text-xs text-[var(--muted)] mt-0.5">
+                        Auto-split
+                      </div>
                     </div>
                   </div>
+                );
+              })}
+            </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handlePayBill(bill)}
-                    className="btn-spring px-3.5 py-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--card)] hover:bg-[var(--oak)] hover:border-[var(--oak)] hover:text-white text-xs sm:text-sm font-semibold text-[var(--text)] cursor-pointer shadow-2xs transition-all"
-                    title={`Record payment & auto-split for ${bill.title}`}
-                  >
-                    Pay
-                  </button>
+            {/* Flex-Grow Ghost CTA when fewer than 2 bills */}
+            {bills.length < 2 && (
+              <button
+                type="button"
+                onClick={() => openModal('expense')}
+                style={{ animationDelay: `${bills.length * 45}ms` }}
+                className="animate-fade-up flex-1 w-full min-h-[44px] mt-2.5 rounded-xl border border-dashed border-[var(--border)] dark:border-white/10 flex items-center justify-center gap-2 text-xs font-medium text-[var(--muted)] hover:text-[var(--text)] hover:border-[var(--oak)]/50 hover:bg-[var(--oak-tint)]/20 dark:hover:bg-[var(--oak)]/5 transition-all duration-300 group cursor-pointer"
+              >
+                <div className="w-6 h-6 rounded-full bg-[var(--canvas)] dark:bg-white/5 group-hover:bg-[var(--oak-tint)] dark:group-hover:bg-[var(--oak)]/20 flex items-center justify-center transition-colors shadow-2xs">
+                  <IconPlus size={13} className="text-[var(--muted)] group-hover:text-[var(--oak)] transition-colors" />
                 </div>
-              </div>
-            );
-          })
+                <span>Add monthly recurring bill</span>
+              </button>
+            )}
+          </div>
         )}
       </div>
     </section>

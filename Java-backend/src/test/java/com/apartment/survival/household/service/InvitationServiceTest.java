@@ -1,11 +1,5 @@
 package com.apartment.survival.household.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -37,16 +31,31 @@ import com.apartment.survival.household.repository.HouseholdRepository;
 import com.apartment.survival.iam.api.UserPublicApi;
 import com.apartment.survival.iam.api.UserPublicDto;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
 @ExtendWith(MockitoExtension.class)
 @DisplayName("InvitationService Unit Tests")
 class InvitationServiceTest {
 
-    @Mock private HouseholdRepository householdRepository;
-    @Mock private HouseholdMemberRepository memberRepository;
-    @Mock private HouseholdInviteRepository inviteRepository;
-    @Mock private UserPublicApi userPublicApi;
-    @Mock private HouseholdMapper householdMapper;
-    @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock
+    private HouseholdRepository householdRepository;
+    @Mock
+    private HouseholdMemberRepository memberRepository;
+    @Mock
+    private HouseholdInviteRepository inviteRepository;
+    @Mock
+    private UserPublicApi userPublicApi;
+    @Mock
+    private HouseholdMapper householdMapper;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private InvitationService invitationService;
@@ -68,7 +77,8 @@ class InvitationServiceTest {
                 .build();
     }
 
-    private HouseholdInvite buildInvite(InviteType type, InviteStatus status, int maxUses, int usedCount, Instant expiresAt) {
+    private HouseholdInvite buildInvite(InviteType type, InviteStatus status, int maxUses, int usedCount,
+            Instant expiresAt) {
         return HouseholdInvite.builder()
                 .id(INVITE_ID)
                 .household(buildHousehold(5))
@@ -96,8 +106,8 @@ class InvitationServiceTest {
             var household = buildHousehold(5);
             var request = new InviteRequest.CreateLink(5, 14);
             var summary = new InviteResponse.HouseholdInviteSummary(
-                    INVITE_ID, InviteType.LINK, InviteStatus.PENDING, CODE, null, 5, 0, Instant.now().plus(14, ChronoUnit.DAYS), Instant.now()
-            );
+                    INVITE_ID, InviteType.LINK, InviteStatus.PENDING, CODE, null, 5, 0,
+                    Instant.now().plus(14, ChronoUnit.DAYS), Instant.now());
 
             when(householdRepository.findActive(HOUSEHOLD_ID)).thenReturn(Optional.of(household));
             when(memberRepository.countByHouseholdId(HOUSEHOLD_ID)).thenReturn(2L);
@@ -123,7 +133,8 @@ class InvitationServiceTest {
             when(householdRepository.findActive(HOUSEHOLD_ID)).thenReturn(Optional.of(household));
             when(memberRepository.countByHouseholdId(HOUSEHOLD_ID)).thenReturn(3L);
 
-            assertThatThrownBy(() -> invitationService.createLinkInvite(HOUSEHOLD_ID, new InviteRequest.CreateLink(null, null), CREATOR_ID))
+            assertThatThrownBy(() -> invitationService.createLinkInvite(HOUSEHOLD_ID,
+                    new InviteRequest.CreateLink(null, null), CREATOR_ID))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("maximum member capacity");
         }
@@ -143,14 +154,15 @@ class InvitationServiceTest {
             var request = new InviteRequest.CreateDirect("Bob", 7);
             var targetDto = new UserPublicDto(TARGET_USER_ID, "Bob", "bob@test.com");
             var summary = new InviteResponse.HouseholdInviteSummary(
-                    INVITE_ID, InviteType.DIRECT_USER, InviteStatus.PENDING, null, "Bob", 1, 0, Instant.now().plus(7, ChronoUnit.DAYS), Instant.now()
-            );
+                    INVITE_ID, InviteType.DIRECT_USER, InviteStatus.PENDING, null, "Bob", 1, 0,
+                    Instant.now().plus(7, ChronoUnit.DAYS), Instant.now());
 
             when(householdRepository.findActive(HOUSEHOLD_ID)).thenReturn(Optional.of(household));
             when(memberRepository.countByHouseholdId(HOUSEHOLD_ID)).thenReturn(2L);
             when(userPublicApi.findByUsername("Bob")).thenReturn(Optional.of(targetDto));
             when(memberRepository.isMember(HOUSEHOLD_ID, TARGET_USER_ID)).thenReturn(false);
-            when(inviteRepository.hasActiveInvite(eq(HOUSEHOLD_ID), eq(TARGET_USER_ID), any(Instant.class))).thenReturn(false);
+            when(inviteRepository.hasActiveInvite(eq(HOUSEHOLD_ID), eq(TARGET_USER_ID), any(Instant.class)))
+                    .thenReturn(false);
             when(inviteRepository.save(any(HouseholdInvite.class))).thenAnswer(inv -> {
                 HouseholdInvite saved = inv.getArgument(0);
                 saved.setId(INVITE_ID);
@@ -172,7 +184,8 @@ class InvitationServiceTest {
             when(memberRepository.countByHouseholdId(HOUSEHOLD_ID)).thenReturn(1L);
             when(userPublicApi.findByUsername("NonExistent")).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> invitationService.createDirectInvite(HOUSEHOLD_ID, new InviteRequest.CreateDirect("NonExistent", 7), CREATOR_ID))
+            assertThatThrownBy(() -> invitationService.createDirectInvite(HOUSEHOLD_ID,
+                    new InviteRequest.CreateDirect("NonExistent", 7), CREATOR_ID))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
 
@@ -186,7 +199,8 @@ class InvitationServiceTest {
             when(userPublicApi.findByUsername("Bob")).thenReturn(Optional.of(targetDto));
             when(memberRepository.isMember(HOUSEHOLD_ID, TARGET_USER_ID)).thenReturn(true);
 
-            assertThatThrownBy(() -> invitationService.createDirectInvite(HOUSEHOLD_ID, new InviteRequest.CreateDirect("Bob", 7), CREATOR_ID))
+            assertThatThrownBy(() -> invitationService.createDirectInvite(HOUSEHOLD_ID,
+                    new InviteRequest.CreateDirect("Bob", 7), CREATOR_ID))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("already a member");
         }
@@ -200,9 +214,11 @@ class InvitationServiceTest {
             when(memberRepository.countByHouseholdId(HOUSEHOLD_ID)).thenReturn(1L);
             when(userPublicApi.findByUsername("Bob")).thenReturn(Optional.of(targetDto));
             when(memberRepository.isMember(HOUSEHOLD_ID, TARGET_USER_ID)).thenReturn(false);
-            when(inviteRepository.hasActiveInvite(eq(HOUSEHOLD_ID), eq(TARGET_USER_ID), any(Instant.class))).thenReturn(true);
+            when(inviteRepository.hasActiveInvite(eq(HOUSEHOLD_ID), eq(TARGET_USER_ID), any(Instant.class)))
+                    .thenReturn(true);
 
-            assertThatThrownBy(() -> invitationService.createDirectInvite(HOUSEHOLD_ID, new InviteRequest.CreateDirect("Bob", 7), CREATOR_ID))
+            assertThatThrownBy(() -> invitationService.createDirectInvite(HOUSEHOLD_ID,
+                    new InviteRequest.CreateDirect("Bob", 7), CREATOR_ID))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("pending invite already exists");
         }
@@ -218,15 +234,18 @@ class InvitationServiceTest {
         @Test
         @DisplayName("Should join household via code, add member, increment usage, and publish event")
         void joinViaCode_Success() {
-            var invite = buildInvite(InviteType.LINK, InviteStatus.PENDING, 5, 1, Instant.now().plus(5, ChronoUnit.DAYS));
+            var invite = buildInvite(InviteType.LINK, InviteStatus.PENDING, 5, 1,
+                    Instant.now().plus(5, ChronoUnit.DAYS));
             var request = new InviteRequest.JoinWithCode(CODE);
-            var summary = new HouseholdResponse.Summary(HOUSEHOLD_ID, "Sunshine Villa", null, null, null, null, 2, false, Instant.now());
+            var summary = new HouseholdResponse.Summary(HOUSEHOLD_ID, "Sunshine Villa", null, null, null, null, 2,
+                    false, Instant.now());
 
             when(userPublicApi.existsById(TARGET_USER_ID)).thenReturn(true);
             when(inviteRepository.findActiveByCode(CODE)).thenReturn(Optional.of(invite));
             when(memberRepository.isMember(HOUSEHOLD_ID, TARGET_USER_ID)).thenReturn(false);
             when(memberRepository.countByHouseholdId(HOUSEHOLD_ID)).thenReturn(1L);
-            when(householdMapper.toSummary(invite.getHousehold())).thenReturn(summary);
+            when(householdMapper.toSummary(invite.getHousehold(),
+                    com.apartment.survival.household.model.HouseholdRole.MEMBER)).thenReturn(summary);
 
             var result = invitationService.joinViaCode(request, TARGET_USER_ID);
 
@@ -242,7 +261,8 @@ class InvitationServiceTest {
             when(userPublicApi.existsById(TARGET_USER_ID)).thenReturn(true);
             when(inviteRepository.findActiveByCode(CODE)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> invitationService.joinViaCode(new InviteRequest.JoinWithCode(CODE), TARGET_USER_ID))
+            assertThatThrownBy(
+                    () -> invitationService.joinViaCode(new InviteRequest.JoinWithCode(CODE), TARGET_USER_ID))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("Invalid or expired");
         }
@@ -250,12 +270,14 @@ class InvitationServiceTest {
         @Test
         @DisplayName("Should throw BadRequestException when user is already a member")
         void joinViaCode_AlreadyMember_ThrowsBadRequest() {
-            var invite = buildInvite(InviteType.LINK, InviteStatus.PENDING, 5, 0, Instant.now().plus(5, ChronoUnit.DAYS));
+            var invite = buildInvite(InviteType.LINK, InviteStatus.PENDING, 5, 0,
+                    Instant.now().plus(5, ChronoUnit.DAYS));
             when(userPublicApi.existsById(TARGET_USER_ID)).thenReturn(true);
             when(inviteRepository.findActiveByCode(CODE)).thenReturn(Optional.of(invite));
             when(memberRepository.isMember(HOUSEHOLD_ID, TARGET_USER_ID)).thenReturn(true);
 
-            assertThatThrownBy(() -> invitationService.joinViaCode(new InviteRequest.JoinWithCode(CODE), TARGET_USER_ID))
+            assertThatThrownBy(
+                    () -> invitationService.joinViaCode(new InviteRequest.JoinWithCode(CODE), TARGET_USER_ID))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("already a member");
         }
@@ -271,14 +293,17 @@ class InvitationServiceTest {
         @Test
         @DisplayName("Should accept direct invite, set status to ACCEPTED, add member, and publish event")
         void acceptDirect_Success() {
-            var invite = buildInvite(InviteType.DIRECT_USER, InviteStatus.PENDING, 1, 0, Instant.now().plus(5, ChronoUnit.DAYS));
-            var summary = new HouseholdResponse.Summary(HOUSEHOLD_ID, "Sunshine Villa", null, null, null, null, 2, false, Instant.now());
+            var invite = buildInvite(InviteType.DIRECT_USER, InviteStatus.PENDING, 1, 0,
+                    Instant.now().plus(5, ChronoUnit.DAYS));
+            var summary = new HouseholdResponse.Summary(HOUSEHOLD_ID, "Sunshine Villa", null, null, null, null, 2,
+                    false, Instant.now());
 
             when(userPublicApi.existsById(TARGET_USER_ID)).thenReturn(true);
             when(inviteRepository.findActiveById(INVITE_ID)).thenReturn(Optional.of(invite));
             when(memberRepository.isMember(HOUSEHOLD_ID, TARGET_USER_ID)).thenReturn(false);
             when(memberRepository.countByHouseholdId(HOUSEHOLD_ID)).thenReturn(1L);
-            when(householdMapper.toSummary(invite.getHousehold())).thenReturn(summary);
+            when(householdMapper.toSummary(invite.getHousehold(),
+                    com.apartment.survival.household.model.HouseholdRole.MEMBER)).thenReturn(summary);
 
             var result = invitationService.acceptDirectInvite(INVITE_ID, TARGET_USER_ID);
 
@@ -290,7 +315,8 @@ class InvitationServiceTest {
         @Test
         @DisplayName("Should throw BadRequestException when user is not the designated target recipient")
         void acceptDirect_UnauthorizedUser_ThrowsBadRequest() {
-            var invite = buildInvite(InviteType.DIRECT_USER, InviteStatus.PENDING, 1, 0, Instant.now().plus(5, ChronoUnit.DAYS));
+            var invite = buildInvite(InviteType.DIRECT_USER, InviteStatus.PENDING, 1, 0,
+                    Instant.now().plus(5, ChronoUnit.DAYS));
             UUID wrongUser = UUID.randomUUID();
 
             when(userPublicApi.existsById(wrongUser)).thenReturn(true);
@@ -312,7 +338,8 @@ class InvitationServiceTest {
         @Test
         @DisplayName("Should mark invite as DECLINED when target user declines")
         void declineDirect_Success() {
-            var invite = buildInvite(InviteType.DIRECT_USER, InviteStatus.PENDING, 1, 0, Instant.now().plus(5, ChronoUnit.DAYS));
+            var invite = buildInvite(InviteType.DIRECT_USER, InviteStatus.PENDING, 1, 0,
+                    Instant.now().plus(5, ChronoUnit.DAYS));
             when(inviteRepository.findActiveById(INVITE_ID)).thenReturn(Optional.of(invite));
 
             invitationService.declineDirectInvite(INVITE_ID, TARGET_USER_ID);
@@ -331,7 +358,8 @@ class InvitationServiceTest {
         @Test
         @DisplayName("Should mark invite as REVOKED")
         void revokeInvite_Success() {
-            var invite = buildInvite(InviteType.LINK, InviteStatus.PENDING, 5, 0, Instant.now().plus(5, ChronoUnit.DAYS));
+            var invite = buildInvite(InviteType.LINK, InviteStatus.PENDING, 5, 0,
+                    Instant.now().plus(5, ChronoUnit.DAYS));
             when(inviteRepository.findById(INVITE_ID)).thenReturn(Optional.of(invite));
 
             invitationService.revokeInvite(HOUSEHOLD_ID, INVITE_ID);
@@ -342,7 +370,8 @@ class InvitationServiceTest {
         @Test
         @DisplayName("Should throw BadRequestException when invite belongs to different household")
         void revokeInvite_WrongHousehold_ThrowsBadRequest() {
-            var invite = buildInvite(InviteType.LINK, InviteStatus.PENDING, 5, 0, Instant.now().plus(5, ChronoUnit.DAYS));
+            var invite = buildInvite(InviteType.LINK, InviteStatus.PENDING, 5, 0,
+                    Instant.now().plus(5, ChronoUnit.DAYS));
             UUID otherHouseholdId = UUID.randomUUID();
             when(inviteRepository.findById(INVITE_ID)).thenReturn(Optional.of(invite));
 
@@ -362,9 +391,11 @@ class InvitationServiceTest {
         @Test
         @DisplayName("Should batch hydrate inviter profiles and map to UserInboxInvite DTOs")
         void getInbox_Success() {
-            var invite = buildInvite(InviteType.DIRECT_USER, InviteStatus.PENDING, 1, 0, Instant.now().plus(5, ChronoUnit.DAYS));
+            var invite = buildInvite(InviteType.DIRECT_USER, InviteStatus.PENDING, 1, 0,
+                    Instant.now().plus(5, ChronoUnit.DAYS));
             var inviterDto = new UserPublicDto(CREATOR_ID, "Alice", "alice@test.com");
-            var inboxDto = new InviteResponse.UserInboxInvite(INVITE_ID, HOUSEHOLD_ID, "Sunshine Villa", "Beach Apt", "Alice", invite.getExpiresAt(), Instant.now());
+            var inboxDto = new InviteResponse.UserInboxInvite(INVITE_ID, HOUSEHOLD_ID, "Sunshine Villa", "Beach Apt",
+                    "Alice", invite.getExpiresAt(), Instant.now());
 
             when(inviteRepository.findUserInbox(eq(TARGET_USER_ID), any(Instant.class))).thenReturn(List.of(invite));
             when(userPublicApi.findAllByIds(Set.of(CREATOR_ID))).thenReturn(Map.of(CREATOR_ID, inviterDto));
@@ -397,12 +428,16 @@ class InvitationServiceTest {
         @Test
         @DisplayName("Should batch hydrate target usernames and map to HouseholdInviteSummary list")
         void getHouseholdInvites_Success() {
-            var linkInvite = buildInvite(InviteType.LINK, InviteStatus.PENDING, 5, 1, Instant.now().plus(5, ChronoUnit.DAYS));
-            var directInvite = buildInvite(InviteType.DIRECT_USER, InviteStatus.PENDING, 1, 0, Instant.now().plus(5, ChronoUnit.DAYS));
+            var linkInvite = buildInvite(InviteType.LINK, InviteStatus.PENDING, 5, 1,
+                    Instant.now().plus(5, ChronoUnit.DAYS));
+            var directInvite = buildInvite(InviteType.DIRECT_USER, InviteStatus.PENDING, 1, 0,
+                    Instant.now().plus(5, ChronoUnit.DAYS));
             var targetDto = new UserPublicDto(TARGET_USER_ID, "Bob", "bob@test.com");
 
-            var summaryLink = new InviteResponse.HouseholdInviteSummary(linkInvite.getId(), InviteType.LINK, InviteStatus.PENDING, CODE, null, 5, 1, linkInvite.getExpiresAt(), Instant.now());
-            var summaryDirect = new InviteResponse.HouseholdInviteSummary(directInvite.getId(), InviteType.DIRECT_USER, InviteStatus.PENDING, null, "Bob", 1, 0, directInvite.getExpiresAt(), Instant.now());
+            var summaryLink = new InviteResponse.HouseholdInviteSummary(linkInvite.getId(), InviteType.LINK,
+                    InviteStatus.PENDING, CODE, null, 5, 1, linkInvite.getExpiresAt(), Instant.now());
+            var summaryDirect = new InviteResponse.HouseholdInviteSummary(directInvite.getId(), InviteType.DIRECT_USER,
+                    InviteStatus.PENDING, null, "Bob", 1, 0, directInvite.getExpiresAt(), Instant.now());
 
             when(inviteRepository.findAllByHousehold(HOUSEHOLD_ID)).thenReturn(List.of(linkInvite, directInvite));
             when(userPublicApi.findAllByIds(Set.of(TARGET_USER_ID))).thenReturn(Map.of(TARGET_USER_ID, targetDto));

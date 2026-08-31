@@ -1,5 +1,6 @@
 package com.apartment.survival.household.model;
 
+import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.util.Currency;
 import java.util.HashSet;
@@ -44,6 +45,24 @@ public class Household extends BaseEntity {
     @Builder.Default
     @Column(name = "max_members", nullable = false)
     private int maxMembers = 10;
+
+    @Builder.Default
+    @Column(name = "monthly_budget", precision = 12, scale = 2)
+    private BigDecimal monthlyBudget = BigDecimal.ZERO;
+
+    @Column(name = "wifi_ssid", length = 100)
+    private String wifiSsid;
+
+    @Column(name = "wifi_password", length = 100)
+    private String wifiPassword;
+
+    @Builder.Default
+    @Column(name = "split_algorithm", length = 30, nullable = false)
+    private String splitAlgorithm = "DEBT_SIMPLIFIED";
+
+    @Builder.Default
+    @Column(name = "auto_restock_from_expenses", nullable = false)
+    private boolean autoRestockFromExpenses = true;
 
     @Builder.Default
     @Column(nullable = false)

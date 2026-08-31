@@ -1,24 +1,24 @@
-import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import {
-  IconHome,
-  IconLayoutDashboard,
-  IconReceipt2,
-  IconShoppingCart,
-  IconUsers,
-  IconSettings,
-  IconChevronDown,
-  IconPlus,
-  IconUserPlus,
-  IconCheck,
-  IconBuildingCommunity,
-  IconLogout,
-} from '@tabler/icons-react';
-import { useHouseholdStore } from '@/stores/useHouseholdStore';
-import { useAuthStore } from '@/stores/useAuthStore';
 import { usePantryStock } from '@/features/pantry';
 import { useHouseholdLedger } from '@/features/roommates';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useHouseholdStore } from '@/stores/useHouseholdStore';
+import {
+  IconBuildingCommunity,
+  IconCheck,
+  IconChevronDown,
+  IconHome,
+  IconLayoutDashboard,
+  IconLogout,
+  IconPlus,
+  IconReceipt2,
+  IconSettings,
+  IconShoppingCart,
+  IconUserPlus,
+  IconUsers,
+} from '@tabler/icons-react';
 import { useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 
 export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ export const Sidebar: React.FC = () => {
   const memberCount = ledger.memberCount;
 
   const navItems = [
-    { to: '/', label: 'Dashboard', icon: IconLayoutDashboard },
+    { to: '/dashboard', label: 'Dashboard', icon: IconLayoutDashboard },
     {
       to: '/expenses',
       label: 'Ledger & Expenses',
@@ -49,9 +49,9 @@ export const Sidebar: React.FC = () => {
       badge:
         userNetBalance !== 0
           ? {
-              text: `${userNetBalance > 0 ? '+' : ''}${Math.round(userNetBalance)}`,
-              variant: userNetBalance >= 0 ? ('sage' as const) : ('warn' as const),
-            }
+            text: `${userNetBalance > 0 ? '+' : ''}${Math.round(userNetBalance)}`,
+            variant: userNetBalance >= 0 ? ('sage' as const) : ('warn' as const),
+          }
           : undefined,
     },
     {
@@ -79,7 +79,7 @@ export const Sidebar: React.FC = () => {
   const handleSignOut = () => {
     logout();
     queryClient.clear();
-    navigate('/login', { replace: true });
+    window.location.href = '/';
   };
 
   const handleSelectHousehold = (householdId: string) => {
@@ -118,19 +118,17 @@ export const Sidebar: React.FC = () => {
             </div>
             <IconChevronDown
               size={15}
-              className={`text-[var(--muted)] group-hover:text-[var(--text)] shrink-0 transition-transform duration-300 ease-out ${
-                isHouseholdExpanded ? 'rotate-180 text-[var(--oak)]' : ''
-              }`}
+              className={`text-[var(--muted)] group-hover:text-[var(--text)] shrink-0 transition-transform duration-300 ease-out ${isHouseholdExpanded ? 'rotate-180 text-[var(--oak)]' : ''
+                }`}
             />
           </button>
 
           {/* Smooth Expanding Accordion Drawer */}
           <div
-            className={`grid transition-all duration-300 ease-in-out ${
-              isHouseholdExpanded
-                ? 'grid-rows-[1fr] opacity-100 mt-2 border-t border-[var(--border)] pt-2'
-                : 'grid-rows-[0fr] opacity-0 pointer-events-none'
-            }`}
+            className={`grid transition-all duration-300 ease-in-out ${isHouseholdExpanded
+              ? 'grid-rows-[1fr] opacity-100 mt-2 border-t border-[var(--border)] pt-2'
+              : 'grid-rows-[0fr] opacity-0 pointer-events-none'
+              }`}
           >
             <div className="overflow-hidden space-y-1">
               <div className="px-2 text-[10px] font-bold text-[var(--muted)] uppercase tracking-wider">
@@ -144,11 +142,10 @@ export const Sidebar: React.FC = () => {
                     key={h.id}
                     type="button"
                     onClick={() => handleSelectHousehold(h.id)}
-                    className={`w-full flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer transition-all ${
-                      isCurrent
-                        ? 'bg-[var(--oak-tint)] text-[var(--oak-hover)] dark:text-[var(--oak)] font-semibold shadow-2xs'
-                        : 'hover:bg-[var(--card)] text-[var(--text)]'
-                    }`}
+                    className={`w-full flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer transition-all ${isCurrent
+                      ? 'bg-[var(--oak-tint)] text-[var(--oak-hover)] dark:text-[var(--oak)] font-semibold shadow-2xs'
+                      : 'hover:bg-[var(--card)] text-[var(--text)]'
+                      }`}
                   >
                     <div className="flex items-center gap-2 truncate">
                       <IconHome
@@ -167,7 +164,22 @@ export const Sidebar: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setIsHouseholdExpanded(false);
-                    navigate('/onboarding/create');
+                    navigate('/hub');
+                  }}
+                  className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold bg-[var(--card)] hover:bg-[var(--oak-tint)] text-[var(--text)] hover:text-[var(--oak)] cursor-pointer transition-colors border border-[var(--border)] mb-1 shadow-2xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <IconBuildingCommunity size={14} className="text-[var(--oak)]" />
+                    <span>Command Hub</span>
+                  </div>
+                  <span className="text-[10px] text-[var(--muted)] font-mono">All Flats →</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsHouseholdExpanded(false);
+                    navigate('/hub');
                   }}
                   className="w-full flex items-center gap-2 p-1.5 rounded-xl text-[11px] font-medium text-[var(--oak)] hover:bg-[var(--oak-tint)] cursor-pointer transition-colors"
                 >
@@ -179,7 +191,7 @@ export const Sidebar: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setIsHouseholdExpanded(false);
-                    navigate('/onboarding/join');
+                    navigate('/hub');
                   }}
                   className="w-full flex items-center gap-2 p-1.5 rounded-xl text-[11px] font-medium text-[var(--sage)] hover:bg-[var(--sage-tint)] cursor-pointer transition-colors"
                 >
@@ -201,10 +213,9 @@ export const Sidebar: React.FC = () => {
                 to={item.to}
                 end={item.to === '/'}
                 className={({ isActive }) =>
-                  `nav-item flex items-center justify-between p-2.5 rounded-xl text-xs font-medium transition-all ${
-                    isActive
-                      ? 'bg-[var(--oak-tint)] text-[var(--oak-hover)] dark:text-[var(--oak)] font-semibold shadow-xs'
-                      : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--sage-tint)]'
+                  `nav-item flex items-center justify-between p-2.5 rounded-xl text-xs font-medium transition-all ${isActive
+                    ? 'bg-[var(--oak-tint)] text-[var(--oak-hover)] dark:text-[var(--oak)] font-semibold shadow-xs'
+                    : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--sage-tint)]'
                   }`
                 }
               >
@@ -215,13 +226,12 @@ export const Sidebar: React.FC = () => {
 
                 {item.badge && (
                   <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tight shrink-0 ${
-                      item.badge.variant === 'sage'
-                        ? 'bg-[var(--positive-bg)] text-[var(--positive-text)]'
-                        : item.badge.variant === 'warn'
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tight shrink-0 ${item.badge.variant === 'sage'
+                      ? 'bg-[var(--positive-bg)] text-[var(--positive-text)]'
+                      : item.badge.variant === 'warn'
                         ? 'bg-[var(--warn-bg)] text-[var(--warn-text)]'
                         : 'bg-[var(--canvas)] text-[var(--muted)] border border-[var(--border)]'
-                    }`}
+                      }`}
                   >
                     {item.badge.text}
                   </span>

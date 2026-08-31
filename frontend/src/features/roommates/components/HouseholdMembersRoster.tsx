@@ -1,26 +1,28 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  IconCrown,
-  IconUser,
-  IconBrandWhatsapp,
-  IconDots,
-  IconUsers,
-  IconReceipt,
-  IconUserX,
-} from '@tabler/icons-react';
+import { DataCard } from '@/components/ui/DataCard';
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  IconBrandWhatsapp,
+  IconCrown,
+  IconDots,
+  IconReceipt,
+  IconUser,
+  IconUserPlus,
+  IconUserX,
+} from '@tabler/icons-react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Roommate } from '../types';
 
 interface HouseholdMembersRosterProps {
@@ -48,82 +50,79 @@ export const HouseholdMembersRoster: React.FC<HouseholdMembersRosterProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  return (
-    <div className="card-custom overflow-visible">
-      {/* Header with Occupancy Counter */}
-      <div className="p-5 sm:p-6 border-b border-[var(--border)] flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-base font-bold text-[var(--text)] flex items-center gap-2">
-              <IconUsers size={18} className="text-[var(--oak)]" />
-              Household Members
-            </h2>
-
-            {/* Occupancy Counter Pill with Rich Tooltip Slot Dots */}
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--canvas)] border border-[var(--border)]">
-              <div className="flex items-center gap-1.5">
-                {Array.from({ length: capacity }).map((_, idx) => {
-                  const isFilled = idx < memberCount;
-                  const resident = isFilled ? roommates[idx] : null;
-                  return (
-                    <Tooltip key={idx}>
-                      <TooltipTrigger asChild>
-                        <span
-                          className={`w-2.5 h-2.5 rounded-full transition-all cursor-help ${
-                            isFilled ? 'bg-[var(--oak)]' : 'border border-dashed border-[var(--muted)] bg-transparent'
-                          }`}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {isFilled && resident
-                          ? `Room ${idx + 1}: ${resident.name} (${resident.role === 'ADMIN' ? 'Admin' : 'Resident'})`
-                          : `Room ${idx + 1}: Open bedroom slot available`}
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                })}
-              </div>
-              <span className="text-xs font-bold text-[var(--text)]">
-                {memberCount} / {capacity} Slots
-              </span>
-            </div>
-          </div>
-          <p className="text-[11px] text-[var(--muted)] mt-1">
-            Administer living roles, inspect spending tabs, or manage member access.
-          </p>
+  const headerAction = (
+    <div className="flex items-center gap-3">
+      {/* Occupancy Counter Pill with Rich Tooltip Slot Dots */}
+      <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--canvas)] border border-[var(--border)]">
+        <div className="flex items-center gap-1.5">
+          {Array.from({ length: capacity }).map((_, idx) => {
+            const isFilled = idx < memberCount;
+            const resident = isFilled ? roommates[idx] : null;
+            return (
+              <Tooltip key={idx}>
+                <TooltipTrigger asChild>
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full transition-all cursor-help ${isFilled ? 'bg-[var(--oak)]' : 'border border-dashed border-[var(--muted)] bg-transparent'
+                      }`}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isFilled && resident
+                    ? `Room ${idx + 1}: ${resident.name} (${resident.role === 'ADMIN' ? 'Admin' : 'Resident'})`
+                    : `Room ${idx + 1}: Open bedroom slot available`}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
         </div>
-
-        <div className="flex items-center gap-2">
-          <span
-            className={`text-xs font-semibold px-2.5 py-1 rounded-lg border ${
-              openSlots > 0
-                ? 'bg-[var(--positive-bg)] text-[var(--positive-text)] border-[var(--positive-text)]/30'
-                : 'bg-[var(--warn-bg)] text-[var(--warn-text)] border-[var(--warn-text)]/30'
-            }`}
-          >
-            {openSlots > 0 ? `${openSlots} Room${openSlots > 1 ? 's' : ''} Open` : 'Full Occupancy'}
-          </span>
-        </div>
+        <span className="text-xs font-bold text-[var(--text)]">
+          {memberCount} / {capacity} Slots
+        </span>
       </div>
 
-      {/* Members List */}
-      <div className="divide-y divide-[var(--border)]">
-        {isLoading ? (
-          <div className="text-xs text-[var(--muted)] text-center py-8">Loading household roster...</div>
-        ) : (
-          roommates.map((member) => (
+      <span
+        className={`text-xs font-semibold px-2.5 py-1 rounded-lg border hidden sm:inline-flex ${openSlots > 0
+            ? 'bg-[var(--positive-bg)] text-[var(--positive-text)] border-[var(--positive-text)]/30'
+            : 'bg-[var(--warn-bg)] text-[var(--warn-text)] border-[var(--warn-text)]/30'
+          }`}
+      >
+        {openSlots > 0 ? `${openSlots} Room${openSlots > 1 ? 's' : ''} Open` : 'Full Occupancy'}
+      </span>
+    </div>
+  );
+
+  return (
+    <DataCard
+      title="Household Members"
+      headerAction={headerAction}
+      isLoading={isLoading}
+      isEmpty={false}
+      skeleton={
+        <div className="space-y-3 py-2">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-16 w-full skeleton-warm rounded-xl" />
+          ))}
+        </div>
+      }
+      emptyState={null}
+      className="overflow-visible"
+    >
+      <div className="space-y-2">
+        {/* 1. Populated Members List */}
+        <div className="divide-y divide-[var(--border)]">
+          {roommates.map((member, index) => (
             <div
               key={member.id}
-              className="p-4 sm:p-5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-4 hover:bg-[var(--sage-tint)]/60 transition-colors relative"
+              style={{ animationDelay: `${index * 45}ms` }}
+              className="animate-fade-up p-4 sm:p-5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-4 hover:bg-[var(--sage-tint)]/60 transition-colors relative rounded-xl"
             >
               {/* Avatar & User Details */}
               <div className="flex items-center gap-3.5 min-w-0 flex-1">
                 <span
-                  className={`w-10 h-10 rounded-2xl font-bold flex items-center justify-center text-sm shadow-xs shrink-0 ${
-                    member.avatarColor === 'oak'
+                  className={`w-10 h-10 rounded-2xl font-bold flex items-center justify-center text-sm shadow-xs shrink-0 ${member.avatarColor === 'oak'
                       ? 'bg-[var(--oak)] text-white'
                       : 'bg-[var(--sage-tint)] text-[var(--sage)]'
-                  }`}
+                    }`}
                   aria-hidden="true"
                 >
                   {member.avatarInitial}
@@ -162,9 +161,8 @@ export const HouseholdMembersRoster: React.FC<HouseholdMembersRosterProps> = ({
                 {/* Net Balance Pill */}
                 <div className="text-right pr-1">
                   <span
-                    className={`pill-balance ${
-                      member.balance > 0 ? 'pos' : member.balance < 0 ? 'neg' : ''
-                    } ${member.balance === 0 ? 'bg-[var(--canvas)] text-[var(--muted)] border border-[var(--border)]' : ''}`}
+                    className={`pill-balance ${member.balance > 0 ? 'pos' : member.balance < 0 ? 'neg' : ''
+                      } ${member.balance === 0 ? 'bg-[var(--canvas)] text-[var(--muted)] border border-[var(--border)]' : ''}`}
                   >
                     {member.balance > 0 ? '+' : ''}
                     {member.balance.toFixed(2)} {member.currency}
@@ -174,13 +172,13 @@ export const HouseholdMembersRoster: React.FC<HouseholdMembersRosterProps> = ({
                       ? member.balance > 0
                         ? 'Total You Are Owed'
                         : member.balance < 0
-                        ? 'Total You Owe'
-                        : 'All Settled'
+                          ? 'Total You Owe'
+                          : 'All Settled'
                       : member.pendingDays
-                      ? `${member.pendingDays}d pending`
-                      : member.balance === 0
-                      ? 'Settled up'
-                      : 'Open balance'}
+                        ? `${member.pendingDays}d pending`
+                        : member.balance === 0
+                          ? 'Settled up'
+                          : 'Open balance'}
                   </div>
                 </div>
 
@@ -212,7 +210,7 @@ export const HouseholdMembersRoster: React.FC<HouseholdMembersRosterProps> = ({
                   </button>
                 )}
 
-                {/* Admin Actions Dropdown (Using shadcn DropdownMenu) */}
+                {/* Admin Actions Dropdown */}
                 {!member.isCurrentUser && (
                   <DropdownMenu>
                     <DropdownMenuTrigger
@@ -257,9 +255,29 @@ export const HouseholdMembersRoster: React.FC<HouseholdMembersRosterProps> = ({
                 )}
               </div>
             </div>
-          ))
-        )}
+          ))}
+        </div>
+
+        {/* 2. Open Ghost Slots (Fills to total capacity) */}
+        {Array.from({ length: Math.max(0, capacity - roommates.length) }).map((_, idx) => (
+          <div
+            key={`ghost-${idx}`}
+            style={{ animationDelay: `${(roommates.length + idx) * 45}ms` }}
+            className="animate-fade-up flex items-center gap-3 p-3.5 border border-dashed border-[var(--border)] dark:border-white/10 rounded-xl mb-2 text-[var(--muted)] bg-[var(--canvas)]/50 select-none"
+          >
+            <div className="w-10 h-10 rounded-full border border-dashed border-[var(--border-strong)] dark:border-white/20 flex items-center justify-center shrink-0">
+              <IconUserPlus size={16} className="text-[var(--muted)]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-medium text-[var(--text)]">Empty Slot</div>
+              <div className="text-[11px] text-[var(--muted)]">Waiting for invitee...</div>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 rounded border border-dashed border-[var(--border)] text-[var(--muted)]">
+              Open Slot
+            </span>
+          </div>
+        ))}
       </div>
-    </div>
+    </DataCard>
   );
 };

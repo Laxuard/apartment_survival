@@ -52,20 +52,28 @@ public class HouseholdService {
         // Cascades automatically persist both Household and HouseholdMember
         Household savedHousehold = householdRepository.save(household);
 
-        return householdMapper.toSummary(savedHousehold);
+        return householdMapper.toSummary(savedHousehold, HouseholdRole.ADMIN);
     }
 
     // === 2. List User's Active Households ===
     @Transactional(readOnly = true)
     public List<HouseholdResponse.Summary> getUserHouseholds(UUID userId) {
         return householdRepository.findAllActiveByUser(userId).stream()
-                .map(householdMapper::toSummary)
+                .map(household -> {
+                    HouseholdRole userRole = household.getMembers().stream()
+                            .filter(m -> m.getUserId().equals(userId))
+                            .map(HouseholdMember::getRole)
+                            .findFirst()
+                            .orElse(HouseholdRole.MEMBER);
+                    return householdMapper.toSummary(household, userRole);
+                })
                 .toList();
     }
 
     // === 3. Get Household Details with Roommates ===
     @Transactional(readOnly = true)
-    public HouseholdResponse.Detail getHousehold(UUID householdId) {
+
+    public HouseholdResponse.Detail getHousehold(UUID householdId, UUID callerUserId) {
         Household household = householdRepository.findActiveWithMembers(householdId)
                 .orElseThrow(() -> new ResourceNotFoundException("Active household not found: " + householdId));
 
@@ -88,14 +96,31 @@ public class HouseholdService {
                 })
                 .toList();
 
-        return householdMapper.toDetail(household, memberSummaries);
+        HouseholdRole callerRole = callerUserId != null
+                ? household.getMembers().stream()
+                        .filter(m -> m.getUserId().equals(callerUserId))
+                        .map(HouseholdMember::getRole)
+                        .findFirst()
+                        .orElse(null)
+                : null;
+
+        return householdMapper.toDetail(household, memberSummaries, callerRole);
+    }
+
+    // Overloaded convenience method
+    @Transactional(readOnly = true)
+    public HouseholdResponse.Detail getHousehold(UUID householdId) {
+        return getHousehold(householdId, null);
     }
 
     // === 4. Update Household Settings ===
     @Transactional
-    public HouseholdResponse.Summary update(UUID householdId, HouseholdRequest.Update request) {
-        Household household = householdRepository.findActive(householdId)
-                .orElseThrow(() -> new ResourceNotFoundException("Active household not found: " + householdId));
+
+    public HouseholdResponse.Summary update(UUID householdId, HouseholdRequest.Update request, UUID callerUserId) {
+        Household household = householdRepository.findActiveWithMembers(householdId)
+                .orElseGet(() -> householdRepository.findActive(householdId)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Active household not found: " + householdId)));
 
         if (request.maxMembers() != null) {
             long currentMemberCount = memberRepository.countByHouseholdId(householdId);
@@ -106,7 +131,22 @@ public class HouseholdService {
         }
 
         householdMapper.updateEntity(request, household);
-        return householdMapper.toSummary(household);
+
+        HouseholdRole callerRole = callerUserId != null && household.getMembers() != null
+                ? household.getMembers().stream()
+                        .filter(m -> m.getUserId().equals(callerUserId))
+                        .map(HouseholdMember::getRole)
+                        .findFirst()
+                        .orElse(HouseholdRole.ADMIN)
+                : HouseholdRole.ADMIN;
+
+        return householdMapper.toSummary(household, callerRole);
+    }
+
+    // Overloaded convenience method
+    @Transactional
+    public HouseholdResponse.Summary update(UUID householdId, HouseholdRequest.Update request) {
+        return update(householdId, request, null);
     }
 
     // === 5. Archive Household ===
@@ -123,12 +163,14 @@ public class HouseholdService {
     public HouseholdResponse.MemberSummary updateMember(UUID householdId, UUID targetUserId,
             HouseholdRequest.UpdateMember request) {
         HouseholdMember member = memberRepository.findByActiveHouseholdIdAndUserId(householdId, targetUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("Active membership not found for user: " + targetUserId));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Active membership not found for user: " + targetUserId));
 
         if (member.isAdmin() && request.role() != HouseholdRole.ADMIN) {
             long adminCount = memberRepository.countByHouseholdIdAndRole(householdId, HouseholdRole.ADMIN);
             if (adminCount <= 1) {
-                throw new BadRequestException("Cannot demote the sole admin of the household. Promote another member to admin first.");
+                throw new BadRequestException(
+                        "Cannot demote the sole admin of the household. Promote another member to admin first.");
             }
         }
 
@@ -155,12 +197,14 @@ public class HouseholdService {
     @Transactional
     public void removeMember(UUID householdId, UUID targetUserId) {
         HouseholdMember member = memberRepository.findByActiveHouseholdIdAndUserId(householdId, targetUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("Active membership not found for user: " + targetUserId));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Active membership not found for user: " + targetUserId));
 
         if (member.isAdmin()) {
             long adminCount = memberRepository.countByHouseholdIdAndRole(householdId, HouseholdRole.ADMIN);
             if (adminCount <= 1) {
-                throw new BadRequestException("Cannot leave or remove the sole admin of the household. Transfer admin ownership first.");
+                throw new BadRequestException(
+                        "Cannot leave or remove the sole admin of the household. Transfer admin ownership first.");
             }
         }
 

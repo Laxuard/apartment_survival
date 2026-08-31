@@ -18,12 +18,7 @@ import com.apartment.survival.household.dto.InviteResponse;
 import com.apartment.survival.household.event.HouseholdInviteAcceptedEvent;
 import com.apartment.survival.household.event.HouseholdInviteCreatedEvent;
 import com.apartment.survival.household.mapper.HouseholdMapper;
-import com.apartment.survival.household.model.Household;
-import com.apartment.survival.household.model.HouseholdInvite;
-import com.apartment.survival.household.model.HouseholdMember;
-import com.apartment.survival.household.model.HouseholdRole;
-import com.apartment.survival.household.model.InviteStatus;
-import com.apartment.survival.household.model.InviteType;
+import com.apartment.survival.household.model.*;
 import com.apartment.survival.household.repository.HouseholdInviteRepository;
 import com.apartment.survival.household.repository.HouseholdMemberRepository;
 import com.apartment.survival.household.repository.HouseholdRepository;
@@ -36,7 +31,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class InvitationService {
 
-    private static final String CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // Base-32 excluding lookalikes (0/O, 1/I)
+    private static final String CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // Base-32 excluding lookalikes
+                                                                                    // (0/O, 1/I)
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final HouseholdRepository householdRepository;
@@ -48,7 +44,8 @@ public class InvitationService {
 
     // === 1. Create Shareable Link/Code Invite (Admins only) ===
     @Transactional
-    public InviteResponse.HouseholdInviteSummary createLinkInvite(UUID householdId, InviteRequest.CreateLink request, UUID creatorUserId) {
+    public InviteResponse.HouseholdInviteSummary createLinkInvite(UUID householdId, InviteRequest.CreateLink request,
+            UUID creatorUserId) {
         Household household = getActiveHouseholdOrThrow(householdId);
         validateHouseholdCapacity(household);
 
@@ -78,7 +75,8 @@ public class InvitationService {
 
     // === 2. Create Direct Username Invite (Admins only) ===
     @Transactional
-    public InviteResponse.HouseholdInviteSummary createDirectInvite(UUID householdId, InviteRequest.CreateDirect request, UUID creatorUserId) {
+    public InviteResponse.HouseholdInviteSummary createDirectInvite(UUID householdId,
+            InviteRequest.CreateDirect request, UUID creatorUserId) {
         Household household = getActiveHouseholdOrThrow(householdId);
         validateHouseholdCapacity(household);
 
@@ -258,13 +256,14 @@ public class InvitationService {
         // Publish decoupled domain event
         eventPublisher.publishEvent(new HouseholdInviteAcceptedEvent(invite.getId(), household.getId(), userId));
 
-        return householdMapper.toSummary(household);
+        return householdMapper.toSummary(household, HouseholdRole.MEMBER);
     }
 
     private void validateHouseholdCapacity(Household household) {
         long currentMembers = memberRepository.countByHouseholdId(household.getId());
         if (currentMembers >= household.getMaxMembers()) {
-            throw new BadRequestException("Household has reached its maximum member capacity (" + household.getMaxMembers() + ").");
+            throw new BadRequestException(
+                    "Household has reached its maximum member capacity (" + household.getMaxMembers() + ").");
         }
     }
 
@@ -300,7 +299,6 @@ public class InvitationService {
                 invite.getTargetUserId(),
                 targetEmail,
                 invite.getCode(),
-                invite.getExpiresAt()
-        ));
+                invite.getExpiresAt()));
     }
 }

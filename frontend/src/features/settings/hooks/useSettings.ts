@@ -1,16 +1,25 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useHouseholdStore } from '@/stores/useHouseholdStore';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { useHouseholdLedger } from '@/features/roommates';
+import { useUpdateHouseholdMutation } from '@/features/households/hooks/useHouseholdsQueries';
+import { useUpdateProfile, useChangePassword } from '@/features/auth/hooks/useAuth';
+import { householdsApi } from '@/features/households/api/householdsApi';
+import type { UpdateHouseholdDto } from '@/features/households/types';
+import type { HouseholdMembership } from '@/types';
 import type { PasswordChangeData } from '../types/settings.types';
 
 export const useSettings = () => {
   const { mode, setMode } = useThemeStore();
-  const { user, updateUser } = useAuthStore();
-  const { getActiveHousehold, updateActiveHousehold } = useHouseholdStore();
+  const { user } = useAuthStore();
+  const { getActiveHousehold, updateActiveHousehold, setHouseholds, households } = useHouseholdStore();
   const activeHousehold = getActiveHousehold();
+
+  const updateHouseholdMutation = useUpdateHouseholdMutation();
+  const updateProfileMutation = useUpdateProfile();
+  const changePasswordMutation = useChangePassword();
 
   const ledger = useHouseholdLedger();
   const userBalance = ledger.userNetBalance;
@@ -21,108 +30,155 @@ export const useSettings = () => {
   const [profileFeedback, setProfileFeedback] = useState<string | null>(null);
   const [passwordFeedback, setPasswordFeedback] = useState<{ success?: boolean; message?: string } | null>(null);
 
-  // Trigger ambient save pulse
-  const triggerSavePulse = useCallback(() => {
-    setSaveStatus('saving');
-    const timer = setTimeout(() => {
-      setSaveStatus('saved');
-    }, 600);
-    return () => clearTimeout(timer);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingUpdatesRef = useRef<UpdateHouseholdDto>({});
+
+  // Flush debounced updates to backend
+  const flushHouseholdUpdate = useCallback(
+    async (immediateDto?: UpdateHouseholdDto) => {
+      if (!activeHousehold?.id) return;
+      const payload = { ...pendingUpdatesRef.current, ...(immediateDto || {}) };
+      pendingUpdatesRef.current = {};
+
+      if (Object.keys(payload).length === 0) return;
+
+      setSaveStatus('saving');
+      try {
+        await updateHouseholdMutation.mutateAsync({
+          householdId: activeHousehold.id,
+          dto: payload,
+        });
+        setSaveStatus('saved');
+      } catch (err: unknown) {
+        setSaveStatus('saved');
+        const msg = err instanceof Error ? err.message : 'Failed to save household settings';
+        toast.error(msg);
+      }
+    },
+    [activeHousehold?.id, updateHouseholdMutation]
+  );
+
+  const queueHouseholdUpdate = useCallback(
+    (patch: UpdateHouseholdDto, immediate = false) => {
+      updateActiveHousehold(patch as Partial<HouseholdMembership>);
+      pendingUpdatesRef.current = { ...pendingUpdatesRef.current, ...patch };
+
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      if (immediate) {
+        flushHouseholdUpdate();
+      } else {
+        setSaveStatus('saving');
+        debounceTimerRef.current = setTimeout(() => {
+          flushHouseholdUpdate();
+        }, 600);
+      }
+    },
+    [updateActiveHousehold, flushHouseholdUpdate]
+  );
+
+  // Clean up debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
   }, []);
 
   // Update Household Parameters (Instant live sync)
   const updateHouseholdName = useCallback(
     (name: string) => {
-      updateActiveHousehold({ name: name.trim() || 'Apartment' });
-      triggerSavePulse();
+      queueHouseholdUpdate({ name: name.trim() || 'Apartment' }, false);
     },
-    [updateActiveHousehold, triggerSavePulse]
+    [queueHouseholdUpdate]
   );
 
   const updateDescription = useCallback(
     (description: string) => {
-      updateActiveHousehold({ description });
-      triggerSavePulse();
+      queueHouseholdUpdate({ description }, false);
     },
-    [updateActiveHousehold, triggerSavePulse]
+    [queueHouseholdUpdate]
   );
 
   const updateMonthlyBudget = useCallback(
     (monthlyBudget: number) => {
-      updateActiveHousehold({ monthlyBudget: Math.max(0, monthlyBudget) });
-      triggerSavePulse();
+      queueHouseholdUpdate({ monthlyBudget: Math.max(0, monthlyBudget) }, false);
     },
-    [updateActiveHousehold, triggerSavePulse]
+    [queueHouseholdUpdate]
   );
 
   const updateCapacity = useCallback(
     (capacity: number) => {
-      updateActiveHousehold({ capacity: Math.max(1, capacity) });
-      triggerSavePulse();
+      queueHouseholdUpdate({ maxMembers: Math.max(1, capacity) }, true);
     },
-    [updateActiveHousehold, triggerSavePulse]
+    [queueHouseholdUpdate]
   );
 
   const updateWifiSsid = useCallback(
     (wifiSsid: string) => {
-      updateActiveHousehold({ wifiSsid });
-      triggerSavePulse();
+      queueHouseholdUpdate({ wifiSsid }, false);
     },
-    [updateActiveHousehold, triggerSavePulse]
+    [queueHouseholdUpdate]
   );
 
   const updateWifiPassword = useCallback(
     (wifiPassword: string) => {
-      updateActiveHousehold({ wifiPassword });
-      triggerSavePulse();
+      queueHouseholdUpdate({ wifiPassword }, false);
     },
-    [updateActiveHousehold, triggerSavePulse]
+    [queueHouseholdUpdate]
   );
 
   const updateCurrency = useCallback(
     (currency: string) => {
-      updateActiveHousehold({ currency });
-      triggerSavePulse();
+      queueHouseholdUpdate({ currency }, true);
     },
-    [updateActiveHousehold, triggerSavePulse]
+    [queueHouseholdUpdate]
   );
 
   const updateSplitAlgorithm = useCallback(
     (splitAlgorithm: 'DEBT_SIMPLIFIED' | 'DIRECT') => {
-      updateActiveHousehold({ splitAlgorithm });
-      triggerSavePulse();
+      queueHouseholdUpdate({ splitAlgorithm }, true);
     },
-    [updateActiveHousehold, triggerSavePulse]
+    [queueHouseholdUpdate]
   );
 
   const updateAutoRestock = useCallback(
     (autoRestockFromExpenses: boolean) => {
-      updateActiveHousehold({ autoRestockFromExpenses });
-      triggerSavePulse();
+      queueHouseholdUpdate({ autoRestockFromExpenses }, true);
     },
-    [updateActiveHousehold, triggerSavePulse]
+    [queueHouseholdUpdate]
   );
 
-  // Update User Profile (Explicit manual save)
+  // Update User Profile (Explicit manual save with backend sync)
   const saveProfile = useCallback(
-    (name: string, email: string) => {
-      updateUser({
-        name: name.trim() || 'User',
-        email: email.trim() || 'user@apartment.com',
-      });
-      triggerSavePulse();
-      setProfileFeedback('Profile details updated successfully!');
-      toast.success('Profile details updated', {
-        description: 'Your display identity has been saved.',
-      });
-      setTimeout(() => setProfileFeedback(null), 3000);
+    async (name: string, email: string) => {
+      setSaveStatus('saving');
+      try {
+        await updateProfileMutation.mutateAsync({
+          username: name.trim() || 'User',
+          email: email.trim() || 'user@apartment.com',
+        });
+        setSaveStatus('saved');
+        setProfileFeedback('Profile details updated successfully!');
+        toast.success('Profile details updated', {
+          description: 'Your identity has been saved to the backend.',
+        });
+        setTimeout(() => setProfileFeedback(null), 3000);
+      } catch (err: unknown) {
+        setSaveStatus('saved');
+        const msg = err instanceof Error ? err.message : 'Failed to update profile';
+        toast.error(msg);
+      }
     },
-    [updateUser, triggerSavePulse]
+    [updateProfileMutation]
   );
 
-  // Handle Explicit Password Change
+  // Handle Explicit Password Change with backend verification
   const changePassword = useCallback(
-    ({ currentPassword, newPassword, confirmPassword }: PasswordChangeData) => {
+    async ({ currentPassword, newPassword, confirmPassword }: PasswordChangeData): Promise<boolean> => {
       if (!currentPassword || !newPassword || !confirmPassword) {
         setPasswordFeedback({ success: false, message: 'Please fill in all password fields.' });
         toast.error('Please fill in all password fields.');
@@ -139,13 +195,43 @@ export const useSettings = () => {
         return false;
       }
 
-      setPasswordFeedback({ success: true, message: 'Password updated successfully!' });
-      toast.success('Password updated successfully!');
-      triggerSavePulse();
-      setTimeout(() => setPasswordFeedback(null), 3000);
-      return true;
+      setSaveStatus('saving');
+      try {
+        await changePasswordMutation.mutateAsync({
+          currentPassword,
+          newPassword,
+        });
+        setSaveStatus('saved');
+        setPasswordFeedback({ success: true, message: 'Password updated successfully!' });
+        toast.success('Password updated successfully!');
+        setTimeout(() => setPasswordFeedback(null), 3000);
+        return true;
+      } catch (err: unknown) {
+        setSaveStatus('saved');
+        const msg = err instanceof Error ? err.message : 'Failed to update password';
+        setPasswordFeedback({ success: false, message: msg });
+        toast.error(msg);
+        return false;
+      }
     },
-    [triggerSavePulse]
+    [changePasswordMutation]
+  );
+
+  // Leave Living Space
+  const leaveHousehold = useCallback(
+    async () => {
+      if (!activeHousehold?.id || !user?.id) return;
+      try {
+        await householdsApi.leaveHousehold(activeHousehold.id, user.id);
+        toast.success(`Left ${activeHousehold.name}`);
+        const remaining = households.filter((h) => h.id !== activeHousehold.id);
+        setHouseholds(remaining);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Failed to leave space';
+        toast.error(msg);
+      }
+    },
+    [activeHousehold, user?.id, households, setHouseholds]
   );
 
   // Copy Household Invite Link
@@ -190,6 +276,7 @@ export const useSettings = () => {
     updateAutoRestock,
     saveProfile,
     changePassword,
+    leaveHousehold,
     copyInviteLink,
     copyWifiPassword,
   };

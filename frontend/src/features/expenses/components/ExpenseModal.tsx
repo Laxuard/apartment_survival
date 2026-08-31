@@ -1,28 +1,28 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import {
-  IconPlus,
-  IconShoppingCart,
-  IconBolt,
-  IconHome2,
-  IconCup,
-  IconReceipt2,
-  IconUsers,
-  IconScale,
-} from '@tabler/icons-react';
-import { useUIStore } from '@/stores/useUIStore';
-import { useHouseholdStore } from '@/stores/useHouseholdStore';
 import { useCreateExpenseMutation } from '@/features/expenses/hooks/useExpensesQueries';
 import { useRoommatesQuery } from '@/features/roommates';
+import { useHouseholdStore } from '@/stores/useHouseholdStore';
+import { useUIStore } from '@/stores/useUIStore';
+import {
+  IconBolt,
+  IconCup,
+  IconHome2,
+  IconPlus,
+  IconReceipt2,
+  IconScale,
+  IconShoppingCart,
+  IconUsers,
+} from '@tabler/icons-react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const CATEGORIES = [
   { value: 'GROCERIES', label: 'Groceries', icon: <IconShoppingCart size={15} /> },
@@ -199,11 +199,10 @@ export const ExpenseModal: React.FC = () => {
                   key={cat.value}
                   type="button"
                   onClick={() => setCategory(cat.value)}
-                  className={`p-2 rounded-xl border text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                    category === cat.value
+                  className={`p-2 rounded-xl border text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${category === cat.value
                       ? 'bg-[var(--oak)] text-white border-[var(--oak)] shadow-sm font-semibold'
                       : 'bg-[var(--canvas)] text-[var(--text)] border-[var(--border)] hover:bg-[var(--sage-tint)]'
-                  }`}
+                    }`}
                 >
                   {cat.icon}
                   <span className="truncate">{cat.label}</span>
@@ -228,11 +227,10 @@ export const ExpenseModal: React.FC = () => {
                   key={method}
                   type="button"
                   onClick={() => setSplitMethod(method)}
-                  className={`py-1.5 px-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
-                    splitMethod === method
+                  className={`py-1.5 px-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${splitMethod === method
                       ? 'bg-[var(--canvas)] border-[var(--oak)] text-[var(--text)] ring-1 ring-[var(--oak)] font-semibold'
                       : 'bg-[var(--card)] text-[var(--muted)] border-[var(--border)] hover:text-[var(--text)]'
-                  }`}
+                    }`}
                 >
                   {method === 'EQUAL' ? 'Equal Split' : method === 'EXACT' ? 'Exact Custom' : 'Percentage'}
                 </button>

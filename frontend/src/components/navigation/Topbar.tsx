@@ -1,19 +1,19 @@
-import React, { useEffect, useRef, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
-import {
-  IconSearch,
-  IconBell,
-  IconBellOff,
-  IconUserPlus,
-} from '@tabler/icons-react';
-import { useUIStore } from '@/stores/useUIStore';
-import { useAuthStore } from '@/stores/useAuthStore';
-import { usePantryStock, type PantryItem } from '@/features/pantry';
-import { useHouseholdLedger } from '@/features/roommates';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useBillsSummary } from '@/features/bills';
 import { useExpensesQuery } from '@/features/expenses';
+import { usePantryStock, type PantryItem } from '@/features/pantry';
+import { useHouseholdLedger } from '@/features/roommates';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { useHouseholdStore } from '@/stores/useHouseholdStore';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { useUIStore } from '@/stores/useUIStore';
+import {
+  IconBell,
+  IconBellOff,
+  IconSearch,
+  IconUserPlus,
+} from '@tabler/icons-react';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 
 interface TopbarProps {
   notifications?: Array<{
@@ -182,11 +182,10 @@ export const Topbar: React.FC<TopbarProps> = ({ notifications: propNotifs }) => 
               <Tooltip key={rm.id}>
                 <TooltipTrigger asChild>
                   <div
-                    className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center ring-2 ring-[var(--card)] shadow-xs hover:scale-110 hover:z-20 transition-all duration-150 cursor-pointer ${
-                      rm.avatarColor === 'oak'
+                    className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center ring-2 ring-[var(--card)] shadow-xs hover:scale-110 hover:z-20 transition-all duration-150 cursor-pointer ${rm.avatarColor === 'oak'
                         ? 'bg-gradient-to-br from-[#D98236] to-[#B86822] text-white'
                         : 'bg-gradient-to-br from-[var(--sage)] to-[#7AA06D] text-white'
-                    }`}
+                      }`}
                   >
                     {rm.avatarInitial}
                   </div>
@@ -266,13 +265,12 @@ export const Topbar: React.FC<TopbarProps> = ({ notifications: propNotifs }) => 
                 >
                   <div className="flex items-center gap-1.5">
                     <span
-                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                        notif.type === 'warn'
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${notif.type === 'warn'
                           ? 'bg-[var(--negative-text)]'
                           : notif.type === 'sage'
-                          ? 'bg-[var(--sage)]'
-                          : 'bg-[var(--oak)]'
-                      }`}
+                            ? 'bg-[var(--sage)]'
+                            : 'bg-[var(--oak)]'
+                        }`}
                     />
                     <span className="font-semibold text-xs text-[var(--text)]">
                       {notif.title}

@@ -1,11 +1,5 @@
 package com.apartment.survival.household.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.*;
@@ -31,14 +25,27 @@ import com.apartment.survival.household.repository.HouseholdRepository;
 import com.apartment.survival.iam.api.UserPublicApi;
 import com.apartment.survival.iam.api.UserPublicDto;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
 @ExtendWith(MockitoExtension.class)
 @DisplayName("HouseholdService Unit Tests")
 class HouseholdServiceTest {
 
-    @Mock private UserPublicApi userPublicApi;
-    @Mock private HouseholdMapper householdMapper;
-    @Mock private HouseholdRepository householdRepository;
-    @Mock private HouseholdMemberRepository memberRepository;
+    @Mock
+    private UserPublicApi userPublicApi;
+    @Mock
+    private HouseholdMapper householdMapper;
+    @Mock
+    private HouseholdRepository householdRepository;
+    @Mock
+    private HouseholdMemberRepository memberRepository;
 
     @InjectMocks
     private HouseholdService householdService;
@@ -85,7 +92,7 @@ class HouseholdServiceTest {
             when(userPublicApi.existsById(CREATOR_ID)).thenReturn(true);
             when(householdMapper.toEntity(request)).thenReturn(mapped);
             when(householdRepository.save(mapped)).thenReturn(saved);
-            when(householdMapper.toSummary(saved)).thenReturn(summary);
+            when(householdMapper.toSummary(saved, HouseholdRole.ADMIN)).thenReturn(summary);
 
             var result = householdService.create(request, CREATOR_ID);
 
@@ -117,10 +124,12 @@ class HouseholdServiceTest {
         @DisplayName("Should return summaries of all active households for user")
         void getUserHouseholds_Success() {
             var h1 = buildHousehold(UUID.randomUUID(), "Apt 1", 5);
+            var member = buildMember(CREATOR_ID, HouseholdRole.ADMIN, null);
+            h1.addMember(member);
             var s1 = buildSummary(h1.getId(), "Apt 1");
 
             when(householdRepository.findAllActiveByUser(CREATOR_ID)).thenReturn(List.of(h1));
-            when(householdMapper.toSummary(h1)).thenReturn(s1);
+            when(householdMapper.toSummary(eq(h1), any())).thenReturn(s1);
 
             assertThat(householdService.getUserHouseholds(CREATOR_ID)).containsExactly(s1);
         }
@@ -148,13 +157,15 @@ class HouseholdServiceTest {
             household.addMember(member);
 
             var profile = new UserPublicDto(TARGET_USER_ID, "Alex", "alex@gmail.com");
-            var memberSummary = new HouseholdResponse.MemberSummary(TARGET_USER_ID, "Alex", "alex@gmail.com", HouseholdRole.ADMIN, "Roomie", Instant.now());
-            var detail = new HouseholdResponse.Detail(HOUSEHOLD_ID, NAME, null, null, MAD, CASABLANCA, 5, false, List.of(memberSummary), Instant.now());
+            var memberSummary = new HouseholdResponse.MemberSummary(TARGET_USER_ID, "Alex", "alex@gmail.com",
+                    HouseholdRole.ADMIN, "Roomie", Instant.now());
+            var detail = new HouseholdResponse.Detail(HOUSEHOLD_ID, NAME, null, null, MAD, CASABLANCA, 5, false,
+                    List.of(memberSummary), Instant.now());
 
             when(householdRepository.findActiveWithMembers(HOUSEHOLD_ID)).thenReturn(Optional.of(household));
             when(userPublicApi.findAllByIds(Set.of(TARGET_USER_ID))).thenReturn(Map.of(TARGET_USER_ID, profile));
             when(householdMapper.toMemberSummary(member, "Alex", "alex@gmail.com")).thenReturn(memberSummary);
-            when(householdMapper.toDetail(eq(household), any())).thenReturn(detail);
+            when(householdMapper.toDetail(eq(household), any(), any())).thenReturn(detail);
 
             assertThat(householdService.getHousehold(HOUSEHOLD_ID)).isEqualTo(detail);
         }
@@ -183,9 +194,9 @@ class HouseholdServiceTest {
             var household = buildHousehold(HOUSEHOLD_ID, NAME, 4);
             var summary = buildSummary(HOUSEHOLD_ID, "New Name");
 
-            when(householdRepository.findActive(HOUSEHOLD_ID)).thenReturn(Optional.of(household));
+            when(householdRepository.findActiveWithMembers(HOUSEHOLD_ID)).thenReturn(Optional.of(household));
             when(memberRepository.countByHouseholdId(HOUSEHOLD_ID)).thenReturn(2L);
-            when(householdMapper.toSummary(household)).thenReturn(summary);
+            when(householdMapper.toSummary(eq(household), any())).thenReturn(summary);
 
             assertThat(householdService.update(HOUSEHOLD_ID, request)).isEqualTo(summary);
             verify(householdMapper).updateEntity(request, household);
@@ -197,7 +208,7 @@ class HouseholdServiceTest {
             var request = new HouseholdRequest.Update("New Name", null, null, null, null, 2);
             var household = buildHousehold(HOUSEHOLD_ID, NAME, 4);
 
-            when(householdRepository.findActive(HOUSEHOLD_ID)).thenReturn(Optional.of(household));
+            when(householdRepository.findActiveWithMembers(HOUSEHOLD_ID)).thenReturn(Optional.of(household));
             when(memberRepository.countByHouseholdId(HOUSEHOLD_ID)).thenReturn(4L);
 
             assertThatThrownBy(() -> householdService.update(HOUSEHOLD_ID, request))
@@ -246,9 +257,11 @@ class HouseholdServiceTest {
             var request = new HouseholdRequest.UpdateMember(HouseholdRole.MEMBER, "  Alias  ");
             var member = buildMember(TARGET_USER_ID, HouseholdRole.ADMIN, "Old");
             var profile = new UserPublicDto(TARGET_USER_ID, "Sam", "sam@gmail.com");
-            var summary = new HouseholdResponse.MemberSummary(TARGET_USER_ID, "Sam", "sam@gmail.com", HouseholdRole.MEMBER, "Alias", Instant.now());
+            var summary = new HouseholdResponse.MemberSummary(TARGET_USER_ID, "Sam", "sam@gmail.com",
+                    HouseholdRole.MEMBER, "Alias", Instant.now());
 
-            when(memberRepository.findByActiveHouseholdIdAndUserId(HOUSEHOLD_ID, TARGET_USER_ID)).thenReturn(Optional.of(member));
+            when(memberRepository.findByActiveHouseholdIdAndUserId(HOUSEHOLD_ID, TARGET_USER_ID))
+                    .thenReturn(Optional.of(member));
             when(memberRepository.countByHouseholdIdAndRole(HOUSEHOLD_ID, HouseholdRole.ADMIN)).thenReturn(2L);
             when(userPublicApi.findById(TARGET_USER_ID)).thenReturn(Optional.of(profile));
             when(householdMapper.toMemberSummary(member, "Sam", "sam@gmail.com")).thenReturn(summary);
@@ -263,7 +276,8 @@ class HouseholdServiceTest {
             var request = new HouseholdRequest.UpdateMember(HouseholdRole.MEMBER, null);
             var soleAdmin = buildMember(TARGET_USER_ID, HouseholdRole.ADMIN, null);
 
-            when(memberRepository.findByActiveHouseholdIdAndUserId(HOUSEHOLD_ID, TARGET_USER_ID)).thenReturn(Optional.of(soleAdmin));
+            when(memberRepository.findByActiveHouseholdIdAndUserId(HOUSEHOLD_ID, TARGET_USER_ID))
+                    .thenReturn(Optional.of(soleAdmin));
             when(memberRepository.countByHouseholdIdAndRole(HOUSEHOLD_ID, HouseholdRole.ADMIN)).thenReturn(1L);
 
             assertThatThrownBy(() -> householdService.updateMember(HOUSEHOLD_ID, TARGET_USER_ID, request))
@@ -286,7 +300,8 @@ class HouseholdServiceTest {
             var member = buildMember(TARGET_USER_ID, HouseholdRole.MEMBER, null);
             household.addMember(member);
 
-            when(memberRepository.findByActiveHouseholdIdAndUserId(HOUSEHOLD_ID, TARGET_USER_ID)).thenReturn(Optional.of(member));
+            when(memberRepository.findByActiveHouseholdIdAndUserId(HOUSEHOLD_ID, TARGET_USER_ID))
+                    .thenReturn(Optional.of(member));
 
             householdService.removeMember(HOUSEHOLD_ID, TARGET_USER_ID);
 
@@ -299,7 +314,8 @@ class HouseholdServiceTest {
         void removeMember_SoleAdmin_ThrowsBadRequest() {
             var member = buildMember(TARGET_USER_ID, HouseholdRole.ADMIN, null);
 
-            when(memberRepository.findByActiveHouseholdIdAndUserId(HOUSEHOLD_ID, TARGET_USER_ID)).thenReturn(Optional.of(member));
+            when(memberRepository.findByActiveHouseholdIdAndUserId(HOUSEHOLD_ID, TARGET_USER_ID))
+                    .thenReturn(Optional.of(member));
             when(memberRepository.countByHouseholdIdAndRole(HOUSEHOLD_ID, HouseholdRole.ADMIN)).thenReturn(1L);
 
             assertThatThrownBy(() -> householdService.removeMember(HOUSEHOLD_ID, TARGET_USER_ID))

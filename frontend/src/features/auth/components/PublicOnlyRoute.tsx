@@ -7,7 +7,7 @@ export const PublicOnlyRoute: React.FC = () => {
   const [searchParams] = useSearchParams();
 
   if (isAuthenticated) {
-    const redirectUrl = searchParams.get('redirect') || '/';
+    const redirectUrl = searchParams.get('redirect') || '/dashboard';
     return <Navigate to={redirectUrl} replace />;
   }
 

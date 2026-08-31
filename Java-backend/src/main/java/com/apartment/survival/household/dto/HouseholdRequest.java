@@ -1,5 +1,6 @@
 package com.apartment.survival.household.dto;
 
+import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.util.Currency;
 
@@ -22,8 +23,30 @@ public interface HouseholdRequest {
         String description,
 
         Currency currency,
-        ZoneId timezone
-    ) {}
+        ZoneId timezone,
+
+        @Min(value = 0, message = "Monthly budget cannot be negative")
+        BigDecimal monthlyBudget,
+
+        @Size(max = 100, message = "WiFi SSID cannot exceed 100 characters")
+        String wifiSsid,
+
+        @Size(max = 100, message = "WiFi password cannot exceed 100 characters")
+        String wifiPassword,
+
+        @Size(max = 30, message = "Split algorithm cannot exceed 30 characters")
+        String splitAlgorithm,
+
+        Boolean autoRestockFromExpenses,
+
+        @Min(value = 1, message = "Max members must be at least 1")
+        @Max(value = 100, message = "Max members cannot exceed 100")
+        Integer maxMembers
+    ) {
+        public Create(String name, String description, Currency currency, ZoneId timezone) {
+            this(name, description, currency, timezone, null, null, null, null, null, null);
+        }
+    }
 
     record Update(
         @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
@@ -38,10 +61,28 @@ public interface HouseholdRequest {
         Currency currency,
         ZoneId timezone,
 
+        @Min(value = 0, message = "Monthly budget cannot be negative")
+        BigDecimal monthlyBudget,
+
+        @Size(max = 100, message = "WiFi SSID cannot exceed 100 characters")
+        String wifiSsid,
+
+        @Size(max = 100, message = "WiFi password cannot exceed 100 characters")
+        String wifiPassword,
+
+        @Size(max = 30, message = "Split algorithm cannot exceed 30 characters")
+        String splitAlgorithm,
+
+        Boolean autoRestockFromExpenses,
+
         @Min(value = 1, message = "Max members must be at least 1")
         @Max(value = 100, message = "Max members cannot exceed 100")
         Integer maxMembers
-    ) {}
+    ) {
+        public Update(String name, String description, String avatarUrl, Currency currency, ZoneId timezone, Integer maxMembers) {
+            this(name, description, avatarUrl, currency, timezone, null, null, null, null, null, maxMembers);
+        }
+    }
 
     record UpdateMember(
         @NotNull(message = "Role is required")

@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
-import { toast } from 'sonner';
 import {
-  IconCoins,
+  IconAlertTriangle,
   IconArrowsSplit,
   IconCheck,
+  IconCoins,
   IconCopy,
-  IconTrash,
-  IconWifi,
-  IconUsers,
-  IconPigMoney,
-  IconShoppingCart,
   IconHome,
-  IconAlertTriangle,
   IconMinus,
+  IconPigMoney,
   IconPlus,
   IconQrcode,
+  IconShoppingCart,
+  IconTrash,
+  IconUsers,
+  IconWifi,
 } from '@tabler/icons-react';
+import { QRCodeSVG } from 'qrcode.react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { CURRENCIES } from '../constants/settings.constants';
 import { WelcomeKitModal } from './WelcomeKitModal';
 
@@ -46,6 +46,7 @@ interface HouseholdSettingsTabProps {
   onCopyInvite: () => void;
   copiedWifi: boolean;
   onCopyWifi: () => void;
+  onLeaveHousehold?: () => void;
 }
 
 export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
@@ -71,6 +72,7 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
   onToggleAutoRestock,
   copiedWifi,
   onCopyWifi,
+  onLeaveHousehold,
 }) => {
   // Stepper rejection and shake states
   const [isShaking, setIsShaking] = useState(false);
@@ -114,6 +116,7 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
   const handleConfirmLeave = () => {
     if (hasUnsettledDebt) return;
     setShowLeaveModal(false);
+    onLeaveHousehold?.();
   };
 
   const wifiQrPayload = `WIFI:T:WPA;S:${wifiSsid};P:${wifiPassword};;`;
@@ -197,11 +200,10 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
             <div className="md:col-span-7 flex flex-wrap items-center gap-3">
               {/* Tactile Animated Stepper */}
               <div
-                className={`flex items-center gap-1.5 p-1 rounded-xl bg-[var(--canvas)] border transition-all duration-200 ${
-                  isShaking
+                className={`flex items-center gap-1.5 p-1 rounded-xl bg-[var(--canvas)] border transition-all duration-200 ${isShaking
                     ? 'animate-shake border-[var(--negative-text)] ring-2 ring-[var(--negative-text)]/30'
                     : 'border-[var(--border)]'
-                }`}
+                  }`}
               >
                 <button
                   type="button"
@@ -227,11 +229,10 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
               {/* Occupancy Status Badge */}
               <div className="flex items-center gap-2">
                 <span
-                  className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-all ${
-                    isAtCapacity
+                  className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-all ${isAtCapacity
                       ? 'bg-[var(--warn-bg)] text-[var(--warn-text)] border-[var(--warn-text)]/30'
                       : 'bg-[var(--positive-bg)] text-[var(--positive-text)] border-[var(--positive-text)]/30'
-                  }`}
+                    }`}
                 >
                   {memberCount} / {capacity} Occupied
                 </span>
@@ -314,11 +315,10 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
                       key={c.code}
                       type="button"
                       onClick={() => onCurrencyChange(c.code)}
-                      className={`flex items-center justify-between p-3 rounded-xl border text-left cursor-pointer transition-all active:scale-[0.98] ${
-                        isSelected
+                      className={`flex items-center justify-between p-3 rounded-xl border text-left cursor-pointer transition-all active:scale-[0.98] ${isSelected
                           ? 'border-[var(--oak)] bg-[var(--canvas)] ring-2 ring-[var(--oak)]/20 shadow-xs'
                           : 'border-[var(--border)] bg-[var(--card)] hover:bg-[var(--canvas)] hover:border-[var(--border-strong)]'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-3 truncate">
                         <span className="w-8 h-8 rounded-lg bg-[var(--canvas)] border border-[var(--border)] flex items-center justify-center mono font-bold text-xs text-[var(--oak)] shrink-0">
@@ -357,11 +357,10 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
                   role="radio"
                   aria-checked={splitAlgorithm === 'DEBT_SIMPLIFIED'}
                   onClick={() => onSplitAlgorithmChange('DEBT_SIMPLIFIED')}
-                  className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all active:scale-[0.98] ${
-                    splitAlgorithm === 'DEBT_SIMPLIFIED'
+                  className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all active:scale-[0.98] ${splitAlgorithm === 'DEBT_SIMPLIFIED'
                       ? 'bg-[var(--canvas)] border-[var(--oak)] ring-2 ring-[var(--oak)]/20 shadow-xs'
                       : 'border-[var(--border)] bg-[var(--card)] hover:border-[var(--border-strong)]'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between text-xs font-bold text-[var(--text)] mb-1">
                     <span>Minimum Cash Flow</span>
@@ -377,11 +376,10 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
                   role="radio"
                   aria-checked={splitAlgorithm === 'DIRECT'}
                   onClick={() => onSplitAlgorithmChange('DIRECT')}
-                  className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all active:scale-[0.98] ${
-                    splitAlgorithm === 'DIRECT'
+                  className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all active:scale-[0.98] ${splitAlgorithm === 'DIRECT'
                       ? 'bg-[var(--canvas)] border-[var(--oak)] ring-2 ring-[var(--oak)]/20 shadow-xs'
                       : 'border-[var(--border)] bg-[var(--card)] hover:border-[var(--border-strong)]'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between text-xs font-bold text-[var(--text)] mb-1">
                     <span>Direct 1-to-1 Ledger</span>
@@ -446,11 +444,10 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
               <button
                 type="button"
                 onClick={handleCopyWifiCredentials}
-                className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border text-xs font-semibold cursor-pointer shrink-0 transition-all duration-200 active:scale-95 shadow-xs ${
-                  copiedWifi
+                className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border text-xs font-semibold cursor-pointer shrink-0 transition-all duration-200 active:scale-95 shadow-xs ${copiedWifi
                     ? 'bg-[var(--positive-bg)] border-[var(--positive-text)] text-[var(--positive-text)] scale-105'
                     : 'bg-[var(--card)] border-[var(--border-strong)] hover:bg-[var(--sage-tint)] text-[var(--text)]'
-                }`}
+                  }`}
               >
                 {copiedWifi ? (
                   <IconCheck size={15} className="animate-scale-in text-[var(--positive-text)]" />
@@ -463,11 +460,10 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
               <button
                 type="button"
                 onClick={() => setShowWifiQr(!showWifiQr)}
-                className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border text-xs font-semibold cursor-pointer shrink-0 transition-all active:scale-95 shadow-xs ${
-                  showWifiQr
+                className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border text-xs font-semibold cursor-pointer shrink-0 transition-all active:scale-95 shadow-xs ${showWifiQr
                     ? 'bg-[var(--oak)] text-white border-[var(--oak)]'
                     : 'bg-[var(--card)] border-[var(--border-strong)] hover:bg-[var(--oak-tint)] text-[var(--text)]'
-                }`}
+                  }`}
               >
                 <IconQrcode size={15} />
                 <span>{showWifiQr ? 'Hide QR' : 'WiFi QR'}</span>
@@ -525,14 +521,12 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
             role="switch"
             aria-checked={autoRestockFromExpenses}
             onClick={() => onToggleAutoRestock(!autoRestockFromExpenses)}
-            className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer shrink-0 ${
-              autoRestockFromExpenses ? 'bg-[var(--oak)]' : 'bg-[var(--border-strong)]'
-            }`}
+            className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer shrink-0 ${autoRestockFromExpenses ? 'bg-[var(--oak)]' : 'bg-[var(--border-strong)]'
+              }`}
           >
             <span
-              className={`block w-4 h-4 rounded-full bg-white transition-transform ${
-                autoRestockFromExpenses ? 'translate-x-6' : 'translate-x-1'
-              }`}
+              className={`block w-4 h-4 rounded-full bg-white transition-transform ${autoRestockFromExpenses ? 'translate-x-6' : 'translate-x-1'
+                }`}
             />
           </button>
         </div>
@@ -563,11 +557,10 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-fade-in">
           <div className="card-custom max-w-md w-full p-6 space-y-4 shadow-2xl animate-fade-in border border-[var(--border-strong)]">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                hasUnsettledDebt
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${hasUnsettledDebt
                   ? 'bg-[var(--warn-bg)] text-[var(--warn-text)]'
                   : 'bg-[var(--negative-bg)] text-[var(--negative-text)]'
-              }`}>
+                }`}>
                 <IconAlertTriangle size={22} />
               </div>
               <div>

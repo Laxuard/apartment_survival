@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
-  IconShieldLock,
+  IconAlertCircle,
+  IconCheck,
   IconEye,
   IconEyeOff,
-  IconCheck,
-  IconAlertCircle,
+  IconShieldLock,
 } from '@tabler/icons-react';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 import type { PasswordChangeData } from '../types/settings.types';
 
 interface ProfileSettingsTabProps {
   initialName: string;
   initialEmail: string;
-  onSaveProfile: (name: string, email: string) => void;
+  onSaveProfile: (name: string, email: string) => void | Promise<void>;
   profileFeedback: string | null;
-  onChangePassword: (data: PasswordChangeData) => boolean;
+  onChangePassword: (data: PasswordChangeData) => boolean | Promise<boolean>;
   passwordFeedback: { success?: boolean; message?: string } | null;
 }
 
@@ -37,15 +37,15 @@ export const ProfileSettingsTab: React.FC<ProfileSettingsTabProps> = ({
 
   const isProfileDirty = name.trim() !== initialName || email.trim() !== initialEmail;
 
-  const handleProfileSubmit = (e: React.FormEvent) => {
+  const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim()) return;
-    onSaveProfile(name, email);
+    await onSaveProfile(name, email);
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ok = onChangePassword({ currentPassword, newPassword, confirmPassword });
+    const ok = await onChangePassword({ currentPassword, newPassword, confirmPassword });
     if (ok) {
       setCurrentPassword('');
       setNewPassword('');
@@ -127,11 +127,10 @@ export const ProfileSettingsTab: React.FC<ProfileSettingsTabProps> = ({
             <Button
               type="submit"
               disabled={!isProfileDirty}
-              className={`text-xs font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer ${
-                isProfileDirty
-                  ? 'btn-tactile bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white shadow-xs'
-                  : 'bg-[var(--canvas)] text-[var(--muted)] border border-[var(--border)] opacity-60 cursor-not-allowed'
-              }`}
+              className={`text-xs font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer ${isProfileDirty
+                ? 'btn-tactile bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white shadow-xs'
+                : 'bg-[var(--canvas)] text-[var(--muted)] border border-[var(--border)] opacity-60 cursor-not-allowed'
+                }`}
             >
               Save Profile Details
             </Button>
@@ -194,9 +193,8 @@ export const ProfileSettingsTab: React.FC<ProfileSettingsTabProps> = ({
 
                 {passwordFeedback && (
                   <div
-                    className={`flex items-center gap-1.5 text-xs font-semibold pt-1 ${
-                      passwordFeedback.success ? 'text-[var(--positive-text)]' : 'text-[var(--negative-text)]'
-                    }`}
+                    className={`flex items-center gap-1.5 text-xs font-semibold pt-1 ${passwordFeedback.success ? 'text-[var(--positive-text)]' : 'text-[var(--negative-text)]'
+                      }`}
                   >
                     {passwordFeedback.success ? <IconCheck size={14} /> : <IconAlertCircle size={14} />}
                     <span>{passwordFeedback.message}</span>

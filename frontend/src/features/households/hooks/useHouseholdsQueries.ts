@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { householdsApi } from '../api/householdsApi';
-import type { CreateHouseholdDto, JoinWithCodeDto, UserInboxInvite } from '../types';
+import type { CreateHouseholdDto, UpdateHouseholdDto, JoinWithCodeDto, UserInboxInvite } from '../types';
 import { useHouseholdStore } from '@/stores/useHouseholdStore';
 import type { HouseholdMembership } from '@/types';
 
@@ -19,9 +19,16 @@ export const useHouseholdsQuery = () => {
       return summaries.map((s) => ({
         id: s.householdId,
         name: s.name,
-        role: 'ADMIN' as const,
+        role: s.role || 'ADMIN',
         currency: typeof s.currency === 'string' ? s.currency : 'MAD',
         memberCount: s.memberCount,
+        description: s.description,
+        monthlyBudget: s.monthlyBudget ?? 0,
+        capacity: s.maxMembers ?? 4,
+        wifiSsid: s.wifiSsid || '',
+        wifiPassword: s.wifiPassword || '',
+        splitAlgorithm: s.splitAlgorithm || 'DEBT_SIMPLIFIED',
+        autoRestockFromExpenses: s.autoRestockFromExpenses ?? true,
       }));
     },
     staleTime: 1000 * 60 * 2,
@@ -46,11 +53,45 @@ export const useCreateHouseholdMutation = () => {
       addHousehold({
         id: created.householdId,
         name: created.name,
-        role: 'ADMIN',
+        role: created.role || 'ADMIN',
         currency: typeof created.currency === 'string' ? created.currency : 'MAD',
         memberCount: 1,
+        description: created.description,
+        monthlyBudget: created.monthlyBudget ?? 0,
+        capacity: created.maxMembers ?? 4,
+        wifiSsid: created.wifiSsid || '',
+        wifiPassword: created.wifiPassword || '',
+        splitAlgorithm: created.splitAlgorithm || 'DEBT_SIMPLIFIED',
+        autoRestockFromExpenses: created.autoRestockFromExpenses ?? true,
       });
       queryClient.invalidateQueries({ queryKey: HOUSEHOLDS_QUERY_KEY });
+    },
+  });
+};
+
+export const useUpdateHouseholdMutation = () => {
+  const queryClient = useQueryClient();
+  const updateActiveHousehold = useHouseholdStore((s) => s.updateActiveHousehold);
+
+  return useMutation({
+    mutationFn: ({ householdId, dto }: { householdId: string; dto: UpdateHouseholdDto }) =>
+      householdsApi.updateHousehold(householdId, dto),
+    onSuccess: (updated) => {
+      updateActiveHousehold({
+        name: updated.name,
+        description: updated.description,
+        currency: typeof updated.currency === 'string' ? updated.currency : 'MAD',
+        memberCount: updated.memberCount,
+        capacity: updated.maxMembers,
+        monthlyBudget: updated.monthlyBudget,
+        wifiSsid: updated.wifiSsid,
+        wifiPassword: updated.wifiPassword,
+        splitAlgorithm: updated.splitAlgorithm,
+        autoRestockFromExpenses: updated.autoRestockFromExpenses,
+        role: updated.role,
+      });
+      queryClient.invalidateQueries({ queryKey: HOUSEHOLDS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: HOUSEHOLD_DETAIL_KEY(updated.householdId) });
     },
   });
 };
@@ -118,4 +159,3 @@ export const useDeclineInviteMutation = () => {
     },
   });
 };
-

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { toast } from 'sonner';
-import { IconArrowLeft, IconUserPlus, IconKey } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useJoinHouseholdMutation } from '@/features/households';
+import { IconArrowLeft, IconKey, IconUserPlus } from '@tabler/icons-react';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export const JoinHouseholdPage: React.FC = () => {
   const [code, setCode] = useState('');
@@ -24,7 +24,7 @@ export const JoinHouseholdPage: React.FC = () => {
           toast.success(`Joined "${data.name}"!`, {
             description: 'You are now connected to the household tab.',
           });
-          navigate('/', { replace: true });
+          navigate('/dashboard', { replace: true });
         },
       }
     );

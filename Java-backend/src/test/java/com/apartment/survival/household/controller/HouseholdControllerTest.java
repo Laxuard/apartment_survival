@@ -1,26 +1,12 @@
 package com.apartment.survival.household.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import tools.jackson.databind.ObjectMapper;
-
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Currency;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -38,6 +24,19 @@ import com.apartment.survival.household.model.HouseholdRole;
 import com.apartment.survival.household.security.HouseholdSecurityEvaluator;
 import com.apartment.survival.household.service.HouseholdService;
 import com.apartment.survival.iam.security.UserDetailsImpl;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(controllers = HouseholdController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -68,12 +67,12 @@ class HouseholdControllerTest {
     private static final ZoneId CASABLANCA = ZoneId.of("Africa/Casablanca");
 
     private static final UserDetailsImpl CURRENT_USER = new UserDetailsImpl(
-            CURRENT_USER_ID, "user@test.com", "TestUser", "password", true, true, List.of()
-    );
+            CURRENT_USER_ID, "user@test.com", "TestUser", "password", true, true, List.of());
 
     @BeforeEach
     void setUpSecurityContext() {
-        Authentication auth = new UsernamePasswordAuthenticationToken(CURRENT_USER, null, CURRENT_USER.getAuthorities());
+        Authentication auth = new UsernamePasswordAuthenticationToken(CURRENT_USER, null,
+                CURRENT_USER.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
@@ -155,10 +154,12 @@ class HouseholdControllerTest {
         @Test
         @DisplayName("Should return 200 OK and household detail with members")
         void getHousehold_Success() throws Exception {
-            var member = new HouseholdResponse.MemberSummary(TARGET_USER_ID, "Alex", "alex@test.com", HouseholdRole.ADMIN, "Roomie", Instant.now());
-            var detail = new HouseholdResponse.Detail(HOUSEHOLD_ID, "My Apt", "Desc", null, MAD, CASABLANCA, 5, false, List.of(member), Instant.now());
+            var member = new HouseholdResponse.MemberSummary(TARGET_USER_ID, "Alex", "alex@test.com",
+                    HouseholdRole.ADMIN, "Roomie", Instant.now());
+            var detail = new HouseholdResponse.Detail(HOUSEHOLD_ID, "My Apt", "Desc", null, MAD, CASABLANCA, 5, false,
+                    List.of(member), Instant.now());
 
-            when(householdService.getHousehold(HOUSEHOLD_ID)).thenReturn(detail);
+            when(householdService.getHousehold(eq(HOUSEHOLD_ID), any())).thenReturn(detail);
 
             mockMvc.perform(get(BASE_URL + "/{householdId}", HOUSEHOLD_ID))
                     .andExpect(status().isOk())
@@ -166,7 +167,7 @@ class HouseholdControllerTest {
                     .andExpect(jsonPath("$.members[0].userId").value(TARGET_USER_ID.toString()))
                     .andExpect(jsonPath("$.members[0].username").value("Alex"));
 
-            verify(householdService).getHousehold(HOUSEHOLD_ID);
+            verify(householdService).getHousehold(eq(HOUSEHOLD_ID), any());
         }
     }
 
@@ -183,7 +184,7 @@ class HouseholdControllerTest {
             var request = new HouseholdRequest.Update("Updated Apt", "New Desc", null, MAD, CASABLANCA, 8);
             var summary = buildSummary(HOUSEHOLD_ID, "Updated Apt");
 
-            when(householdService.update(eq(HOUSEHOLD_ID), any())).thenReturn(summary);
+            when(householdService.update(eq(HOUSEHOLD_ID), any(), any())).thenReturn(summary);
 
             mockMvc.perform(put(BASE_URL + "/{householdId}", HOUSEHOLD_ID)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -191,7 +192,7 @@ class HouseholdControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.name").value("Updated Apt"));
 
-            verify(householdService).update(eq(HOUSEHOLD_ID), any());
+            verify(householdService).update(eq(HOUSEHOLD_ID), any(), any());
         }
 
         @Test
@@ -234,7 +235,8 @@ class HouseholdControllerTest {
         @DisplayName("Should return 200 OK and updated MemberSummary")
         void updateMember_Success() throws Exception {
             var request = new HouseholdRequest.UpdateMember(HouseholdRole.MEMBER, "NewAlias");
-            var summary = new HouseholdResponse.MemberSummary(TARGET_USER_ID, "Alex", "alex@test.com", HouseholdRole.MEMBER, "NewAlias", Instant.now());
+            var summary = new HouseholdResponse.MemberSummary(TARGET_USER_ID, "Alex", "alex@test.com",
+                    HouseholdRole.MEMBER, "NewAlias", Instant.now());
 
             when(householdService.updateMember(eq(HOUSEHOLD_ID), eq(TARGET_USER_ID), any())).thenReturn(summary);
 
@@ -261,7 +263,8 @@ class HouseholdControllerTest {
     }
 
     // ==========================================
-    // 7. DELETE /api/households/{householdId}/members/{targetUserId} (REMOVE MEMBER)
+    // 7. DELETE /api/households/{householdId}/members/{targetUserId} (REMOVE
+    // MEMBER)
     // ==========================================
     @Nested
     @DisplayName("DELETE /api/households/{householdId}/members/{targetUserId}")

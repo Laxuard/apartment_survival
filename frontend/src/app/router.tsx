@@ -1,14 +1,49 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { Suspense, lazy } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from '@/app/layouts/AppLayout';
 import { AuthLayout } from '@/app/layouts/AuthLayout';
 import { OnboardingLayout } from '@/app/layouts/OnboardingLayout';
-import { ProtectedRoute, PublicOnlyRoute } from '@/features/auth';
-import { HouseholdRequiredGuard } from '@/features/households/components/HouseholdRequiredGuard';
+import { AuthGuard, PublicGuard } from '@/features/auth';
+import { HouseholdRequiredGuard } from '@/features/households';
 import { LoadingScreen } from '@/components/common/LoadingScreen';
 
-// ─── Lazy Loaded Feature Pages (Individual Chunk Isolation) ──────────────────
+// ─── Lazy Loaded Feature Pages ───────────────────────────────────────────────
+const LandingPage = lazy(() =>
+  import('@/features/landing/pages/LandingPage').then((m) => ({
+    default: m.LandingPage,
+  }))
+);
+const LoginPage = lazy(() =>
+  import('@/features/auth/pages/LoginPage').then((m) => ({
+    default: m.LoginPage,
+  }))
+);
+const InviteAcceptPage = lazy(() =>
+  import('@/features/auth/pages/InviteAcceptPage').then((m) => ({
+    default: m.InviteAcceptPage,
+  }))
+);
+const HubPage = lazy(() =>
+  import('@/features/hub/pages/HubPage').then((m) => ({
+    default: m.HubPage,
+  }))
+);
+const OnboardingPage = lazy(() =>
+  import('@/features/onboarding/pages/OnboardingPage').then((m) => ({
+    default: m.OnboardingPage,
+  }))
+);
+const CreateHouseholdPage = lazy(() =>
+  import('@/features/onboarding/pages/CreateHouseholdPage').then((m) => ({
+    default: m.CreateHouseholdPage,
+  }))
+);
+const JoinHouseholdPage = lazy(() =>
+  import('@/features/onboarding/pages/JoinHouseholdPage').then((m) => ({
+    default: m.JoinHouseholdPage,
+  }))
+);
 const DashboardPage = lazy(() =>
   import('@/features/dashboard/pages/DashboardPage').then((m) => ({
     default: m.DashboardPage,
@@ -35,40 +70,6 @@ const SettingsPage = lazy(() =>
   }))
 );
 
-// Auth Pages
-const LoginPage = lazy(() =>
-  import('@/features/auth/pages/LoginPage').then((m) => ({
-    default: m.LoginPage,
-  }))
-);
-const RegisterPage = lazy(() =>
-  import('@/features/auth/pages/RegisterPage').then((m) => ({
-    default: m.RegisterPage,
-  }))
-);
-const InviteAcceptPage = lazy(() =>
-  import('@/features/auth/pages/InviteAcceptPage').then((m) => ({
-    default: m.InviteAcceptPage,
-  }))
-);
-
-// Onboarding Pages
-const OnboardingPage = lazy(() =>
-  import('@/features/onboarding/pages/OnboardingPage').then((m) => ({
-    default: m.OnboardingPage,
-  }))
-);
-const CreateHouseholdPage = lazy(() =>
-  import('@/features/onboarding/pages/CreateHouseholdPage').then((m) => ({
-    default: m.CreateHouseholdPage,
-  }))
-);
-const JoinHouseholdPage = lazy(() =>
-  import('@/features/onboarding/pages/JoinHouseholdPage').then((m) => ({
-    default: m.JoinHouseholdPage,
-  }))
-);
-
 const renderLazy = (Component: React.LazyExoticComponent<React.FC>) => (
   <Suspense fallback={<LoadingScreen />}>
     <Component />
@@ -76,56 +77,74 @@ const renderLazy = (Component: React.LazyExoticComponent<React.FC>) => (
 );
 
 export const router = createBrowserRouter([
-  // ─── 1. GUEST-ONLY ROUTES (Redirect to / if logged in) ──────────────────────
+  // ─── 0. PUBLIC MARKETING & AUTH ROUTES (Redirects to /hub if authenticated) ───
   {
-    element: <PublicOnlyRoute />,
+    element: <PublicGuard />,
     children: [
+      {
+        path: '/',
+        element: renderLazy(LandingPage),
+      },
+      {
+        path: '/welcome',
+        element: renderLazy(LandingPage),
+      },
       {
         element: <AuthLayout />,
         children: [
           { path: '/login', element: renderLazy(LoginPage) },
-          { path: '/register', element: renderLazy(RegisterPage) },
         ],
       },
     ],
   },
 
-  // ─── 2. UNIVERSAL INVITE ROUTE (Open to both logged-in & guest users) ───────
+  // ─── 1. SPECIAL INTERCEPT ROUTES (Publicly accessible, contextual flows) ─────
   {
-    path: '/invite/:token',
+    path: '/register',
+    element: <Navigate to="/onboarding" replace />,
+  },
+  {
+    path: '/onboarding',
+    element: renderLazy(OnboardingPage),
+  },
+  {
+    element: <OnboardingLayout />,
+    children: [
+      { path: '/onboarding/create', element: renderLazy(CreateHouseholdPage) },
+      { path: '/onboarding/join', element: renderLazy(JoinHouseholdPage) },
+    ],
+  },
+  {
+    path: '/invite/:inviteToken',
+    element: renderLazy(InviteAcceptPage),
+  },
+  {
+    path: '/invite',
     element: renderLazy(InviteAcceptPage),
   },
 
-  // ─── 3. ONBOARDING ROUTES (Logged in, but no active household) ──────────────
+  // ─── 2. PROTECTED MACRO & MICRO ROUTES (Requires valid Auth Token) ──────────────
   {
-    element: <ProtectedRoute />,
+    element: <AuthGuard />,
     children: [
+      // 2A. MACRO COMMAND CENTER (All user households & pending invites)
       {
-        element: <OnboardingLayout />,
-        children: [
-          { path: '/onboarding', element: renderLazy(OnboardingPage) },
-          { path: '/onboarding/create', element: renderLazy(CreateHouseholdPage) },
-          { path: '/onboarding/join', element: renderLazy(JoinHouseholdPage) },
-        ],
+        path: '/hub',
+        element: renderLazy(HubPage),
       },
-    ],
-  },
 
-  // ─── 4. PROTECTED APP SHELL (Logged in + Member of ≥1 Household) ────────────
-  {
-    element: <ProtectedRoute />,
-    children: [
+      // 2B. MICRO APARTMENT OPERATING WORKSPACE (Requires active household)
       {
         element: <HouseholdRequiredGuard />,
         children: [
           {
             element: <AppLayout />,
             children: [
-              { index: true, element: renderLazy(DashboardPage) },
-              { path: 'expenses', element: renderLazy(ExpensesPage) },
-              { path: 'pantry', element: renderLazy(PantryPage) },
-              { path: 'roommates', element: renderLazy(RoommatesPage) },
-              { path: 'settings', element: renderLazy(SettingsPage) },
+              { path: '/dashboard', element: renderLazy(DashboardPage) },
+              { path: '/expenses', element: renderLazy(ExpensesPage) },
+              { path: '/pantry', element: renderLazy(PantryPage) },
+              { path: '/roommates', element: renderLazy(RoommatesPage) },
+              { path: '/settings', element: renderLazy(SettingsPage) },
             ],
           },
         ],
@@ -133,6 +152,7 @@ export const router = createBrowserRouter([
     ],
   },
 
+  // ─── 3. CATCH-ALL ROUTE ─────────────────────────────────────────────────────
   {
     path: '*',
     element: <Navigate to="/" replace />,

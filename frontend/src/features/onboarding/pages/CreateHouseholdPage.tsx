@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { toast } from 'sonner';
-import { IconArrowLeft, IconHome, IconCheck, IconSparkles, IconCoins } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCreateHouseholdMutation } from '@/features/households';
+import { IconArrowLeft, IconCheck, IconCoins, IconHome, IconSparkles } from '@tabler/icons-react';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const CURRENCY_OPTIONS = [
   { value: 'MAD', label: 'Moroccan Dirham (MAD)', symbol: 'MAD' },
@@ -37,7 +37,7 @@ export const CreateHouseholdPage: React.FC = () => {
           toast.success(`Created "${data.name}"!`, {
             description: `Primary currency set to ${currency}. Welcome to your dashboard!`,
           });
-          navigate('/', { replace: true });
+          navigate('/dashboard', { replace: true });
         },
       }
     );
@@ -102,11 +102,10 @@ export const CreateHouseholdPage: React.FC = () => {
                   key={c.value}
                   type="button"
                   onClick={() => setCurrency(c.value)}
-                  className={`p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
-                    isSelected
+                  className={`p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${isSelected
                       ? 'border-[var(--oak)] bg-[var(--oak-tint)]/80 ring-2 ring-[var(--oak)]/20 shadow-xs'
                       : 'border-[var(--border)] bg-[var(--canvas)] hover:border-[var(--border-strong)]'
-                  }`}
+                    }`}
                 >
                   <div>
                     <div className="text-xs font-bold text-[var(--text)]">{c.value}</div>
@@ -120,16 +119,18 @@ export const CreateHouseholdPage: React.FC = () => {
         </div>
 
         {/* Starter Template Toggle */}
-        <div
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={includeStarterTemplates}
           onClick={() => setIncludeStarterTemplates(!includeStarterTemplates)}
-          className="p-3.5 rounded-2xl border border-[var(--border)] bg-[var(--canvas)] hover:border-[var(--border-strong)] transition-colors flex items-start gap-3 cursor-pointer select-none"
+          className="p-3.5 rounded-2xl border border-[var(--border)] bg-[var(--canvas)] hover:border-[var(--border-strong)] transition-colors flex items-start gap-3 cursor-pointer select-none w-full text-left"
         >
           <div
-            className={`w-5 h-5 rounded-lg border flex items-center justify-center mt-0.5 transition-colors shrink-0 ${
-              includeStarterTemplates
+            className={`w-5 h-5 rounded-lg border flex items-center justify-center mt-0.5 transition-colors shrink-0 ${includeStarterTemplates
                 ? 'bg-[var(--oak)] border-[var(--oak)] text-white'
                 : 'border-[var(--border-strong)] bg-[var(--card)]'
-            }`}
+              }`}
           >
             {includeStarterTemplates && <IconCheck size={13} />}
           </div>
@@ -142,7 +143,7 @@ export const CreateHouseholdPage: React.FC = () => {
               Automatically seeds Wi-Fi & Rent recurring bills and essential pantry restock trackers (Coffee, Eggs, Milk, Olive Oil).
             </p>
           </div>
-        </div>
+        </button>
 
         <Button
           type="submit"

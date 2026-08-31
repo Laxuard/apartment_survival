@@ -1,13 +1,13 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { useUIStore } from '@/stores/useUIStore';
 import {
   IconLayoutDashboard,
-  IconReceipt2,
   IconPlus,
+  IconReceipt2,
   IconShoppingCart,
   IconUser,
 } from '@tabler/icons-react';
-import { useUIStore } from '@/stores/useUIStore';
+import React from 'react';
+import { NavLink } from 'react-router-dom';
 
 export const BottomNav: React.FC = () => {
   const { openModal } = useUIStore();
@@ -15,8 +15,7 @@ export const BottomNav: React.FC = () => {
   return (
     <nav className="bottom-nav" aria-label="Mobile navigation">
       <NavLink
-        to="/"
-        end
+        to="/dashboard"
         className={({ isActive }) => `bn-item ${isActive ? 'active' : ''}`}
       >
         <IconLayoutDashboard size={20} aria-hidden="true" />

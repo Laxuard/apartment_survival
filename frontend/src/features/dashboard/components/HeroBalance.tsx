@@ -29,9 +29,9 @@ export const HeroBalance: React.FC<HeroBalanceProps> = ({
   const lentPct = totalFlow > 0 ? Math.round((finalLent / totalFlow) * 100) : 50;
 
   return (
-    <div className="rounded-3xl border border-[var(--border-strong)] bg-gradient-to-r from-[var(--oak-tint)] via-[var(--card)] to-[var(--sage-tint)]/70 p-6 sm:p-7 relative overflow-hidden shadow-md shrink-0 before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:bg-gradient-to-r before:from-[var(--oak)] before:via-[var(--border-strong)] before:to-[var(--sage)]">
+    <div className="rounded-3xl border border-[var(--border-strong)] bg-gradient-to-r from-[var(--oak-tint)] via-[var(--card)] to-[var(--sage-tint)]/70 p-6 sm:p-7 relative overflow-hidden shadow-md shrink-0 before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:bg-gradient-to-r before:from-[var(--oak)] before:via-[var(--border-strong)] before:to-[var(--sage)] select-none">
       {/* 1. Header Row inside Banner */}
-      <div className="flex items-center justify-between pb-3.5 mb-2 border-b border-[var(--border)]/60">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-3.5 mb-2 border-b border-[var(--border)]/60">
         <div className="flex items-center gap-2.5">
           <span className="uppercase tracking-wider text-xs font-bold text-[var(--muted)]">
             {ledger.statusLabel}
@@ -41,12 +41,13 @@ export const HeroBalance: React.FC<HeroBalanceProps> = ({
             Healthy Ledger
           </span>
         </div>
+
         <span className="text-xs text-[var(--muted)] hidden sm:inline-block font-medium">
           {finalAmount > 0
-            ? `${lentPct}% of space ledger in your favor`
+            ? `${lentPct}% in your favor`
             : finalAmount === 0
-            ? 'All household accounts settled'
-            : 'Open debt pending settlement'}
+            ? 'All flat accounts settled'
+            : 'Open debt pending'}
         </span>
       </div>
 
@@ -96,7 +97,7 @@ export const HeroBalance: React.FC<HeroBalanceProps> = ({
                   title={`Lent: ${lentPct}%`}
                 />
                 <div
-                  className="bg-gradient-to-r from-[var(--oak)] to-[var(--rust)] h-full transition-all duration-500 ease-out shadow-sm"
+                  className="bg-gradient-to-r from-[var(--oak)] to-[var(--oak-hover)] h-full transition-all duration-500 ease-out shadow-sm"
                   style={{ width: `${100 - lentPct}%` }}
                   title={`Borrowed: ${100 - lentPct}%`}
                 />

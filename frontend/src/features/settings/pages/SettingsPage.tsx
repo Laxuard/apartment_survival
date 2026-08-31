@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import type { SettingsTab } from '../types/settings.types';
-import { useSettings } from '../hooks/useSettings';
-import { SettingsTabsNav } from '../components/SettingsTabsNav';
-import { HouseholdSettingsTab } from '../components/HouseholdSettingsTab';
-import { ProfileSettingsTab } from '../components/ProfileSettingsTab';
 import { AppearanceSettingsTab } from '../components/AppearanceSettingsTab';
+import { HouseholdSettingsTab } from '../components/HouseholdSettingsTab';
 import { NotificationsSettingsTab } from '../components/NotificationsSettingsTab';
+import { ProfileSettingsTab } from '../components/ProfileSettingsTab';
+import { SettingsTabsNav } from '../components/SettingsTabsNav';
+import { useSettings } from '../hooks/useSettings';
+import type { SettingsTab } from '../types/settings.types';
 
 export const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('household');
@@ -32,6 +32,7 @@ export const SettingsPage: React.FC = () => {
     updateAutoRestock,
     saveProfile,
     changePassword,
+    leaveHousehold,
     copyInviteLink,
     copyWifiPassword,
   } = useSettings();
@@ -79,6 +80,7 @@ export const SettingsPage: React.FC = () => {
           onCopyInvite={copyInviteLink}
           copiedWifi={copiedWifi}
           onCopyWifi={copyWifiPassword}
+          onLeaveHousehold={leaveHousehold}
         />
       )}
 

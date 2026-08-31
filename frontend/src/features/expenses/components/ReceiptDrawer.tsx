@@ -11,6 +11,7 @@ import { useUIStore } from '@/stores/useUIStore';
 import { useHouseholdStore } from '@/stores/useHouseholdStore';
 import { useExpensesQuery } from '@/features/expenses/hooks/useExpensesQueries';
 import { useRoommatesQuery } from '@/features/roommates';
+import type { ExpenseSplit } from '@/features/expenses/types';
 
 export const ReceiptDrawer: React.FC = () => {
   const { activeReceiptId, closeReceipt } = useUIStore();
@@ -39,7 +40,7 @@ export const ReceiptDrawer: React.FC = () => {
   const currency = expense.currency || activeCurrency;
   const count = roommates.length > 0 ? roommates.length : 1;
 
-  const splits =
+  const splits: ExpenseSplit[] =
     expense.splits && expense.splits.length > 0
       ? expense.splits
       : roommates.length > 0
@@ -76,7 +77,7 @@ export const ReceiptDrawer: React.FC = () => {
           {/* Total & Paid By Banner */}
           <div className="p-4 rounded-2xl bg-[var(--canvas)] border border-[var(--border)] text-center space-y-1">
             <div className="text-xs text-[var(--muted)]">Total Transaction Amount</div>
-            <div className="drawer-total mono font-bold text-3xl text-[var(--text)]">
+            <div className="drawer-total mono font-bold text-3xl text-[var(--text)] font-mono tabular-nums">
               {expense.amount.toFixed(2)}
               <span className="currency text-xs ml-1 text-[var(--muted)]">{currency}</span>
             </div>
@@ -93,13 +94,13 @@ export const ReceiptDrawer: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              {splits.map((split) => (
+              {splits.map((split: ExpenseSplit) => (
                 <div
                   className="p-3 rounded-xl bg-[var(--canvas)] border border-[var(--border)] flex items-center justify-between shadow-2xs"
                   key={split.userId}
                 >
                   <span className="text-xs font-medium text-[var(--text)]">{split.userName}</span>
-                  <span className="mono text-xs font-semibold text-[var(--text)]">
+                  <span className="font-mono tabular-nums text-xs font-semibold text-[var(--text)]">
                     {split.amount.toFixed(2)} {currency}
                   </span>
                 </div>

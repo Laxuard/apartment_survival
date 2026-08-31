@@ -27,14 +27,16 @@ public class HouseholdController {
 
     // === 1. Create a new household (Creator is automatically assigned ADMIN) ===
     @PostMapping
-    public ResponseEntity<HouseholdResponse.Summary> create(@Valid @RequestBody HouseholdRequest.Create request, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<HouseholdResponse.Summary> create(@Valid @RequestBody HouseholdRequest.Create request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
         HouseholdResponse.Summary response = householdService.create(request, userDetails.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     // === 2. List all active households the current user belongs to ===
     @GetMapping
-    public ResponseEntity<List<HouseholdResponse.Summary>> getMyHouseholds(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<List<HouseholdResponse.Summary>> getMyHouseholds(
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
         List<HouseholdResponse.Summary> response = householdService.getUserHouseholds(userDetails.getUserId());
         return ResponseEntity.ok(response);
     }
@@ -42,16 +44,23 @@ public class HouseholdController {
     // === 3. Get household details with all roommates ===
     @GetMapping("/{householdId}")
     @PreAuthorize("@householdSecurity.isHouseholdMember(#householdId)")
-    public ResponseEntity<HouseholdResponse.Detail> getHousehold(@PathVariable UUID householdId) {
-        HouseholdResponse.Detail response = householdService.getHousehold(householdId);
+    public ResponseEntity<HouseholdResponse.Detail> getHousehold(@PathVariable UUID householdId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        HouseholdResponse.Detail response = householdService.getHousehold(householdId,
+                userDetails != null ? userDetails.getUserId() : null);
         return ResponseEntity.ok(response);
     }
 
-    // === 4. Update household settings (name, currency, timezone, capacity) ===
+    // === 4. Update household settings (name, currency, timezone, capacity, budget,
+    // wifi, etc.) ===
     @PutMapping("/{householdId}")
     @PreAuthorize("@householdSecurity.isHouseholdAdmin(#householdId)")
-    public ResponseEntity<HouseholdResponse.Summary> update(@PathVariable UUID householdId, @Valid @RequestBody HouseholdRequest.Update request) {
-        HouseholdResponse.Summary response = householdService.update(householdId, request);
+    public ResponseEntity<HouseholdResponse.Summary> update(
+            @PathVariable UUID householdId,
+            @Valid @RequestBody HouseholdRequest.Update request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        HouseholdResponse.Summary response = householdService.update(householdId, request,
+                userDetails != null ? userDetails.getUserId() : null);
         return ResponseEntity.ok(response);
     }
 
@@ -66,7 +75,9 @@ public class HouseholdController {
     // === 6. Update roommate role or nickname ===
     @PutMapping("/{householdId}/members/{targetUserId}")
     @PreAuthorize("@householdSecurity.isHouseholdAdmin(#householdId)")
-    public ResponseEntity<HouseholdResponse.MemberSummary> updateMember(@PathVariable UUID householdId, @PathVariable UUID targetUserId, @Valid @RequestBody HouseholdRequest.UpdateMember request) {
+    public ResponseEntity<HouseholdResponse.MemberSummary> updateMember(@PathVariable UUID householdId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails, @PathVariable UUID targetUserId,
+            @Valid @RequestBody HouseholdRequest.UpdateMember request) {
         HouseholdResponse.MemberSummary response = householdService.updateMember(householdId, targetUserId, request);
         return ResponseEntity.ok(response);
     }

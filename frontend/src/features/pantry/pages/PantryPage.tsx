@@ -1,16 +1,16 @@
-import React, { useState, useMemo } from 'react';
-import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import {
-  IconPlus,
-  IconShoppingCart,
-  IconMinus,
-  IconCheck,
-  IconSearch,
   IconAlertTriangle,
+  IconCheck,
   IconCircleCheck,
+  IconMinus,
+  IconPlus,
+  IconSearch,
+  IconShoppingCart,
   IconX,
 } from '@tabler/icons-react';
-import { Button } from '@/components/ui/button';
+import React, { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { usePantryStock } from '../hooks/usePantryStock';
 import type { PantryItem } from '../types';
 
@@ -88,11 +88,10 @@ export const PantryPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div
           onClick={() => setFilter('ALL')}
-          className={`bg-[var(--card)] border rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5 cursor-pointer ${
-            filter === 'ALL'
+          className={`bg-[var(--card)] border rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5 cursor-pointer ${filter === 'ALL'
               ? 'border-[var(--oak)] ring-1 ring-[var(--oak)]/20'
               : 'border-[var(--border)]'
-          }`}
+            }`}
         >
           <div className="flex items-center justify-between text-xs font-medium text-[var(--muted)]">
             <span>Tracked Items</span>
@@ -105,11 +104,10 @@ export const PantryPage: React.FC = () => {
 
         <div
           onClick={() => setFilter('CRITICAL')}
-          className={`bg-[var(--card)] border rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5 cursor-pointer ${
-            filter === 'CRITICAL'
+          className={`bg-[var(--card)] border rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5 cursor-pointer ${filter === 'CRITICAL'
               ? 'border-[var(--warn-text)] ring-1 ring-[var(--warn-text)]/20'
               : 'border-[var(--border)]'
-          }`}
+            }`}
         >
           <div className="flex items-center justify-between text-xs font-medium text-[var(--muted)]">
             <span>Needs Restocking</span>
@@ -157,33 +155,30 @@ export const PantryPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setFilter('ALL')}
-                  className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-                    filter === 'ALL'
+                  className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${filter === 'ALL'
                       ? 'bg-[var(--oak)] text-white shadow-sm'
                       : 'bg-[var(--canvas)] text-[var(--muted)] hover:text-[var(--text)] border border-[var(--border)]'
-                  }`}
+                    }`}
                 >
                   All ({totalCount})
                 </button>
                 <button
                   type="button"
                   onClick={() => setFilter('CRITICAL')}
-                  className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-                    filter === 'CRITICAL'
+                  className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${filter === 'CRITICAL'
                       ? 'bg-[var(--negative-text)] text-white shadow-sm'
                       : 'bg-[var(--canvas)] text-[var(--muted)] hover:text-[var(--text)] border border-[var(--border)]'
-                  }`}
+                    }`}
                 >
                   Low / Out ({criticalCount})
                 </button>
                 <button
                   type="button"
                   onClick={() => setFilter('STOCKED')}
-                  className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-                    filter === 'STOCKED'
+                  className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${filter === 'STOCKED'
                       ? 'bg-[var(--sage)] text-white shadow-sm'
                       : 'bg-[var(--canvas)] text-[var(--muted)] hover:text-[var(--text)] border border-[var(--border)]'
-                  }`}
+                    }`}
                 >
                   Stocked
                 </button>
@@ -228,7 +223,7 @@ export const PantryPage: React.FC = () => {
                       <span className="font-medium text-[13px] text-[var(--text)] truncate">{item.name}</span>
                       <span className="text-xs text-[var(--muted)] shrink-0 ml-2">{item.category}</span>
                     </div>
-                    
+
                     {/* Stock meter */}
                     <div className="stock-meter w-full">
                       <div className={`stock-meter-fill ${progress.fillClass}`} style={{ width: `${progress.percentage}%` }} />
@@ -245,7 +240,7 @@ export const PantryPage: React.FC = () => {
                     >
                       <IconMinus size={12} />
                     </button>
-                    <span 
+                    <span
                       key={`${item.id}-${qty}`}
                       className="tabular-nums mono text-xs font-bold text-center text-[var(--text)] w-6 inline-block shrink-0 animate-number-pop"
                     >
@@ -272,9 +267,8 @@ export const PantryPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleToggleGrocery(item.id, item.onGroceryList)}
-                    className={`btn-ghost-add btn-spring shrink-0 w-8 h-8 rounded-lg cursor-pointer flex items-center justify-center ${
-                      isAdded ? 'added bg-[var(--positive-bg)] text-[var(--positive-text)] border-[var(--positive-text)] shadow-xs' : ''
-                    }`}
+                    className={`btn-ghost-add btn-spring shrink-0 w-8 h-8 rounded-lg cursor-pointer flex items-center justify-center ${isAdded ? 'added bg-[var(--positive-bg)] text-[var(--positive-text)] border-[var(--positive-text)] shadow-xs' : ''
+                      }`}
                     aria-label={`Toggle ${item.name} on grocery list`}
                     title={isAdded ? 'On grocery list' : 'Add to grocery list'}
                   >

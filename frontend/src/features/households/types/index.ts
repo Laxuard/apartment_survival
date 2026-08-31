@@ -8,6 +8,13 @@ export interface BackendHouseholdSummary {
   currency: string;
   timezone?: string;
   memberCount: number;
+  maxMembers?: number;
+  monthlyBudget?: number;
+  wifiSsid?: string;
+  wifiPassword?: string;
+  splitAlgorithm?: 'DEBT_SIMPLIFIED' | 'DIRECT';
+  autoRestockFromExpenses?: boolean;
+  role?: Role;
   archived: boolean;
   createdAt: string;
 }
@@ -28,7 +35,14 @@ export interface BackendHouseholdDetail {
   avatarUrl?: string;
   currency: string;
   timezone?: string;
+  memberCount?: number;
   maxMembers: number;
+  monthlyBudget?: number;
+  wifiSsid?: string;
+  wifiPassword?: string;
+  splitAlgorithm?: 'DEBT_SIMPLIFIED' | 'DIRECT';
+  autoRestockFromExpenses?: boolean;
+  role?: Role;
   archived: boolean;
   members: BackendMemberSummary[];
   createdAt: string;
@@ -40,6 +54,11 @@ export interface CreateHouseholdDto {
   currency?: string;
   timezone?: string;
   maxMembers?: number;
+  monthlyBudget?: number;
+  wifiSsid?: string;
+  wifiPassword?: string;
+  splitAlgorithm?: 'DEBT_SIMPLIFIED' | 'DIRECT';
+  autoRestockFromExpenses?: boolean;
 }
 
 export interface UpdateHouseholdDto {
@@ -49,6 +68,11 @@ export interface UpdateHouseholdDto {
   currency?: string;
   timezone?: string;
   maxMembers?: number;
+  monthlyBudget?: number;
+  wifiSsid?: string;
+  wifiPassword?: string;
+  splitAlgorithm?: 'DEBT_SIMPLIFIED' | 'DIRECT';
+  autoRestockFromExpenses?: boolean;
 }
 
 export interface UpdateMemberDto {

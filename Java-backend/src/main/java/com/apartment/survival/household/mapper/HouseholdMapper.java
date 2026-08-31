@@ -2,14 +2,7 @@ package com.apartment.survival.household.mapper;
 
 import java.util.List;
 
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Builder;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
 
 import com.apartment.survival.household.dto.HouseholdRequest;
 import com.apartment.survival.household.dto.HouseholdResponse;
@@ -18,22 +11,72 @@ import com.apartment.survival.household.model.Household;
 import com.apartment.survival.household.model.HouseholdInvite;
 import com.apartment.survival.household.model.HouseholdMember;
 
-@Mapper(
-    componentModel = MappingConstants.ComponentModel.SPRING,
-    unmappedTargetPolicy = ReportingPolicy.IGNORE,
-    builder = @Builder(disableBuilder = true)
-)
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE, builder = @Builder(disableBuilder = true))
 public interface HouseholdMapper {
 
     // === Entity -> Response DTOs ===
 
     @Mapping(target = "householdId", source = "id")
     @Mapping(target = "memberCount", expression = "java(household.getMembers() != null ? household.getMembers().size() : 0)")
+    @Mapping(target = "role", ignore = true)
     HouseholdResponse.Summary toSummary(Household household);
 
     @Mapping(target = "householdId", source = "household.id")
+    @Mapping(target = "name", source = "household.name")
+    @Mapping(target = "description", source = "household.description")
+    @Mapping(target = "avatarUrl", source = "household.avatarUrl")
+    @Mapping(target = "currency", source = "household.currency")
+    @Mapping(target = "timezone", source = "household.timezone")
+    @Mapping(target = "maxMembers", source = "household.maxMembers")
+    @Mapping(target = "monthlyBudget", source = "household.monthlyBudget")
+    @Mapping(target = "wifiSsid", source = "household.wifiSsid")
+    @Mapping(target = "wifiPassword", source = "household.wifiPassword")
+    @Mapping(target = "splitAlgorithm", source = "household.splitAlgorithm")
+    @Mapping(target = "autoRestockFromExpenses", source = "household.autoRestockFromExpenses")
+    @Mapping(target = "archived", source = "household.archived")
+    @Mapping(target = "createdAt", source = "household.createdAt")
+    @Mapping(target = "memberCount", expression = "java(household.getMembers() != null ? household.getMembers().size() : 0)")
+    @Mapping(target = "role", source = "role")
+    HouseholdResponse.Summary toSummary(Household household, com.apartment.survival.household.model.HouseholdRole role);
+
+    @Mapping(target = "householdId", source = "household.id")
+    @Mapping(target = "name", source = "household.name")
+    @Mapping(target = "description", source = "household.description")
+    @Mapping(target = "avatarUrl", source = "household.avatarUrl")
+    @Mapping(target = "currency", source = "household.currency")
+    @Mapping(target = "timezone", source = "household.timezone")
+    @Mapping(target = "maxMembers", source = "household.maxMembers")
+    @Mapping(target = "monthlyBudget", source = "household.monthlyBudget")
+    @Mapping(target = "wifiSsid", source = "household.wifiSsid")
+    @Mapping(target = "wifiPassword", source = "household.wifiPassword")
+    @Mapping(target = "splitAlgorithm", source = "household.splitAlgorithm")
+    @Mapping(target = "autoRestockFromExpenses", source = "household.autoRestockFromExpenses")
+    @Mapping(target = "archived", source = "household.archived")
+    @Mapping(target = "createdAt", source = "household.createdAt")
+    @Mapping(target = "memberCount", expression = "java(household.getMembers() != null ? household.getMembers().size() : 0)")
     @Mapping(target = "members", source = "members")
+    @Mapping(target = "role", ignore = true)
     HouseholdResponse.Detail toDetail(Household household, List<HouseholdResponse.MemberSummary> members);
+
+    @Mapping(target = "householdId", source = "household.id")
+    @Mapping(target = "name", source = "household.name")
+    @Mapping(target = "description", source = "household.description")
+    @Mapping(target = "avatarUrl", source = "household.avatarUrl")
+    @Mapping(target = "currency", source = "household.currency")
+    @Mapping(target = "timezone", source = "household.timezone")
+    @Mapping(target = "maxMembers", source = "household.maxMembers")
+    @Mapping(target = "monthlyBudget", source = "household.monthlyBudget")
+    @Mapping(target = "wifiSsid", source = "household.wifiSsid")
+    @Mapping(target = "wifiPassword", source = "household.wifiPassword")
+    @Mapping(target = "splitAlgorithm", source = "household.splitAlgorithm")
+    @Mapping(target = "autoRestockFromExpenses", source = "household.autoRestockFromExpenses")
+    @Mapping(target = "archived", source = "household.archived")
+    @Mapping(target = "createdAt", source = "household.createdAt")
+    @Mapping(target = "memberCount", expression = "java(household.getMembers() != null ? household.getMembers().size() : 0)")
+    @Mapping(target = "members", source = "members")
+    @Mapping(target = "role", source = "role")
+    HouseholdResponse.Detail toDetail(Household household, List<HouseholdResponse.MemberSummary> members,
+            com.apartment.survival.household.model.HouseholdRole role);
 
     @Mapping(target = "userId", source = "member.userId")
     @Mapping(target = "username", source = "username")
@@ -50,10 +93,13 @@ public interface HouseholdMapper {
     @Mapping(target = "avatarUrl", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "maxMembers", ignore = true)
     @Mapping(target = "archived", constant = "false")
     @Mapping(target = "currency", defaultExpression = "java(java.util.Currency.getInstance(\"MAD\"))")
     @Mapping(target = "timezone", defaultExpression = "java(java.time.ZoneId.of(\"Africa/Casablanca\"))")
+    @Mapping(target = "maxMembers", defaultExpression = "java(request.maxMembers() != null ? request.maxMembers() : 10)")
+    @Mapping(target = "monthlyBudget", defaultExpression = "java(request.monthlyBudget() != null ? request.monthlyBudget() : java.math.BigDecimal.ZERO)")
+    @Mapping(target = "splitAlgorithm", defaultExpression = "java(request.splitAlgorithm() != null ? request.splitAlgorithm() : \"DEBT_SIMPLIFIED\")")
+    @Mapping(target = "autoRestockFromExpenses", defaultExpression = "java(request.autoRestockFromExpenses() != null ? request.autoRestockFromExpenses() : true)")
     Household toEntity(HouseholdRequest.Create request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

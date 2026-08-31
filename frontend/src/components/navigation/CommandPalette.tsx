@@ -1,21 +1,21 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  IconLayoutDashboard,
-  IconReceipt2,
-  IconShoppingCart,
-  IconUsers,
-  IconSettings,
-  IconPlus,
-  IconArrowsExchange,
-  IconUserPlus,
-  IconSearch,
-} from '@tabler/icons-react';
 import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
 import { useUIStore } from '@/stores/useUIStore';
+import {
+  IconArrowsExchange,
+  IconLayoutDashboard,
+  IconPlus,
+  IconReceipt2,
+  IconSearch,
+  IconSettings,
+  IconShoppingCart,
+  IconUserPlus,
+  IconUsers,
+} from '@tabler/icons-react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface PaletteItem {
   id: string;

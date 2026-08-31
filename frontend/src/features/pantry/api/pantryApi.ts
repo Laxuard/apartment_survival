@@ -36,4 +36,3 @@ export const pantryApi = {
     return data;
   },
 };
-

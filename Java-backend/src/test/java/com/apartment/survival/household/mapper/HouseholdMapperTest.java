@@ -1,7 +1,5 @@
 package com.apartment.survival.household.mapper;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Currency;
@@ -19,6 +17,8 @@ import com.apartment.survival.household.dto.HouseholdResponse;
 import com.apartment.survival.household.model.Household;
 import com.apartment.survival.household.model.HouseholdMember;
 import com.apartment.survival.household.model.HouseholdRole;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("HouseholdMapper Unit Tests")
 class HouseholdMapperTest {
@@ -89,8 +89,7 @@ class HouseholdMapperTest {
                     .build();
 
             HouseholdResponse.MemberSummary memberSummary = new HouseholdResponse.MemberSummary(
-                    USER_ID, "Alex", "alex@test.com", HouseholdRole.ADMIN, "Alias", Instant.now()
-            );
+                    USER_ID, "Alex", "alex@test.com", HouseholdRole.ADMIN, "Alias", Instant.now());
 
             HouseholdResponse.Detail detail = mapper.toDetail(household, List.of(memberSummary));
 
@@ -179,7 +178,8 @@ class HouseholdMapperTest {
 
             assertThat(household.getName()).isEqualTo("Updated Name");
             assertThat(household.getMaxMembers()).isEqualTo(10);
-            assertThat(household.getDescription()).isEqualTo("Old Desc"); // Preserved because request description is null
+            assertThat(household.getDescription()).isEqualTo("Old Desc"); // Preserved because request description is
+                                                                          // null
             assertThat(household.getCurrency()).isEqualTo(MAD);
         }
     }

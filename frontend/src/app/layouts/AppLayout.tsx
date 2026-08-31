@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { Sidebar } from '@/components/navigation/Sidebar';
-import { Topbar } from '@/components/navigation/Topbar';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { CommandPalette } from '@/components/navigation/CommandPalette';
 import { KeyboardShortcutsModal } from '@/components/navigation/KeyboardShortcutsModal';
-import { ExpenseModal, SettleModal, ReceiptDrawer } from '@/features/expenses';
+import { Sidebar } from '@/components/navigation/Sidebar';
+import { Topbar } from '@/components/navigation/Topbar';
+import { ExpenseModal, ReceiptDrawer, SettleModal } from '@/features/expenses';
 import { InviteModal } from '@/features/roommates';
 import { useUIStore } from '@/stores/useUIStore';
+import React, { useEffect, useState } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
 
 export const AppLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -53,7 +53,7 @@ export const AppLayout: React.FC = () => {
           break;
         case '1':
           e.preventDefault();
-          navigate('/');
+          navigate('/dashboard');
           break;
         case '2':
           e.preventDefault();

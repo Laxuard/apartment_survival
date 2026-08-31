@@ -1,20 +1,14 @@
 package com.apartment.survival.iam.mapper;
 
-import org.mapstruct.Builder;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.ReportingPolicy;
-import org.mapstruct.MappingConstants;
-import com.apartment.survival.iam.model.User;
-import com.apartment.survival.iam.security.UserDetailsImpl;
+import org.mapstruct.*;
+
 import com.apartment.survival.iam.dto.AuthRequest;
 import com.apartment.survival.iam.dto.AuthResponse;
+import com.apartment.survival.iam.dto.UserResponse;
+import com.apartment.survival.iam.model.User;
+import com.apartment.survival.iam.security.UserDetailsImpl;
 
-@Mapper(
-    componentModel = MappingConstants.ComponentModel.SPRING,
-    unmappedTargetPolicy = ReportingPolicy.IGNORE,
-    builder = @Builder(disableBuilder = true)
-)
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE, builder = @Builder(disableBuilder = true))
 public interface UserMapper {
 
     // User Entity -> AuthResponse.UserSummary (maps id -> userId)
@@ -23,6 +17,10 @@ public interface UserMapper {
 
     // UserDetailsImpl (Security Context) -> AuthResponse.UserSummary
     AuthResponse.UserSummary toSummary(UserDetailsImpl userDetails);
+
+    // User Entity -> UserResponse.ProfileDetail
+    @Mapping(target = "userId", source = "id")
+    UserResponse.ProfileDetail toProfileDetail(User user);
 
     // AuthRequest.Register -> User Entity (password encoding & role handled in service)
     @Mapping(target = "id", ignore = true)

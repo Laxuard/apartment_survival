@@ -1,15 +1,14 @@
-import React from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { IconHome, IconLogout } from '@tabler/icons-react';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { IconHome, IconLogout } from '@tabler/icons-react';
+import React from 'react';
+import { Outlet } from 'react-router-dom';
 
 export const OnboardingLayout: React.FC = () => {
   const { user, logout } = useAuthStore();
-  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    window.location.href = '/';
   };
 
   return (

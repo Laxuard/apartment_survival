@@ -2,24 +2,36 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
-import { IconBuildingCommunity, IconCheck, IconUserPlus, IconCoins } from '@tabler/icons-react';
+import { IconBuildingCommunity, IconCheck, IconCoins, IconUserPlus } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
+import { AuthPanel } from '../components/AuthPanel';
+import { authApi } from '../api/authApi';
+import type { RegisterDto, LoginDto } from '../types';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useHouseholdStore } from '@/stores/useHouseholdStore';
+import { householdsApi } from '@/features/households/api/householdsApi';
 import { useJoinHouseholdMutation } from '@/features/households';
 
 export const InviteAcceptPage: React.FC = () => {
-  const { token = '' } = useParams<{ token: string }>();
+  const params = useParams<{ inviteToken?: string; token?: string }>();
+  const effectiveToken = (params.inviteToken || params.token || 'INVITE').toUpperCase();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuthStore();
+
+  const { isAuthenticated, user, setAuth } = useAuthStore();
+  const { setActiveHousehold, addHousehold } = useHouseholdStore();
   const joinMutation = useJoinHouseholdMutation();
+
   const [isAccepted, setIsAccepted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
-  const handleAccept = async () => {
+  // 1. Authenticated 1-Click Join Handler
+  const handleAcceptAuthenticated = async () => {
     try {
-      const joined = await joinMutation.mutateAsync({ code: token || 'APARTMENT' });
+      const joined = await joinMutation.mutateAsync({ code: effectiveToken });
       setIsAccepted(true);
+      setActiveHousehold(joined.householdId);
 
-      // Trigger Confetti Celebration
       confetti({
         particleCount: 80,
         spread: 70,
@@ -32,13 +44,105 @@ export const InviteAcceptPage: React.FC = () => {
       });
 
       setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 1000);
+        navigate('/dashboard', { replace: true });
+      }, 800);
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to join household with this invite code.';
       toast.error('Unable to accept invitation', {
         description: errorMsg,
       });
+    }
+  };
+
+  // 2. Unauthenticated Creator Joiner Flow: Register + Join atomically
+  const handleRegisterAndJoin = async (dto: RegisterDto) => {
+    setIsSubmitting(true);
+    setAuthError(null);
+    try {
+      // Register with backend
+      const userSummary = await authApi.register(dto);
+
+      // Join the invited household
+      const joined = await householdsApi.joinWithCode({ code: effectiveToken });
+
+      addHousehold({
+        id: joined.householdId,
+        name: joined.name,
+        role: 'MEMBER',
+        currency: typeof joined.currency === 'string' ? joined.currency : 'MAD',
+        memberCount: joined.memberCount,
+      });
+
+      setAuth(
+        {
+          id: userSummary.userId,
+          name: userSummary.username,
+          email: userSummary.email,
+        },
+        'session-cookie-active'
+      );
+
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#D07B30', '#7E9F74', '#F4A261', '#E76F51'],
+      });
+
+      toast.success(`Welcome to ${joined.name}, ${userSummary.username}!`, {
+        description: 'You are now connected to the household tab.',
+      });
+
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to join with invite code';
+      setAuthError(msg);
+      toast.error('Unable to join', { description: msg });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // 3. Unauthenticated Sign In + Join
+  const handleLoginAndJoin = async (dto: LoginDto) => {
+    setIsSubmitting(true);
+    setAuthError(null);
+    try {
+      const userSummary = await authApi.login(dto);
+      const joined = await householdsApi.joinWithCode({ code: effectiveToken });
+
+      addHousehold({
+        id: joined.householdId,
+        name: joined.name,
+        role: 'MEMBER',
+        currency: typeof joined.currency === 'string' ? joined.currency : 'MAD',
+        memberCount: joined.memberCount,
+      });
+
+      setAuth(
+        {
+          id: userSummary.userId,
+          name: userSummary.username,
+          email: userSummary.email,
+        },
+        'session-cookie-active'
+      );
+
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#D07B30', '#7E9F74', '#F4A261', '#E76F51'],
+      });
+
+      toast.success(`Welcome to ${joined.name}, ${userSummary.username}!`);
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Sign in failed';
+      setAuthError(msg);
+      toast.error('Sign in failed', { description: msg });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -60,7 +164,7 @@ export const InviteAcceptPage: React.FC = () => {
             Join Household
           </h1>
           <p className="text-xs sm:text-sm text-[var(--muted)] max-w-xs mx-auto">
-            You have been invited to connect to a shared living space with code <strong className="text-[var(--text)]">{token || 'APARTMENT'}</strong>.
+            You have been invited to connect to a shared space with code <strong className="text-[var(--text)] font-mono">{effectiveToken}</strong>.
           </p>
         </div>
 
@@ -68,7 +172,7 @@ export const InviteAcceptPage: React.FC = () => {
         <div className="p-3 rounded-2xl bg-[var(--canvas)] border border-[var(--border)] text-xs text-center">
           <div className="flex items-center gap-2 justify-center">
             <IconCoins size={15} className="text-[var(--oak)]" />
-            <span className="text-[var(--text)] font-semibold">Shared Ledger & Pantry Stock</span>
+            <span className="text-[var(--text)] font-semibold">Shared Ledger, Pantry Stock & Auto-Bills</span>
           </div>
         </div>
 
@@ -79,7 +183,7 @@ export const InviteAcceptPage: React.FC = () => {
             </div>
 
             <Button
-              onClick={handleAccept}
+              onClick={handleAcceptAuthenticated}
               disabled={joinMutation.isPending || isAccepted}
               className="btn-tactile w-full h-11 rounded-xl bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs sm:text-sm font-semibold shadow-sm cursor-pointer flex items-center justify-center gap-2"
             >
@@ -97,25 +201,19 @@ export const InviteAcceptPage: React.FC = () => {
             </Button>
           </div>
         ) : (
-          <div className="space-y-3 pt-2">
-            <p className="text-xs text-[var(--muted)]">
-              Sign in or create an account to accept this household invite:
-            </p>
-
-            <Button
-              onClick={() => navigate(`/login?redirect=${encodeURIComponent(`/invite/${token}`)}`)}
-              className="btn-tactile w-full h-10.5 rounded-xl bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs sm:text-sm font-semibold shadow-sm cursor-pointer"
-            >
-              Sign In to Accept
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => navigate(`/register?redirect=${encodeURIComponent(`/invite/${token}`)}`)}
-              className="w-full h-10.5 rounded-xl border border-[var(--border-strong)] bg-[var(--canvas)] hover:bg-[var(--card)] text-xs sm:text-sm font-semibold text-[var(--text)] cursor-pointer"
-            >
-              Create New Account
-            </Button>
+          <div className="space-y-3 pt-1 text-left">
+            <div className="text-xs text-[var(--muted)] text-center mb-2">
+              Create an account or sign in to join this household immediately:
+            </div>
+            <AuthPanel
+              initialMode="register"
+              allowToggleMode={true}
+              submitLabel={`Join with Code (${effectiveToken})`}
+              isSubmitting={isSubmitting}
+              errorMessage={authError}
+              onSubmitRegister={handleRegisterAndJoin}
+              onSubmitLogin={handleLoginAndJoin}
+            />
           </div>
         )}
       </div>

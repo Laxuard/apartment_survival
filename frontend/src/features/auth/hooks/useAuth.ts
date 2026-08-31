@@ -1,8 +1,7 @@
+import { useAuthStore } from '@/stores/useAuthStore';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import type { LoginDto, RegisterDto } from '../types';
-import { useAuthStore } from '@/stores/useAuthStore';
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
@@ -47,14 +46,34 @@ export const useRegister = () => {
 export const useLogout = () => {
   const queryClient = useQueryClient();
   const logout = useAuthStore((s) => s.logout);
-  const navigate = useNavigate();
 
   return useMutation({
     mutationFn: () => authApi.logout(),
     onSettled: () => {
       logout();
       queryClient.clear();
-      navigate('/login', { replace: true });
+      window.location.href = '/';
     },
+  });
+};
+
+export const useUpdateProfile = () => {
+  const updateUser = useAuthStore((s) => s.updateUser);
+
+  return useMutation({
+    mutationFn: (dto: { username: string; email: string }) => authApi.updateProfile(dto),
+    onSuccess: (updated) => {
+      updateUser({
+        name: updated.username,
+        email: updated.email,
+      });
+    },
+  });
+};
+
+export const useChangePassword = () => {
+  return useMutation({
+    mutationFn: (dto: { currentPassword: string; newPassword: string }) =>
+      authApi.changePassword(dto),
   });
 };

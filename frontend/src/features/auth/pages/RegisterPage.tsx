@@ -4,96 +4,181 @@ import { toast } from 'sonner';
 import { IconEye, IconEyeOff, IconUserPlus, IconCheck } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useRegister } from '../hooks/useAuth';
+import { authApi } from '../api/authApi';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useHouseholdStore } from '@/stores/useHouseholdStore';
+import { useOnboardingStore } from '@/stores/useOnboardingStore';
+import { householdsApi } from '@/features/households/api/householdsApi';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const RegisterPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const registerMutation = useRegister();
-  const redirectUrl = searchParams.get('redirect') || '/';
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const addHousehold = useHouseholdStore((s) => s.addHousehold);
+  const { hasDraft, draft, clearDraft } = useOnboardingStore();
+  const redirectUrl = searchParams.get('redirect') || '/dashboard';
 
   const isPasswordLongEnough = password.length >= 8;
   const hasNumbers = /\d/.test(password);
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!username || !email || !password) return;
+    if (!username.trim() || !email.trim() || !password) return;
 
-    registerMutation.mutate(
-      {
-        email,
-        username,
+    setIsSubmitting(true);
+    setErrorMessage(null);
+
+    try {
+      // 1. Execute backend registration API & create server session
+      const userSummary = await authApi.register({
+        email: email.trim(),
+        username: username.trim(),
         password,
-      },
-      {
-        onSuccess: (data) => {
-          toast.success(`Account created! Welcome, ${data.username}`, {
-            description: 'You can now set up or join an apartment.',
+      });
+
+      // 2. If user came from reverse onboarding with a draft flat, create household now
+      if (hasDraft && draft.householdName.trim()) {
+        try {
+          const created = await householdsApi.createHousehold({
+            name: draft.householdName.trim(),
+            currency: draft.currency || 'MAD',
+            timezone: draft.timezone || 'UTC',
+            maxMembers: Math.max(8, draft.roommateNames.length + 1),
           });
-          navigate(redirectUrl, { replace: true });
-        },
+
+          addHousehold({
+            id: created.householdId,
+            name: created.name,
+            role: created.role || 'ADMIN',
+            currency: typeof created.currency === 'string' ? created.currency : 'MAD',
+            memberCount: 1,
+            description: created.description,
+            monthlyBudget: created.monthlyBudget ?? 0,
+            capacity: created.maxMembers ?? 4,
+            wifiSsid: created.wifiSsid || '',
+            wifiPassword: created.wifiPassword || '',
+            splitAlgorithm: created.splitAlgorithm || 'DEBT_SIMPLIFIED',
+            autoRestockFromExpenses: created.autoRestockFromExpenses ?? true,
+          });
+
+          clearDraft();
+          toast.success(`Welcome to ${created.name}, ${userSummary.username}!`, {
+            description: 'Your household is saved and your dashboard is live.',
+          });
+        } catch (hErr) {
+          console.error('Failed to create draft household', hErr);
+        }
+      } else {
+        toast.success(`Account created! Welcome, ${userSummary.username}`);
       }
-    );
+
+      // 3. Mark auth session as active in Zustand
+      setAuth(
+        {
+          id: userSummary.userId,
+          name: userSummary.username,
+          email: userSummary.email,
+        },
+        'session-cookie-active'
+      );
+      await queryClient.invalidateQueries({ queryKey: ['user', 'households'] });
+
+      // 4. Smoothly navigate into dashboard or target redirect
+      navigate(redirectUrl && redirectUrl !== '/' ? redirectUrl : '/dashboard', { replace: true });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to register account';
+      setErrorMessage(msg);
+      toast.error('Registration failed', {
+        description: msg,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-5">
       <div className="space-y-1">
         <h2 className="text-xl font-bold text-[var(--text)] tracking-tight">Create your account</h2>
-        <p className="text-xs text-[var(--muted)]">Join Apartment Survival to split bills & track supplies</p>
+        <p className="text-xs text-[var(--muted)]">
+          {hasDraft && draft.householdName
+            ? `Save "${draft.householdName}" & access your shared ledger`
+            : 'Join Apartment Survival to split bills & track supplies'}
+        </p>
       </div>
 
-      {registerMutation.isError && (
-        <div className="text-xs text-[var(--negative-text)] bg-[var(--negative-bg)] p-3 rounded-xl border border-[var(--negative-text)]/20">
-          {registerMutation.error.message}
+      {errorMessage && (
+        <div className="text-xs text-[var(--negative-text)] bg-[var(--negative-bg)] p-3 rounded-xl border border-[var(--negative-text)]/20 animate-fade-up">
+          {errorMessage}
         </div>
       )}
 
-      <form onSubmit={handleRegister} className="space-y-4">
+      {/* Semantic Accessible Form */}
+      <form onSubmit={handleRegister} className="space-y-4" noValidate={false}>
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-[var(--text)] block">Username / Display Name</label>
+          <label htmlFor="reg-username" className="text-xs font-semibold text-[var(--text)] block">
+            Username / Display Name
+          </label>
           <Input
+            id="reg-username"
             type="text"
+            name="username"
+            autoComplete="username"
             placeholder="e.g. Sarah"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
-            className="h-10 rounded-xl bg-[var(--canvas)] border-[var(--border-strong)] text-xs"
+            className="h-11 rounded-xl bg-[var(--canvas)] border-[var(--border-strong)] text-xs sm:text-sm px-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--oak)]/50 focus-visible:border-[var(--oak)] transition-all"
           />
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-[var(--text)] block">Email address</label>
+          <label htmlFor="reg-email" className="text-xs font-semibold text-[var(--text)] block">
+            Email address
+          </label>
           <Input
+            id="reg-email"
             type="email"
+            name="email"
+            autoComplete="email"
             placeholder="name@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="h-10 rounded-xl bg-[var(--canvas)] border-[var(--border-strong)] text-xs"
+            className="h-11 rounded-xl bg-[var(--canvas)] border-[var(--border-strong)] text-xs sm:text-sm px-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--oak)]/50 focus-visible:border-[var(--oak)] transition-all"
           />
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-[var(--text)] block">Password</label>
+          <label htmlFor="reg-password" className="text-xs font-semibold text-[var(--text)] block">
+            Password
+          </label>
           <div className="relative">
             <Input
+              id="reg-password"
               type={showPassword ? 'text' : 'password'}
+              name="password"
+              autoComplete="new-password"
               placeholder="At least 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="h-10 rounded-xl bg-[var(--canvas)] border-[var(--border-strong)] text-xs pr-10"
+              className="h-11 rounded-xl bg-[var(--canvas)] border-[var(--border-strong)] text-xs sm:text-sm px-3.5 pr-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--oak)]/50 focus-visible:border-[var(--oak)] transition-all"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--text)] cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--text)] cursor-pointer p-1 rounded-lg transition-colors"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? <IconEyeOff size={16} /> : <IconEye size={16} />}
@@ -113,15 +198,15 @@ export const RegisterPage: React.FC = () => {
 
         <Button
           type="submit"
-          disabled={registerMutation.isPending}
-          className="btn-tactile w-full h-10.5 rounded-xl bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs sm:text-sm font-semibold shadow-sm cursor-pointer flex items-center justify-center gap-2"
+          disabled={isSubmitting || !username.trim() || !email.trim() || !isPasswordLongEnough}
+          className="btn-tactile w-full h-11 rounded-xl bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs sm:text-sm font-semibold shadow-sm cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[var(--oak)]"
         >
-          {registerMutation.isPending ? (
-            <span>Creating account...</span>
+          {isSubmitting ? (
+            <span>Setting up space & account...</span>
           ) : (
             <>
               <IconUserPlus size={16} />
-              <span>Create Account & Continue</span>
+              <span>{hasDraft ? 'Save Flat & Launch' : 'Create Account & Continue'}</span>
             </>
           )}
         </Button>

@@ -1,8 +1,8 @@
+import { LoadingScreen } from '@/components/common/LoadingScreen';
+import { useHouseholdStore } from '@/stores/useHouseholdStore';
 import React, { useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useHouseholdsQuery } from '../hooks/useHouseholdsQueries';
-import { useHouseholdStore } from '@/stores/useHouseholdStore';
-import { LoadingScreen } from '@/components/common/LoadingScreen';
 
 export const HouseholdRequiredGuard: React.FC = () => {
   const { data: households, isLoading, isError } = useHouseholdsQuery();
