@@ -20,7 +20,14 @@ export const householdsApi = {
   },
 
   createHousehold: async (dto: CreateHouseholdDto): Promise<BackendHouseholdSummary> => {
-    const { data } = await apiClient.post<BackendHouseholdSummary>('/households', dto);
+    const payload = {
+      ...dto,
+      defaultSplitAllocations:
+        dto.defaultSplitAllocations && typeof dto.defaultSplitAllocations === 'object'
+          ? JSON.stringify(dto.defaultSplitAllocations)
+          : dto.defaultSplitAllocations,
+    };
+    const { data } = await apiClient.post<BackendHouseholdSummary>('/households', payload);
     return data;
   },
 
@@ -28,7 +35,14 @@ export const householdsApi = {
     householdId: string,
     dto: UpdateHouseholdDto
   ): Promise<BackendHouseholdSummary> => {
-    const { data } = await apiClient.put<BackendHouseholdSummary>(`/households/${householdId}`, dto);
+    const payload = {
+      ...dto,
+      defaultSplitAllocations:
+        dto.defaultSplitAllocations && typeof dto.defaultSplitAllocations === 'object'
+          ? JSON.stringify(dto.defaultSplitAllocations)
+          : dto.defaultSplitAllocations,
+    };
+    const { data } = await apiClient.put<BackendHouseholdSummary>(`/households/${householdId}`, payload);
     return data;
   },
 

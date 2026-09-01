@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import {
   IconCrown,
-  IconReceipt,
   IconUserX,
   IconAlertTriangle,
   IconX,
 } from '@tabler/icons-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { formatSignedMoney } from '@/domain';
 import type { Roommate } from '../types';
 
 interface AdminMemberActionsModalProps {
@@ -27,62 +29,69 @@ export const AdminMemberActionsModal: React.FC<AdminMemberActionsModalProps> = (
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-      {!showKickConfirm ? (
-        /* Action Selection Menu */
-        <div className="card-custom max-w-sm w-full p-5 space-y-4 shadow-2xl border border-[var(--border-strong)] animate-fade-in">
-          <div className="flex items-center justify-between pb-2 border-b border-[var(--border)]">
-            <div>
-              <h4 className="text-sm font-bold text-[var(--text)]">Manage {member.name}</h4>
-              <p className="text-[10.5px] text-[var(--muted)]">{member.email}</p>
+      {/* 1. Main Action Options Modal */}
+      {!showKickConfirm && (
+        <Card variant="modal" className="max-w-sm w-full p-6 space-y-4 shadow-2xl animate-fade-in">
+          <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+            <div className="flex items-center gap-2.5">
+              <span className={`avatar-badge ${member.avatarColor} w-8 h-8 text-xs font-bold`}>
+                {member.avatarInitial}
+              </span>
+              <div>
+                <h3 className="font-serif font-bold text-sm text-[var(--text)]">{member.name}</h3>
+                <p className="text-[11px] text-[var(--muted)]">{member.role} · Flatmate</p>
+              </div>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="w-6 h-6 rounded-md border border-[var(--border)] hover:bg-[var(--canvas)] flex items-center justify-center text-xs text-[var(--muted)] hover:text-[var(--text)] cursor-pointer"
+              className="w-7 h-7 rounded-lg border border-[var(--border)] hover:bg-[var(--canvas)] flex items-center justify-center text-xs text-[var(--muted)] hover:text-[var(--text)] cursor-pointer"
             >
-              <IconX size={14} />
+              <IconX size={15} />
             </button>
           </div>
 
-          <div className="space-y-1.5 text-xs">
+          <div className="space-y-2">
             {member.role !== 'ADMIN' && (
               <button
                 type="button"
                 onClick={() => onPromote(member.id)}
-                className="w-full text-left px-3 py-2 rounded-xl hover:bg-[var(--canvas)] flex items-center gap-2.5 cursor-pointer text-[var(--text)] font-semibold transition-colors"
+                className="w-full p-3 rounded-xl border border-[var(--border)] hover:border-[var(--oak)] hover:bg-[var(--oak-tint)]/20 flex items-center gap-3 text-left transition-colors cursor-pointer group"
               >
-                <IconCrown size={15} className="text-[var(--oak)]" />
-                <span>Promote to Co-Admin</span>
+                <div className="w-8 h-8 rounded-lg bg-[var(--oak-tint)] text-[var(--oak)] flex items-center justify-center">
+                  <IconCrown size={17} />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-[var(--text)] group-hover:text-[var(--oak)]">
+                    Promote to Co-Admin
+                  </div>
+                  <div className="text-[11px] text-[var(--muted)]">Grant household settings access</div>
+                </div>
               </button>
             )}
 
             <button
               type="button"
-              onClick={() => {
-                onClose();
-                window.location.href = `/expenses?member=${encodeURIComponent(member.name)}`;
-              }}
-              className="w-full text-left px-3 py-2 rounded-xl hover:bg-[var(--canvas)] flex items-center gap-2.5 cursor-pointer text-[var(--text)] font-semibold transition-colors"
-            >
-              <IconReceipt size={15} className="text-[var(--sage)]" />
-              <span>View Shared Expense History</span>
-            </button>
-
-            <div className="border-t border-[var(--border)] my-1"></div>
-
-            <button
-              type="button"
               onClick={() => setShowKickConfirm(true)}
-              className="w-full text-left px-3 py-2 rounded-xl hover:bg-[var(--negative-bg)] text-[var(--negative-text)] flex items-center gap-2.5 font-bold cursor-pointer transition-colors"
+              className="w-full p-3 rounded-xl border border-[var(--border)] hover:border-[var(--negative-text)] hover:bg-[var(--negative-bg)] flex items-center gap-3 text-left transition-colors cursor-pointer group"
             >
-              <IconUserX size={15} />
-              <span>Kick / Remove from Apartment</span>
+              <div className="w-8 h-8 rounded-lg bg-[var(--negative-bg)] text-[var(--negative-text)] flex items-center justify-center">
+                <IconUserX size={17} />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-[var(--text)] group-hover:text-[var(--negative-text)]">
+                  Remove from Apartment
+                </div>
+                <div className="text-[11px] text-[var(--muted)]">Archive tabs and revoke space access</div>
+              </div>
             </button>
           </div>
-        </div>
-      ) : (
-        /* Kick Confirmation Modal */
-        <div className="card-custom max-w-md w-full p-6 space-y-4 shadow-2xl border border-[var(--border-strong)] animate-fade-in">
+        </Card>
+      )}
+
+      {/* 2. Destructive Kick Confirmation Modal */}
+      {showKickConfirm && (
+        <Card variant="modal" className="max-w-md w-full p-6 space-y-4 shadow-2xl animate-fade-in">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[var(--negative-bg)] text-[var(--negative-text)] flex items-center justify-center shrink-0">
               <IconAlertTriangle size={22} />
@@ -96,26 +105,28 @@ export const AdminMemberActionsModal: React.FC<AdminMemberActionsModalProps> = (
           </div>
 
           <p className="text-xs text-[var(--muted)] leading-relaxed">
-            Are you sure you want to remove <strong>{member.name}</strong> from this household? They will lose access to shared grocery checklists, settlement tabs, and house notes. Their current balance of <strong>{member.balance.toFixed(2)} {member.currency}</strong> will be archived.
+            Are you sure you want to remove <strong>{member.name}</strong> from this household? They will lose access to shared grocery checklists, settlement tabs, and house notes. Their current balance of <strong>{formatSignedMoney(member.balance, member.currency)}</strong> will be archived.
           </p>
 
           <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[var(--border)]">
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => setShowKickConfirm(false)}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-[var(--text)] hover:bg-[var(--canvas)] border border-[var(--border)] transition-all cursor-pointer"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="destructive"
+              size="sm"
               onClick={() => onKick(member.id)}
-              className="btn-spring px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[var(--negative-text)] hover:opacity-90 transition-all cursor-pointer shadow-xs"
             >
               Yes, Remove Member
-            </button>
+            </Button>
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

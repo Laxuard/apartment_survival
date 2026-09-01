@@ -61,6 +61,13 @@ public class Household extends BaseEntity {
     private String splitAlgorithm = "DEBT_SIMPLIFIED";
 
     @Builder.Default
+    @Column(name = "default_split_method", length = 30, nullable = false)
+    private String defaultSplitMethod = "EQUAL";
+
+    @Column(name = "default_split_allocations", length = 2048)
+    private String defaultSplitAllocations;
+
+    @Builder.Default
     @Column(name = "auto_restock_from_expenses", nullable = false)
     private boolean autoRestockFromExpenses = true;
 

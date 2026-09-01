@@ -1,12 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { DEFAULT_CURRENCY, type SplitMethod } from '@/domain';
+import { queryKeys } from '@/lib/queryKeys';
 import { expensesApi } from '../api/expensesApi';
 import type {
   Expense,
   ExpenseCategory,
-  SplitMethod,
   CreateExpenseBackendDto,
   CreateSettlementDto,
   HouseholdBalancesResponse,
+  BackendExpenseDetail,
+  SettlementDetail,
 } from '../types';
 
 const parseCategory = (cat: string): ExpenseCategory => {
@@ -25,15 +28,15 @@ const parseCategory = (cat: string): ExpenseCategory => {
 
 const parseSplitMethod = (split: string): SplitMethod => {
   const upper = split?.toUpperCase();
-  if (upper === 'EXACT' || upper === 'PERCENTAGE' || upper === 'EQUAL') {
-    return upper;
+  if (upper === 'EXACT' || upper === 'PERCENTAGE' || upper === 'EQUAL' || upper === 'SHARES') {
+    return upper as SplitMethod;
   }
   return 'EQUAL';
 };
 
 export const useExpensesQuery = (householdId: string | null) => {
   return useQuery<Expense[]>({
-    queryKey: ['households', householdId, 'expenses'],
+    queryKey: householdId ? queryKeys.expenses.all(householdId) : ['expenses', null],
     queryFn: async () => {
       if (!householdId) return [];
       const data = await expensesApi.getExpenses(householdId);
@@ -41,7 +44,7 @@ export const useExpensesQuery = (householdId: string | null) => {
         id: item.expenseId,
         description: item.title,
         amount: Number(item.amount),
-        currency: item.currency || 'MAD',
+        currency: item.currency || DEFAULT_CURRENCY,
         payerId: item.paidByUserId,
         payerName: item.paidByUsername,
         category: parseCategory(item.category),
@@ -57,7 +60,7 @@ export const useExpensesQuery = (householdId: string | null) => {
 
 export const useBalancesQuery = (householdId: string | null) => {
   return useQuery<HouseholdBalancesResponse | null>({
-    queryKey: ['households', householdId, 'balances'],
+    queryKey: householdId ? queryKeys.balances(householdId) : ['balances', null],
     queryFn: async () => {
       if (!householdId) return null;
       return await expensesApi.getBalances(householdId);
@@ -70,18 +73,23 @@ export const useBalancesQuery = (householdId: string | null) => {
 export const useCreateExpenseMutation = (householdId: string | null) => {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (dto: CreateExpenseBackendDto) => {
+  return useMutation<BackendExpenseDetail, Error, CreateExpenseBackendDto>({
+    mutationFn: async (dto: CreateExpenseBackendDto) => {
       if (!householdId) throw new Error('No active household selected');
-      return expensesApi.createExpense(householdId, dto);
+      return await expensesApi.createExpense(householdId, dto);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['households', householdId, 'expenses'],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['households', householdId, 'balances'],
-      });
+      if (householdId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.expenses.all(householdId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.balances(householdId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard(householdId),
+        });
+      }
     },
   });
 };
@@ -89,18 +97,25 @@ export const useCreateExpenseMutation = (householdId: string | null) => {
 export const useCreateSettlementMutation = (householdId: string | null) => {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (dto: CreateSettlementDto) => {
+  return useMutation<SettlementDetail, Error, CreateSettlementDto>({
+    mutationFn: async (dto: CreateSettlementDto) => {
       if (!householdId) throw new Error('No active household selected');
-      return expensesApi.createSettlement(householdId, dto);
+      return await expensesApi.createSettlement(householdId, dto);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['households', householdId, 'balances'],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['households', householdId, 'expenses'],
-      });
+      if (householdId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.balances(householdId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.expenses.all(householdId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard(householdId),
+        });
+      }
     },
   });
 };
+
+export const useSettleMutation = useCreateSettlementMutation;

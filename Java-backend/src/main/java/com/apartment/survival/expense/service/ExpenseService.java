@@ -18,6 +18,7 @@ import com.apartment.survival.expense.dto.ExpenseResponse;
 import com.apartment.survival.expense.mapper.ExpenseMapper;
 import com.apartment.survival.expense.model.Expense;
 import com.apartment.survival.expense.model.ExpenseSplit;
+import com.apartment.survival.expense.model.SplitType;
 import com.apartment.survival.expense.repository.ExpenseRepository;
 import com.apartment.survival.household.api.HouseholdPublicApi;
 import com.apartment.survival.household.api.HouseholdPublicDto;
@@ -47,21 +48,45 @@ public class ExpenseService {
         if (!activeMemberIds.contains(paidByUserId)) {
             throw new BadRequestException("Payer is not an active member of this household.");
         }
-        for (ExpenseRequest.SplitItem splitItem : request.splits()) {
-            if (!activeMemberIds.contains(splitItem.userId())) {
-                throw new BadRequestException("Participant " + splitItem.userId() + " is not an active member of this household.");
+
+        // Resolve effective SplitType from request or household default
+        SplitType effectiveSplitType = request.splitType();
+        if (effectiveSplitType == null) {
+            try {
+                effectiveSplitType = household.defaultSplitMethod() != null
+                        ? SplitType.valueOf(household.defaultSplitMethod().toUpperCase())
+                        : SplitType.EQUAL;
+            } catch (IllegalArgumentException ex) {
+                effectiveSplitType = SplitType.EQUAL;
+            }
+        }
+
+        List<ExpenseRequest.SplitItem> effectiveSplits = request.splits();
+        if (effectiveSplits == null || effectiveSplits.isEmpty()) {
+            // Automatically generate default splits across all active household members
+            effectiveSplits = activeMemberIds.stream()
+                    .map(mId -> new ExpenseRequest.SplitItem(mId, null, null, null))
+                    .toList();
+            // If the method was not EQUAL, fallback to EQUAL since no custom amounts/percentages were supplied
+            effectiveSplitType = SplitType.EQUAL;
+        } else {
+            for (ExpenseRequest.SplitItem splitItem : effectiveSplits) {
+                if (!activeMemberIds.contains(splitItem.userId())) {
+                    throw new BadRequestException("Participant " + splitItem.userId() + " is not an active member of this household.");
+                }
             }
         }
 
         // 1. Calculate financial allocations
         List<SplitCalculator.CalculatedSplit> calculatedSplits =
-                splitCalculator.calculate(request.amount(), request.splitType(), request.splits());
+                splitCalculator.calculate(request.amount(), effectiveSplitType, effectiveSplits);
 
         // 2. Build and populate Expense entity
         Expense expense = expenseMapper.toEntity(request);
         expense.setHouseholdId(householdId);
         expense.setPaidByUserId(paidByUserId);
         expense.setCurrency(household.currency());
+        expense.setSplitType(effectiveSplitType);
 
         for (SplitCalculator.CalculatedSplit calculated : calculatedSplits) {
             ExpenseSplit split = ExpenseSplit.builder()

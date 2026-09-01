@@ -1,3 +1,5 @@
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { DataCard } from '@/components/ui/DataCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -5,6 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { formatSignedMoney } from '@/domain';
 import {
   IconArrowsExchange,
   IconArrowsSplit,
@@ -51,21 +54,17 @@ export const DirectSettlementCard: React.FC<DirectSettlementCardProps> = ({
           className={`text-xs sm:text-sm font-bold mono ${totalNetCredit >= 0 ? 'text-[var(--positive-text)]' : 'text-[var(--negative-text)]'
             }`}
         >
-          {totalNetCredit >= 0 ? '+' : ''}
-          {totalNetCredit.toFixed(2)} {currency}
+          {formatSignedMoney(totalNetCredit, currency)}
         </span>
       </div>
 
       <Tooltip>
         <TooltipTrigger asChild>
-          <span
-            className={`hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full cursor-help transition-opacity hover:opacity-80 ${isMinimalFlow
-              ? 'bg-[var(--sage-tint)] text-[var(--sage)]'
-              : 'bg-[var(--oak-tint)] text-[var(--oak)]'
-              }`}
-          >
-            {isMinimalFlow ? <IconArrowsExchange size={11} /> : <IconArrowsSplit size={11} />}
-            {isMinimalFlow ? 'Minimal Flow' : 'Direct Pairs'}
+          <span className="inline-flex cursor-help">
+            <Badge variant={isMinimalFlow ? 'secondary' : 'default'} className="hidden sm:inline-flex gap-1 text-[10px]">
+              {isMinimalFlow ? <IconArrowsExchange size={11} /> : <IconArrowsSplit size={11} />}
+              <span>{isMinimalFlow ? 'Minimal Flow' : 'Direct Pairs'}</span>
+            </Badge>
           </span>
         </TooltipTrigger>
         <TooltipContent>
@@ -124,27 +123,30 @@ export const DirectSettlementCard: React.FC<DirectSettlementCardProps> = ({
 
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-xs font-bold text-[var(--positive-text)] mono mr-1">
-                  +{path.amount.toFixed(2)} {path.currency}
+                  {formatSignedMoney(path.amount, path.currency)}
                 </span>
 
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="xs"
                   onClick={() => onNudge(path.debtorName, path.amount)}
-                  className="btn-spring text-[11px] font-semibold px-2 py-1 rounded-lg border border-[#25D366]/40 text-[#25D366] hover:bg-[#25D366]/10 flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                  className="border-[#25D366]/40 text-[#25D366] hover:bg-[#25D366]/10"
                   title="Send WhatsApp debt reminder"
                 >
                   <IconBrandWhatsapp size={13} />
                   <span>Nudge</span>
-                </button>
+                </Button>
 
                 {onSettlePath && (
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="xs"
                     onClick={() => onSettlePath(path.debtorName)}
-                    className="btn-spring text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-[var(--border-strong)] bg-[var(--card)] hover:bg-[var(--oak)] hover:border-[var(--oak)] hover:text-white text-[var(--text)] flex items-center gap-1 cursor-pointer transition-all shadow-2xs"
                   >
                     <span>Record Payment</span>
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -156,14 +158,15 @@ export const DirectSettlementCard: React.FC<DirectSettlementCardProps> = ({
           <span className="text-[11px] text-[var(--muted)]">
             {isMinimalFlow ? 'Calculates circular debt reduction' : 'Pairwise balances without circular reduction'}
           </span>
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={onSettleAll}
             disabled={settlementPaths.length === 0}
-            className="btn-spring px-3.5 py-1.5 rounded-xl bg-[var(--card)] hover:bg-[var(--canvas)] border border-[var(--border-strong)] font-semibold text-xs text-[var(--text)] cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-white/5"
           >
             Settle All Debts
-          </button>
+          </Button>
         </div>
       </div>
     </DataCard>

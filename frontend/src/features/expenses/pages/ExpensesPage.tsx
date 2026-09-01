@@ -14,10 +14,15 @@ import {
   IconScale,
   IconDownload,
 } from '@tabler/icons-react';
+import { formatMoney, formatSignedMoney } from '@/domain';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUIStore } from '@/stores/useUIStore';
-import { useHouseholdStore } from '@/stores/useHouseholdStore';
+import { useActiveHousehold } from '@/features/households';
+import { useHouseholdLedger } from '@/features/roommates';
 import { useExpensesQuery } from '../hooks/useExpensesQueries';
+
 import { EmptyState } from '@/components/common/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -44,9 +49,11 @@ const getCategoryInfo = (category: string) => {
 
 export const ExpensesPage: React.FC = () => {
   const { openModal, openSettleModal, openReceipt } = useUIStore();
-  const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
+  const { activeHouseholdId, activeCurrency: currency } = useActiveHousehold();
+  const ledger = useHouseholdLedger(currency);
 
   const { data: expenses = [], isLoading } = useExpensesQuery(activeHouseholdId);
+
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -64,9 +71,7 @@ export const ExpensesPage: React.FC = () => {
 
   // Compute summary stats
   const totalSpent = expenses.reduce((acc, curr) => acc + (curr.amount || 0), 0);
-  const totalUserShare = expenses.reduce((acc, curr) => acc + (curr.userShare || 0), 0);
-  const { getActiveCurrency } = useHouseholdStore();
-  const currency = getActiveCurrency();
+
 
   const handleExportCSV = () => {
     if (expenses.length === 0) {
@@ -101,29 +106,30 @@ export const ExpensesPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
-      {/* 3 Prominent Summary Metric Cards (Elevated & spacious, saving vertical header space) */}
+      {/* 3 Prominent Summary Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5">
+        <Card className="p-4 sm:p-5 shadow-sm space-y-1.5">
           <div className="flex items-center justify-between text-xs font-medium text-[var(--muted)]">
             <span>Total Apartment Spend</span>
             <IconWallet size={18} className="text-[var(--oak)]" />
           </div>
           <div className="mono font-bold text-2xl text-[var(--text)]">
-            {totalSpent.toFixed(2)} <span className="currency text-xs font-normal text-[var(--muted)]">{currency}</span>
+            {formatMoney(totalSpent, currency)}
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5">
+        <Card className="p-4 sm:p-5 shadow-sm space-y-1.5">
           <div className="flex items-center justify-between text-xs font-medium text-[var(--muted)]">
-            <span>Your Total Share</span>
-            <IconPigMoney size={18} className="text-[var(--sage)]" />
+            <span>Your Net Position</span>
+            <IconPigMoney size={18} className={ledger.isOwedMoney ? 'text-[var(--sage)]' : ledger.isOwingMoney ? 'text-[var(--oak)]' : 'text-[var(--muted)]'} />
           </div>
-          <div className="mono font-bold text-2xl text-[var(--sage)]">
-            {totalUserShare.toFixed(2)} <span className="currency text-xs font-normal text-[var(--muted)]">{currency}</span>
+          <div className={`mono font-bold text-2xl ${ledger.isOwedMoney ? 'text-[var(--positive-text)]' : ledger.isOwingMoney ? 'text-[var(--negative-text)]' : 'text-[var(--text)]'}`}>
+            {formatSignedMoney(ledger.userNetBalance, currency)}
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1.5">
+
+        <Card className="p-4 sm:p-5 shadow-sm space-y-1.5">
           <div className="flex items-center justify-between text-xs font-medium text-[var(--muted)]">
             <span>Total Transactions</span>
             <IconScale size={18} className="text-[var(--muted)]" />
@@ -131,11 +137,11 @@ export const ExpensesPage: React.FC = () => {
           <div className="mono font-bold text-2xl text-[var(--text)]">
             {expenses.length} <span className="text-xs font-normal text-[var(--muted)]">entries</span>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Main Ledger Card */}
-      <div className="card-custom">
+      <Card className="shadow-sm">
         {/* Search & Category Filter Header */}
         <div className="p-4 border-b border-[var(--border)] space-y-3">
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
@@ -152,31 +158,39 @@ export const ExpensesPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2 self-center sm:self-auto">
-              <button
-                type="button"
-                onClick={handleExportCSV}
-                className="btn-spring flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[var(--border)] hover:bg-[var(--canvas)] text-xs font-semibold text-[var(--text)] cursor-pointer shadow-2xs transition-all"
-                title="Download CSV spreadsheet"
-              >
-                <IconDownload size={14} className="text-[var(--oak)]" />
-                <span className="hidden sm:inline">Export CSV</span>
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportCSV}
+                  >
+                    <IconDownload size={14} className="text-[var(--oak)]" />
+                    <span className="hidden sm:inline">Export CSV</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Download CSV spreadsheet</TooltipContent>
+              </Tooltip>
 
-              <button
-                type="button"
-                onClick={() => openSettleModal()}
-                className="btn-spring flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--card)] hover:bg-[var(--canvas)] text-xs font-semibold text-[var(--text)] cursor-pointer shadow-2xs transition-all"
-                title="Record an offline payment"
-              >
-                <span>Record Payment</span>
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openSettleModal()}
+                  >
+                    <span>Record Payment</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Record an offline payment</TooltipContent>
+              </Tooltip>
 
               <Button
+                size="sm"
                 onClick={() => openModal('expense')}
-                className="btn-tactile bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs cursor-pointer shadow-sm px-3.5 py-1.5 rounded-xl"
               >
                 <IconPlus size={14} className="mr-1" />
-                Log Expense
+                <span>Log Expense</span>
               </Button>
             </div>
           </div>
@@ -201,7 +215,7 @@ export const ExpensesPage: React.FC = () => {
         </div>
 
         {/* Expense Rows */}
-        <div className="divide-y divide-[var(--border)]">
+        <CardContent noPadding={true} className="divide-y divide-[var(--border)]">
           {isLoading ? (
             <div className="space-y-3 py-4 px-5">
               {[1, 2, 3, 4].map((i) => (
@@ -228,10 +242,11 @@ export const ExpensesPage: React.FC = () => {
                 action={
                   !searchQuery && (
                     <Button
+                      size="sm"
                       onClick={() => openModal('expense')}
-                      className="btn-tactile bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs cursor-pointer"
                     >
-                      <IconPlus size={14} className="mr-1" /> Log Expense
+                      <IconPlus size={14} className="mr-1" />
+                      <span>Log Expense</span>
                     </Button>
                   )
                 }
@@ -246,7 +261,7 @@ export const ExpensesPage: React.FC = () => {
                   type="button"
                   key={expense.id}
                   onClick={() => openReceipt(expense.id)}
-                  className="row-clickable flex items-center justify-between py-3.5 px-4 sm:px-5 w-full text-left cursor-pointer hover:bg-[var(--sage-tint)] transition-colors"
+                  className="row-clickable flex items-center justify-between py-3.5 px-4 sm:px-5 w-full text-left cursor-pointer hover:bg-[var(--sage-tint)]/40 transition-colors"
                   title="Click to view receipt breakdown"
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -270,12 +285,11 @@ export const ExpensesPage: React.FC = () => {
 
                   <div className="text-right shrink-0 ml-3">
                     <div className="row-amount mono font-semibold text-sm text-[var(--text)]">
-                      {expense.amount.toFixed(2)}
-                      <span className="currency font-normal text-xs ml-0.5 text-[var(--muted)]">{expense.currency}</span>
+                      {formatMoney(expense.amount, expense.currency)}
                     </div>
                     {expense.userShare !== undefined && (
                       <div className="row-share text-[11px] text-[var(--muted)] font-medium">
-                        Your share: {expense.userShare.toFixed(2)} {expense.currency}
+                        Your share: {formatMoney(expense.userShare, expense.currency)}
                       </div>
                     )}
                   </div>
@@ -283,8 +297,8 @@ export const ExpensesPage: React.FC = () => {
               );
             })
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

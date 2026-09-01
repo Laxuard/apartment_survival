@@ -1,14 +1,15 @@
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   useAcceptInviteMutation,
-  useCreateHouseholdMutation,
   useHouseholdsQuery,
-  useJoinHouseholdMutation,
   usePendingInvitesQuery,
 } from '@/features/households';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useHouseholdStore } from '@/stores/useHouseholdStore';
+import { CreateHouseholdModal } from '../components/CreateHouseholdModal';
+import { JoinHouseholdModal } from '../components/JoinHouseholdModal';
 import {
   IconArrowRight,
   IconBuildingCommunity,
@@ -21,28 +22,21 @@ import {
   IconUserPlus,
   IconUsers,
 } from '@tabler/icons-react';
-import { useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export const HubPage: React.FC = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { user, logout } = useAuthStore();
   const { setActiveHousehold } = useHouseholdStore();
 
   const { data: households = [], isLoading } = useHouseholdsQuery();
   const { data: pendingInvites = [] } = usePendingInvitesQuery();
   const acceptInviteMutation = useAcceptInviteMutation();
-  const joinMutation = useJoinHouseholdMutation();
-  const createMutation = useCreateHouseholdMutation();
 
   const [isJoinOpen, setIsJoinOpen] = useState(false);
-  const [joinCode, setJoinCode] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newFlatName, setNewFlatName] = useState('');
-  const [newCurrency, setNewCurrency] = useState('MAD');
 
   const userInitial = (user?.name || 'User').charAt(0).toUpperCase();
 
@@ -60,44 +54,6 @@ export const HubPage: React.FC = () => {
     } catch (err) {
       console.error(err);
       toast.error('Failed to accept invite');
-    }
-  };
-
-  const handleJoinByCode = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const cleanCode = joinCode.trim().toUpperCase();
-    if (!cleanCode) return;
-    try {
-      const res = await joinMutation.mutateAsync({ code: cleanCode });
-      toast.success(`Joined ${res.name}!`);
-      setIsJoinOpen(false);
-      setJoinCode('');
-      setActiveHousehold(res.householdId);
-      navigate('/dashboard');
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Invalid invite code';
-      toast.error(errorMsg);
-    }
-  };
-
-  const handleQuickCreate = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!newFlatName.trim()) return;
-    try {
-      const res = await createMutation.mutateAsync({
-        name: newFlatName.trim(),
-        currency: newCurrency,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-        maxMembers: 8,
-      });
-      toast.success(`Created "${res.name}"!`);
-      setIsCreateOpen(false);
-      setNewFlatName('');
-      setActiveHousehold(res.householdId);
-      navigate('/dashboard');
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to create household';
-      toast.error(errorMsg);
     }
   };
 
@@ -130,19 +86,18 @@ export const HubPage: React.FC = () => {
           </div>
 
           {/* Sign Out Button */}
-          <button
-            type="button"
+          <Button
+            variant="destructive"
+            size="sm"
             onClick={() => {
               logout();
-              queryClient.clear();
-              window.location.href = '/';
+              navigate('/auth/login');
             }}
-            className="h-8 px-2.5 rounded-xl border border-[var(--negative-text)]/30 bg-[var(--negative-bg)] text-[var(--negative-text)] hover:bg-[var(--negative-text)] hover:text-white transition-colors text-xs font-semibold flex items-center gap-1 cursor-pointer shadow-2xs"
-            title="Sign out"
+            className="flex items-center gap-1.5 cursor-pointer"
           >
             <IconLogout size={14} />
             <span className="hidden sm:inline">Sign Out</span>
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -163,7 +118,6 @@ export const HubPage: React.FC = () => {
             <Button
               onClick={() => setIsJoinOpen(true)}
               variant="outline"
-              className="btn-tactile h-10 px-4 rounded-xl border-[var(--border-strong)] bg-[var(--card)] hover:bg-[var(--canvas)] text-xs font-semibold text-[var(--text)] cursor-pointer flex items-center gap-1.5 shadow-2xs"
             >
               <IconUserPlus size={15} />
               <span>Join with Code</span>
@@ -171,7 +125,6 @@ export const HubPage: React.FC = () => {
 
             <Button
               onClick={() => setIsCreateOpen(true)}
-              className="btn-tactile h-10 px-4.5 rounded-xl bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs font-semibold shadow-sm cursor-pointer flex items-center gap-1.5"
             >
               <IconPlus size={15} />
               <span>Create New Flat</span>
@@ -181,7 +134,7 @@ export const HubPage: React.FC = () => {
 
         {/* Pending Invites Alert Banner */}
         {pendingInvites.length > 0 && (
-          <div className="p-4 rounded-2xl bg-[var(--oak-tint)] border border-[var(--oak)]/30 space-y-3 shadow-xs animate-fade-up">
+          <Card variant="tinted" className="p-4 space-y-3 shadow-xs animate-fade-up">
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--oak-hover)] dark:text-[var(--oak)] uppercase tracking-wider">
               <IconMail size={16} />
               <span>Pending Household Invitations ({pendingInvites.length})</span>
@@ -204,7 +157,6 @@ export const HubPage: React.FC = () => {
                     size="sm"
                     disabled={acceptInviteMutation.isPending}
                     onClick={() => handleAcceptInvite(invite.inviteId, invite.householdName)}
-                    className="btn-tactile h-8 px-4 rounded-xl bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs font-semibold cursor-pointer shrink-0 inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <IconCheck size={13} />
                     <span>{acceptInviteMutation.isPending ? 'Joining...' : 'Accept & Join'}</span>
@@ -212,7 +164,7 @@ export const HubPage: React.FC = () => {
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         )}
 
         {/* Households Grid */}
@@ -230,7 +182,6 @@ export const HubPage: React.FC = () => {
               ))}
             </div>
           ) : households.length === 0 ? (
-            // 3. Strict Constrained Empty State (max-w-lg, py-16)
             <div className="max-w-lg mx-auto w-full py-16 px-6 rounded-3xl bg-[var(--card)] border border-dashed border-[var(--border-strong)] text-center space-y-5 my-6 animate-fade-up">
               <div className="w-14 h-14 rounded-2xl bg-[var(--oak-tint)] text-[var(--oak)] flex items-center justify-center mx-auto shadow-2xs">
                 <IconSparkles size={28} />
@@ -244,61 +195,70 @@ export const HubPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <Button
                   onClick={() => setIsCreateOpen(true)}
-                  className="btn-tactile w-full sm:w-auto h-11 px-5 rounded-xl bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs font-semibold shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+                  size="lg"
+                  className="w-full sm:w-auto"
                 >
-                  <IconPlus size={15} />
+                  <IconPlus size={16} />
                   <span>Create Your First Flat</span>
                 </Button>
                 <Button
                   onClick={() => setIsJoinOpen(true)}
                   variant="outline"
-                  className="w-full sm:w-auto h-11 px-4 rounded-xl border-[var(--border)] bg-[var(--canvas)] hover:bg-[var(--card)] text-xs font-semibold text-[var(--text)] cursor-pointer"
+                  size="lg"
+                  className="w-full sm:w-auto"
                 >
-                  <span>Join with Code</span>
+                  <IconUserPlus size={16} />
+                  <span>Join with Invite Code</span>
                 </Button>
               </div>
             </div>
           ) : (
-            // Populated Household Cards
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {households.map((h, index) => (
-                <div
+              {households.map((h) => (
+                <Card
                   key={h.id}
+                  variant="hoverable"
                   onClick={() => handleSelectHousehold(h.id)}
-                  style={{ animationDelay: `${index * 45}ms` }}
-                  className="animate-fade-up card-custom p-6 rounded-3xl border border-[var(--border)] hover:border-[var(--oak)] bg-[var(--card)] hover:bg-[var(--oak-tint)]/20 transition-all cursor-pointer group flex flex-col justify-between space-y-5 shadow-sm hover:shadow-md select-none"
+                  className="p-6 space-y-4 rounded-3xl group cursor-pointer"
                 >
-                  {/* Top Details */}
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-12 h-12 rounded-2xl bg-[var(--oak-tint)] text-[var(--oak)] group-hover:bg-[var(--oak)] group-hover:text-white transition-all flex items-center justify-center font-bold shrink-0 shadow-2xs">
-                          <IconBuildingCommunity size={24} />
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="font-serif font-bold text-lg text-[var(--text)] group-hover:text-[var(--oak)] transition-colors truncate">
-                            {h.name}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-0.5 text-xs text-[var(--muted)]">
-                            <span className="flex items-center gap-1">
-                              <IconUsers size={13} /> {h.memberCount || 1} members
-                            </span>
-                            <span>•</span>
-                            <span className="flex items-center gap-1 font-mono font-semibold">
-                              <IconCoins size={13} /> {h.currency || 'MAD'}
-                            </span>
-                          </div>
+                  {/* Top Bar: Icon + Flat Name + Currency */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-[var(--oak-tint)] text-[var(--oak)] flex items-center justify-center font-bold text-lg shadow-2xs group-hover:scale-105 transition-transform">
+                        <IconBuildingCommunity size={22} />
+                      </div>
+                      <div>
+                        <h2 className="font-serif font-bold text-lg text-[var(--text)] group-hover:text-[var(--oak)] transition-colors line-clamp-1">
+                          {h.name}
+                        </h2>
+                        <div className="flex items-center gap-2 text-xs text-[var(--muted)] mt-0.5">
+                          <span className="flex items-center gap-1 font-medium">
+                            <IconUsers size={13} />
+                            {h.memberCount} flatmates
+                          </span>
+                          <span>•</span>
+                          <span className="font-semibold text-[var(--oak)]">
+                            {h.role === 'ADMIN' ? 'Admin / Host' : 'Member'}
+                          </span>
                         </div>
                       </div>
+                    </div>
 
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border shrink-0 ${h.role === 'ADMIN'
-                          ? 'bg-[var(--oak-tint)] text-[var(--oak)] border-[var(--oak)]/30'
-                          : 'bg-[var(--canvas)] text-[var(--muted)] border-[var(--border)]'
-                          }`}
-                      >
-                        {h.role === 'ADMIN' ? 'Primary Admin' : 'Resident'}
-                      </span>
+                    <Badge variant="outline" className="font-mono text-xs">
+                      {h.currency}
+                    </Badge>
+                  </div>
+
+                  {/* Body Content / Info */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="default">
+                        <IconCoins size={12} className="mr-1 inline" />
+                        {h.splitAlgorithm === 'DEBT_SIMPLIFIED' ? 'Debt Simplified' : 'Direct Split'}
+                      </Badge>
+                      <Badge variant="neutral">
+                        Active Ledger
+                      </Badge>
                     </div>
 
                     <p className="text-xs text-[var(--muted)] line-clamp-2">
@@ -316,109 +276,24 @@ export const HubPage: React.FC = () => {
                       <IconArrowRight size={14} />
                     </div>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}
         </div>
       </main>
 
-      {/* Quick Join Modal */}
-      {isJoinOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="card-custom w-full max-w-sm p-6 rounded-3xl bg-[var(--card)] border border-[var(--border-strong)] shadow-2xl space-y-4 animate-fade-up">
-            <div className="flex items-center justify-between">
-              <h3 className="font-serif font-bold text-base text-[var(--text)]">Join Existing Household</h3>
-              <button
-                type="button"
-                onClick={() => setIsJoinOpen(false)}
-                className="text-xs text-[var(--muted)] hover:text-[var(--text)] cursor-pointer p-1"
-              >
-                ✕
-              </button>
-            </div>
-            <p className="text-xs text-[var(--muted)]">
-              Enter the 8-character invite code provided by your flatmate.
-            </p>
-            <form onSubmit={handleJoinByCode} className="space-y-4">
-              <Input
-                type="text"
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                placeholder="e.g. 4B992XYZ"
-                maxLength={16}
-                required
-                className="h-12 rounded-xl bg-[var(--canvas)] border-[var(--border-strong)] text-center font-mono font-bold tracking-widest text-base text-[var(--text)] uppercase focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--oak)]/50 focus-visible:border-[var(--oak)] transition-all"
-              />
-              <Button
-                type="submit"
-                disabled={joinMutation.isPending || !joinCode.trim()}
-                className="btn-tactile w-full h-11 rounded-xl bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs font-semibold shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[var(--oak)]"
-              >
-                {joinMutation.isPending ? 'Verifying code...' : 'Join Household'}
-              </Button>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Join Household Dialog Modal */}
+      <JoinHouseholdModal
+        open={isJoinOpen}
+        onOpenChange={setIsJoinOpen}
+      />
 
-      {/* Quick Create Modal */}
-      {isCreateOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="card-custom w-full max-w-md p-6 rounded-3xl bg-[var(--card)] border border-[var(--border-strong)] shadow-2xl space-y-4 animate-fade-up">
-            <div className="flex items-center justify-between">
-              <h3 className="font-serif font-bold text-base text-[var(--text)]">Create New Household</h3>
-              <button
-                type="button"
-                onClick={() => setIsCreateOpen(false)}
-                className="text-xs text-[var(--muted)] hover:text-[var(--text)] cursor-pointer p-1"
-              >
-                ✕
-              </button>
-            </div>
-            <form onSubmit={handleQuickCreate} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-[var(--text)] block">Apartment Name</label>
-                <Input
-                  type="text"
-                  value={newFlatName}
-                  onChange={(e) => setNewFlatName(e.target.value)}
-                  placeholder="e.g., Casa Flat, Marrakech 2026"
-                  required
-                  className="h-11 rounded-xl bg-[var(--canvas)] border-[var(--border-strong)] text-xs text-[var(--text)] px-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--oak)]/50 focus-visible:border-[var(--oak)] transition-all"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-[var(--text)] block">Primary Currency</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {['MAD', 'EUR', 'USD', 'GBP'].map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setNewCurrency(c)}
-                      className={`h-10 rounded-xl border text-xs font-bold transition-all cursor-pointer ${newCurrency === c
-                        ? 'border-[var(--oak)] bg-[var(--oak-tint)] text-[var(--oak)] ring-2 ring-[var(--oak)]/20'
-                        : 'border-[var(--border)] bg-[var(--canvas)] text-[var(--text)] hover:border-[var(--border-strong)]'
-                        }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                disabled={createMutation.isPending || !newFlatName.trim()}
-                className="btn-tactile w-full h-11 rounded-xl bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs font-semibold shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[var(--oak)]"
-              >
-                {createMutation.isPending ? 'Creating space...' : 'Create & Enter Flat'}
-              </Button>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Create Household Dialog Modal */}
+      <CreateHouseholdModal
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+      />
 
       {/* Footer Info */}
       <footer className="p-6 text-center text-xs text-[var(--muted)] border-t border-[var(--border)]/60">

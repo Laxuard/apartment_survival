@@ -8,6 +8,8 @@ import {
   IconCoins,
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { formatMoney } from '@/domain';
 import type { DirectSettlementPath } from '../types';
 
 interface BatchSettlementModalProps {
@@ -31,14 +33,14 @@ export const BatchSettlementModal: React.FC<BatchSettlementModalProps> = ({
 
   const handleConfirm = () => {
     confetti({
-      particleCount: 85,
+      particleCount: 80,
       spread: 70,
       origin: { y: 0.65 },
       colors: ['#C1793D', '#6B7A5E', '#E0954F', '#7CC199'],
     });
 
     toast.success('All apartment tabs settled!', {
-      description: `Reconciled ${totalClearedAmount.toFixed(2)} ${currency} across ${settlementPaths.length} transfers.`,
+      description: `Reconciled ${formatMoney(totalClearedAmount, currency)} across ${settlementPaths.length} transfers.`,
     });
 
     onConfirmBatchSettle();
@@ -46,7 +48,7 @@ export const BatchSettlementModal: React.FC<BatchSettlementModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-      <div className="card-custom max-w-lg w-full p-6 space-y-5 shadow-2xl border border-[var(--border-strong)] animate-fade-in">
+      <Card variant="modal" className="max-w-lg w-full p-6 space-y-5 shadow-2xl animate-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
           <div className="flex items-center gap-2.5">
@@ -91,7 +93,7 @@ export const BatchSettlementModal: React.FC<BatchSettlementModalProps> = ({
                   </div>
                 </div>
                 <div className="font-bold mono text-[var(--positive-text)] shrink-0">
-                  {path.amount.toFixed(2)} {path.currency}
+                  {formatMoney(path.amount, path.currency)}
                 </div>
               </div>
             ))}
@@ -99,35 +101,36 @@ export const BatchSettlementModal: React.FC<BatchSettlementModalProps> = ({
         </div>
 
         {/* Total Summary */}
-        <div className="p-4 rounded-xl bg-[var(--card)] border border-[var(--border-strong)] flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-[var(--canvas)] border border-[var(--border-strong)] flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
             <IconCoins size={16} className="text-[var(--oak)]" />
             <span>Total Debt Cleared:</span>
           </div>
           <div className="text-base font-bold mono text-[var(--positive-text)]">
-            {totalClearedAmount.toFixed(2)} {currency}
+            {formatMoney(totalClearedAmount, currency)}
           </div>
         </div>
 
         {/* Actions */}
         <div className="pt-2 flex items-center justify-end gap-2.5 border-t border-[var(--border)]">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-[var(--text)] hover:bg-[var(--canvas)] border border-[var(--border)] transition-all cursor-pointer"
-          >
-            Cancel
-          </button>
           <Button
             type="button"
+            variant="outline"
+            size="sm"
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            size="sm"
             onClick={handleConfirm}
-            className="btn-tactile bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs font-semibold px-5 py-2 rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
           >
             <IconCheck size={15} />
             <span>Confirm & Settle All Tabs</span>
           </Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

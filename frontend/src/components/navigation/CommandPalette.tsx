@@ -25,8 +25,16 @@ interface PaletteItem {
 }
 
 export const CommandPalette: React.FC = () => {
-  const { isPaletteOpen, togglePalette, openModal, openSettleModal } = useUIStore();
+  const {
+    isPaletteOpen,
+    togglePalette,
+    openModal,
+    openSettleModal,
+    openBillModal,
+    openManageBillsModal,
+  } = useUIStore();
   const navigate = useNavigate();
+
   const [query, setQuery] = useState('');
 
   const items: PaletteItem[] = [
@@ -94,6 +102,24 @@ export const CommandPalette: React.FC = () => {
       },
     },
     {
+      id: 'action-bill',
+      label: 'Set up recurring bill',
+      icon: IconPlus,
+      action: () => {
+        togglePalette(false);
+        openBillModal();
+      },
+    },
+    {
+      id: 'action-manage-bills',
+      label: 'Manage recurring bills',
+      icon: IconReceipt2,
+      action: () => {
+        togglePalette(false);
+        openManageBillsModal();
+      },
+    },
+    {
       id: 'action-invite',
       label: 'Invite roommate',
       icon: IconUserPlus,
@@ -103,6 +129,7 @@ export const CommandPalette: React.FC = () => {
       },
     },
   ];
+
 
   const filtered = items.filter((i) =>
     i.label.toLowerCase().includes(query.toLowerCase())

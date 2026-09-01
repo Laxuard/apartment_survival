@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useHouseholdStore } from '@/stores/useHouseholdStore';
+import { useActiveHousehold } from './useActiveHousehold';
 import { useRoommatesQuery } from '@/features/roommates/hooks/useRoommatesQueries';
 import {
   calculateHouseholdMetrics,
@@ -19,10 +19,7 @@ export interface HouseholdMetricsState extends HouseholdCalculations {
  * Universal Hook for Household Capacity, Budget Splits, and Occupancy Metrics
  */
 export const useHouseholdMetrics = (): HouseholdMetricsState => {
-  const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
-  const { getActiveHousehold, getActiveCurrency } = useHouseholdStore();
-  const activeHousehold = getActiveHousehold();
-  const currency = getActiveCurrency();
+  const { activeHousehold, activeHouseholdId, activeCurrency: currency } = useActiveHousehold();
 
   const { data: members = [] } = useRoommatesQuery(activeHouseholdId, currency);
 

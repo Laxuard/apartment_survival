@@ -93,6 +93,7 @@ class HouseholdIntegrationTest {
                         var createRequest = new HouseholdRequest.Create("Sunshine Villa", "Beachside Apartment",
                                         Currency.getInstance("MAD"), null);
                         MvcResult createResult = mockMvc.perform(post(HOUSEHOLDS_URL)
+                                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                                         .session(sessionA)
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -124,6 +125,7 @@ class HouseholdIntegrationTest {
                         var updateRequest = new HouseholdRequest.Update("Sunny Villa Renovated", "New Description",
                                         null, null, null, 8);
                         mockMvc.perform(put(HOUSEHOLDS_URL + "/{householdId}", householdId)
+                                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                                         .session(sessionA)
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(objectMapper.writeValueAsString(updateRequest)))
@@ -131,7 +133,9 @@ class HouseholdIntegrationTest {
                                         .andExpect(jsonPath("$.name").value("Sunny Villa Renovated"));
 
                         // 6. User A archives the household
-                        mockMvc.perform(delete(HOUSEHOLDS_URL + "/{householdId}", householdId).session(sessionA))
+                        mockMvc.perform(delete(HOUSEHOLDS_URL + "/{householdId}", householdId)
+                                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
+                                        .session(sessionA))
                                         .andExpect(status().isNoContent());
 
                         // Verify database state is soft-archived
@@ -155,6 +159,7 @@ class HouseholdIntegrationTest {
                                         "Alice", "Password123!");
                         var createRequest = new HouseholdRequest.Create("Alice Apt", null, null, null);
                         MvcResult createResult = mockMvc.perform(post(HOUSEHOLDS_URL)
+                                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                                         .session(sessionA)
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -177,6 +182,7 @@ class HouseholdIntegrationTest {
                         // User B attempts to update Alice's household -> 403 Forbidden
                         var updateRequest = new HouseholdRequest.Update("Hacked Name", null, null, null, null, 10);
                         mockMvc.perform(put(HOUSEHOLDS_URL + "/{householdId}", householdId)
+                                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                                         .session(sessionB)
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(objectMapper.writeValueAsString(updateRequest)))

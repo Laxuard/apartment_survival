@@ -39,7 +39,10 @@ export const usePantryStock = (): PantryStockState => {
   const metrics = useMemo(() => calculatePantryMetrics(items), [items]);
 
   const adjustQuantity = (id: string, delta: number) => {
-    adjustStockMutation.mutate({ itemId: id, delta });
+    const item = items.find((i) => i.id === id);
+    const currentQty = item?.quantity ?? (item?.status === 'out' ? 0 : 2);
+    const targetQty = Math.max(0, currentQty + delta);
+    adjustStockMutation.mutate({ itemId: id, targetQty });
   };
 
   const toggleGrocery = (id: string, currentStatus?: boolean) => {

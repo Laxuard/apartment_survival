@@ -115,6 +115,7 @@ class ExpenseIntegrationTest {
                         var createHousehold = new HouseholdRequest.Create("Sunny Palms", "Beach House",
                                         Currency.getInstance("MAD"), null);
                         MvcResult householdResult = mockMvc.perform(post(HOUSEHOLDS_URL)
+                                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                                         .session(alice.session())
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(objectMapper.writeValueAsString(createHousehold)))
@@ -127,11 +128,14 @@ class ExpenseIntegrationTest {
                         UUID householdId = household.householdId();
 
                         // Add Bob and Charlie to Household directly
-                        var hEntity = householdRepository.findById(householdId).orElseThrow();
-                        memberRepository.save(HouseholdMember.builder().household(hEntity).userId(bob.userId())
-                                        .role(HouseholdRole.MEMBER).build());
-                        memberRepository.save(HouseholdMember.builder().household(hEntity).userId(charlie.userId())
-                                        .role(HouseholdRole.MEMBER).build());
+                        var hEntity = householdRepository.findActiveWithMembers(householdId).orElseThrow();
+                        var bobMember = HouseholdMember.builder().household(hEntity).userId(bob.userId())
+                                        .role(HouseholdRole.MEMBER).build();
+                        var charlieMember = HouseholdMember.builder().household(hEntity).userId(charlie.userId())
+                                        .role(HouseholdRole.MEMBER).build();
+                        hEntity.addMember(bobMember);
+                        hEntity.addMember(charlieMember);
+                        householdRepository.save(hEntity);
 
                         String expensesUrl = "/api/households/" + householdId + "/expenses";
                         String settlementsUrl = "/api/households/" + householdId + "/settlements";
@@ -154,6 +158,7 @@ class ExpenseIntegrationTest {
                                                                         null)));
 
                         MvcResult expenseResult = mockMvc.perform(post(expensesUrl)
+                                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                                         .session(alice.session())
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(objectMapper.writeValueAsString(expenseRequest)))
@@ -200,6 +205,7 @@ class ExpenseIntegrationTest {
                                         "Cash payment for groceries");
 
                         mockMvc.perform(post(settlementsUrl)
+                                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                                         .session(bob.session())
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(objectMapper.writeValueAsString(settlementRequest)))
@@ -239,6 +245,7 @@ class ExpenseIntegrationTest {
 
                         // 8. Alice soft-deletes the expense
                         mockMvc.perform(delete(expensesUrl + "/{expenseId}", expenseDetail.expenseId())
+                                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                                         .session(alice.session()))
                                         .andExpect(status().isNoContent());
 
@@ -261,6 +268,7 @@ class ExpenseIntegrationTest {
 
                         var createHousehold = new HouseholdRequest.Create("Alice Villa", null, null, null);
                         MvcResult householdResult = mockMvc.perform(post(HOUSEHOLDS_URL)
+                                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                                         .session(alice.session())
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(objectMapper.writeValueAsString(createHousehold)))
@@ -290,6 +298,7 @@ class ExpenseIntegrationTest {
                                         List.of(new ExpenseRequest.SplitItem(david.userId(), null, null, null)));
 
                         mockMvc.perform(post(expensesUrl)
+                                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                                         .session(david.session())
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(objectMapper.writeValueAsString(expenseRequest)))

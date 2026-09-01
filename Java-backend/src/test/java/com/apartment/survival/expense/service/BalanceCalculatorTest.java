@@ -175,30 +175,54 @@ class BalanceCalculatorTest {
     }
 
     @Test
-    @DisplayName("Should throw IllegalStateException when corrupt expense splits cause a ledger imbalance")
-    void imbalancedSplits_ThrowsIllegalStateException() {
-        // Corrupt expense: amount is 100.00 but splits total only 50.00
-        Expense corruptExpense = Expense.builder()
+    @DisplayName("Should correctly calculate direct 1-to-1 debts when DIRECT split algorithm is selected")
+    void directAlgorithm_PairwiseDebts() {
+        // Alice pays 300 MAD, split Bob (100) and Charlie (200)
+        Expense expense = Expense.builder()
                 .id(UUID.randomUUID())
                 .householdId(HOUSEHOLD_ID)
                 .paidByUserId(ALICE)
-                .amount(new BigDecimal("100.00"))
+                .amount(new BigDecimal("300.00"))
                 .currency(MAD)
                 .category(ExpenseCategory.GROCERIES)
-                .splitType(SplitType.EQUAL)
+                .splitType(SplitType.EXACT)
+                .build();
+        expense.addSplit(ExpenseSplit.builder().userId(BOB).assignedAmount(new BigDecimal("100.00")).build());
+        expense.addSplit(ExpenseSplit.builder().userId(CHARLIE).assignedAmount(new BigDecimal("200.00")).build());
+
+        // Bob settles 50 with Alice
+        Settlement settlement = Settlement.builder()
+                .id(UUID.randomUUID())
+                .householdId(HOUSEHOLD_ID)
+                .payerUserId(BOB)
+                .recipientUserId(ALICE)
+                .amount(new BigDecimal("50.00"))
+                .currency(MAD)
                 .build();
 
-        corruptExpense.addSplit(ExpenseSplit.builder().userId(BOB).assignedAmount(new BigDecimal("50.00")).build());
-
-        assertThatThrownBy(() -> balanceCalculator.calculateBalances(
+        BalanceResponse.HouseholdBalances result = balanceCalculator.calculateBalances(
                 HOUSEHOLD_ID,
                 MAD,
-                Set.of(ALICE, BOB),
-                List.of(corruptExpense),
-                List.of(),
+                "DIRECT",
+                Set.of(ALICE, BOB, CHARLIE),
+                List.of(expense),
+                List.of(settlement),
                 usernames
-        ))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Ledger math imbalance");
+        );
+
+        // Bob owes Alice 50, Charlie owes Alice 200
+        assertThat(result.simplifiedDebts()).hasSize(2);
+
+        BalanceResponse.DebtTransfer bobToAlice = result.simplifiedDebts().stream()
+                .filter(d -> d.fromUserId().equals(BOB))
+                .findFirst().orElseThrow();
+        assertThat(bobToAlice.toUserId()).isEqualTo(ALICE);
+        assertThat(bobToAlice.amount()).isEqualByComparingTo("50.00");
+
+        BalanceResponse.DebtTransfer charlieToAlice = result.simplifiedDebts().stream()
+                .filter(d -> d.fromUserId().equals(CHARLIE))
+                .findFirst().orElseThrow();
+        assertThat(charlieToAlice.toUserId()).isEqualTo(ALICE);
+        assertThat(charlieToAlice.amount()).isEqualByComparingTo("200.00");
     }
 }

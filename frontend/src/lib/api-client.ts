@@ -22,14 +22,28 @@ export const apiClient = axios.create({
   },
   timeout: 10000,
   withCredentials: true, // Enables JSESSIONID cookie persistence
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
 });
 
-// Request Interceptor: Attach Auth Token if JWT is used in addition to cookies
+/**
+ * Helper to retrieve cookie value by name
+ */
+function getCookie(name: string): string | undefined {
+  if (typeof document === 'undefined') return undefined;
+  const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+  return match ? decodeURIComponent(match[3]) : undefined;
+}
+
+// Request Interceptor: Attach X-XSRF-TOKEN for state-changing operations
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('auth_token');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const method = config.method?.toUpperCase();
+    if (method && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+      const xsrfToken = getCookie('XSRF-TOKEN');
+      if (xsrfToken && config.headers) {
+        config.headers['X-XSRF-TOKEN'] = xsrfToken;
+      }
     }
     return config;
   },
@@ -49,10 +63,20 @@ apiClient.interceptors.response.use(
       error.message ||
       'An unexpected network error occurred';
 
+    const errObj = new Error(message) as Error & {
+      status?: number;
+      response?: AxiosError['response'];
+      errors?: Record<string, string>;
+    };
+    errObj.status = status;
+    errObj.response = error.response;
+    errObj.errors = data?.errors;
+
     if (status === 401) {
       console.warn('Session expired or unauthorized request (401)');
     }
 
-    return Promise.reject(new Error(message));
+    return Promise.reject(errObj);
   }
 );
+

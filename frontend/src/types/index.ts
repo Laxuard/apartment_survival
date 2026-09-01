@@ -1,8 +1,7 @@
-/**
- * Global Shared Domain Types
- */
+import type { SplitAlgorithm, SplitMethod } from '@/domain';
 
 export type Role = 'ADMIN' | 'MEMBER';
+export type { SplitAlgorithm, SplitMethod };
 
 export interface User {
   id: string;
@@ -21,7 +20,10 @@ export interface HouseholdMembership {
   capacity?: number;
   wifiSsid?: string;
   wifiPassword?: string;
-  splitAlgorithm?: 'DEBT_SIMPLIFIED' | 'DIRECT';
+  splitAlgorithm?: SplitAlgorithm;
+  defaultSplitMethod?: SplitMethod;
+  defaultSplitAllocations?: Record<string, number>;
   autoRestockFromExpenses?: boolean;
   memberCount: number;
 }
+

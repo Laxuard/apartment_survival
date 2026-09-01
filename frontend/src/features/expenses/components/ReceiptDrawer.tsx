@@ -7,17 +7,16 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { formatMoney } from '@/domain';
 import { useUIStore } from '@/stores/useUIStore';
-import { useHouseholdStore } from '@/stores/useHouseholdStore';
+import { useActiveHousehold } from '@/features/households';
 import { useExpensesQuery } from '@/features/expenses/hooks/useExpensesQueries';
 import { useRoommatesQuery } from '@/features/roommates';
 import type { ExpenseSplit } from '@/features/expenses/types';
 
 export const ReceiptDrawer: React.FC = () => {
   const { activeReceiptId, closeReceipt } = useUIStore();
-  const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
-  const { getActiveCurrency } = useHouseholdStore();
-  const activeCurrency = getActiveCurrency();
+  const { activeHouseholdId, activeCurrency } = useActiveHousehold();
   const [copied, setCopied] = useState(false);
 
   const { data: expenses = [] } = useExpensesQuery(activeHouseholdId);
@@ -78,8 +77,7 @@ export const ReceiptDrawer: React.FC = () => {
           <div className="p-4 rounded-2xl bg-[var(--canvas)] border border-[var(--border)] text-center space-y-1">
             <div className="text-xs text-[var(--muted)]">Total Transaction Amount</div>
             <div className="drawer-total mono font-bold text-3xl text-[var(--text)] font-mono tabular-nums">
-              {expense.amount.toFixed(2)}
-              <span className="currency text-xs ml-1 text-[var(--muted)]">{currency}</span>
+              {formatMoney(expense.amount, currency)}
             </div>
             <div className="text-xs text-[var(--muted)] pt-1">
               Paid in full by <strong className="text-[var(--text)] font-semibold">{expense.payerName}</strong>
@@ -101,7 +99,7 @@ export const ReceiptDrawer: React.FC = () => {
                 >
                   <span className="text-xs font-medium text-[var(--text)]">{split.userName}</span>
                   <span className="font-mono tabular-nums text-xs font-semibold text-[var(--text)]">
-                    {split.amount.toFixed(2)} {currency}
+                    {formatMoney(split.amount, currency)}
                   </span>
                 </div>
               ))}

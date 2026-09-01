@@ -190,6 +190,7 @@ class AuthIntegrationTest {
 
             // 2. Perform Logout passing the active session
             mockMvc.perform(post(LOGOUT_URL)
+                    .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                     .session((org.springframework.mock.web.MockHttpSession) session))
                     .andExpect(status().isNoContent())
                     .andExpect(cookie().exists("JSESSIONID"))

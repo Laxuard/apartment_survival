@@ -6,6 +6,7 @@ import type { LoginDto, RegisterDto } from '../types';
 
 export interface AuthPanelProps {
   initialMode?: 'register' | 'login';
+  initialUsername?: string;
   allowToggleMode?: boolean;
   submitLabel?: string;
   isSubmitting?: boolean;
@@ -16,6 +17,7 @@ export interface AuthPanelProps {
 
 export const AuthPanel: React.FC<AuthPanelProps> = ({
   initialMode = 'register',
+  initialUsername = '',
   allowToggleMode = true,
   submitLabel,
   isSubmitting = false,
@@ -24,7 +26,7 @@ export const AuthPanel: React.FC<AuthPanelProps> = ({
   onSubmitLogin,
 }) => {
   const [mode, setMode] = useState<'register' | 'login'>(initialMode);
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState(initialUsername);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

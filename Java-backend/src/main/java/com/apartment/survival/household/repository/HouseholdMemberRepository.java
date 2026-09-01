@@ -28,6 +28,10 @@ public interface HouseholdMemberRepository extends JpaRepository<HouseholdMember
            "WHERE m.household.id = :householdId AND m.userId = :userId AND m.household.archived = false")
     Optional<HouseholdMember> findByActiveHouseholdIdAndUserId(@Param("householdId") UUID householdId, @Param("userId") UUID userId);
 
+    @Query("SELECT m.userId FROM HouseholdMember m " +
+           "WHERE m.household.id = :householdId AND m.household.archived = false")
+    java.util.Set<UUID> findActiveMemberUserIds(@Param("householdId") UUID householdId);
+
     @Query("SELECT COUNT(m) FROM HouseholdMember m WHERE m.household.id = :householdId")
     long countByHouseholdId(@Param("householdId") UUID householdId);
 

@@ -1,10 +1,17 @@
+import { LoadingScreen } from '@/components/common/LoadingScreen';
+import { useCurrentUserQuery } from '@/features/auth/hooks/useAuth';
+import { useAuthStore } from '@/stores/useAuthStore';
 import React from 'react';
 import { Navigate, Outlet, useSearchParams } from 'react-router-dom';
-import { useAuthStore } from '@/stores/useAuthStore';
 
 export const PublicOnlyRoute: React.FC = () => {
-  const { isAuthenticated } = useAuthStore();
+  useCurrentUserQuery();
+  const { isAuthenticated, isInitialized } = useAuthStore();
   const [searchParams] = useSearchParams();
+
+  if (!isInitialized) {
+    return <LoadingScreen message="Checking session..." />;
+  }
 
   if (isAuthenticated) {
     const redirectUrl = searchParams.get('redirect') || '/dashboard';

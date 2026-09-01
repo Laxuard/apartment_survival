@@ -1,8 +1,10 @@
+import { DEFAULT_CURRENCY, getClientTimezone } from '@/domain';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export interface OnboardingDraft {
   householdName: string;
+  hostName: string;
   currency: string;
   roommateNames: string[];
   includeStarterTemplates: boolean;
@@ -15,16 +17,18 @@ interface OnboardingState {
 
   setDraft: (partial: Partial<OnboardingDraft>) => void;
   addRoommateName: (name: string) => void;
+  addRoommateNames: (names: string[]) => void;
   removeRoommateName: (index: number) => void;
   clearDraft: () => void;
 }
 
 const DEFAULT_DRAFT: OnboardingDraft = {
   householdName: '',
-  currency: 'MAD',
+  hostName: '',
+  currency: DEFAULT_CURRENCY,
   roommateNames: [],
   includeStarterTemplates: true,
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+  timezone: getClientTimezone(),
 };
 
 export const useOnboardingStore = create<OnboardingState>()(
@@ -41,11 +45,33 @@ export const useOnboardingStore = create<OnboardingState>()(
 
       addRoommateName: (name) =>
         set((state) => {
-          if (!name.trim() || state.draft.roommateNames.includes(name.trim())) return state;
+          const trimmed = name.trim();
+          if (!trimmed || state.draft.roommateNames.some((n) => n.toLowerCase() === trimmed.toLowerCase())) return state;
           return {
             draft: {
               ...state.draft,
-              roommateNames: [...state.draft.roommateNames, name.trim()],
+              roommateNames: [...state.draft.roommateNames, trimmed],
+            },
+            hasDraft: true,
+          };
+        }),
+
+      addRoommateNames: (names) =>
+        set((state) => {
+          const existing = new Set(state.draft.roommateNames.map((n) => n.toLowerCase()));
+          const added: string[] = [];
+          for (const raw of names) {
+            const trimmed = raw.trim();
+            if (trimmed && !existing.has(trimmed.toLowerCase())) {
+              existing.add(trimmed.toLowerCase());
+              added.push(trimmed);
+            }
+          }
+          if (added.length === 0) return state;
+          return {
+            draft: {
+              ...state.draft,
+              roommateNames: [...state.draft.roommateNames, ...added],
             },
             hasDraft: true,
           };

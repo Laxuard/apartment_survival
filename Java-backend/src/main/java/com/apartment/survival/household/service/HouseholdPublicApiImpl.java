@@ -5,14 +5,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.apartment.survival.household.api.HouseholdPublicApi;
 import com.apartment.survival.household.api.HouseholdPublicDto;
-import com.apartment.survival.household.model.HouseholdMember;
 import com.apartment.survival.household.repository.HouseholdMemberRepository;
 import com.apartment.survival.household.repository.HouseholdRepository;
 
@@ -65,7 +63,10 @@ public class HouseholdPublicApiImpl implements HouseholdPublicApi {
                         h.getCurrency(),
                         h.getTimezone(),
                         h.isArchived(),
-                        h.getMaxMembers()
+                        h.getMaxMembers(),
+                        h.getSplitAlgorithm(),
+                        h.getDefaultSplitMethod(),
+                        h.getDefaultSplitAllocations()
                 ));
     }
 
@@ -75,16 +76,12 @@ public class HouseholdPublicApiImpl implements HouseholdPublicApi {
         if (householdId == null) {
             return Set.of();
         }
-        return householdRepository.findActiveWithMembers(householdId)
-                .map(h -> h.getMembers().stream()
-                        .map(HouseholdMember::getUserId)
-                        .collect(Collectors.toSet()))
-                .orElse(Set.of());
+        return memberRepository.findActiveMemberUserIds(householdId);
     }
     @Override
     @Transactional(readOnly = true)
     public Map.Entry<HouseholdPublicDto, Set<UUID>> findWithMemberIds(UUID householdId) {
-        return householdRepository.findActiveWithMembers(householdId)
+        return householdRepository.findActive(householdId)
                 .map(h -> {
                     HouseholdPublicDto dto = new HouseholdPublicDto(
                             h.getId(),
@@ -92,11 +89,12 @@ public class HouseholdPublicApiImpl implements HouseholdPublicApi {
                             h.getCurrency(),
                             h.getTimezone(),
                             h.isArchived(),
-                            h.getMaxMembers()
+                            h.getMaxMembers(),
+                            h.getSplitAlgorithm(),
+                            h.getDefaultSplitMethod(),
+                            h.getDefaultSplitAllocations()
                     );
-                    Set<UUID> memberIds = h.getMembers().stream()
-                            .map(HouseholdMember::getUserId)
-                            .collect(Collectors.toSet());
+                    Set<UUID> memberIds = memberRepository.findActiveMemberUserIds(householdId);
                     return (Map.Entry<HouseholdPublicDto, Set<UUID>>) new AbstractMap.SimpleImmutableEntry<>(dto, memberIds);
                 })
                 .orElseThrow(() -> new com.apartment.survival.common.exception.type.ResourceNotFoundException(

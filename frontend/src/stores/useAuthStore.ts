@@ -1,36 +1,32 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { User } from '@/types';
+
 interface AuthState {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
+  isInitialized: boolean;
 
-  setAuth: (user: User, token: string) => void;
+  setAuth: (user: User) => void;
   updateUser: (data: Partial<User>) => void;
   logout: () => void;
+  setInitialized: (initialized: boolean) => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      token: null,
-      isAuthenticated: false,
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  isAuthenticated: false,
+  isInitialized: false,
 
-      setAuth: (user, token) =>
-        set({ user, token, isAuthenticated: true }),
+  setAuth: (user) =>
+    set({ user, isAuthenticated: true, isInitialized: true }),
 
-      updateUser: (data) =>
-        set((state) => ({
-          user: state.user ? { ...state.user, ...data } : null,
-        })),
+  updateUser: (data) =>
+    set((state) => ({
+      user: state.user ? { ...state.user, ...data } : null,
+    })),
 
-      logout: () =>
-        set({ user: null, token: null, isAuthenticated: false }),
-    }),
-    {
-      name: 'apartment-survival-auth',
-    }
-  )
-);
+  logout: () =>
+    set({ user: null, isAuthenticated: false, isInitialized: true }),
+
+  setInitialized: (isInitialized) => set({ isInitialized }),
+}));

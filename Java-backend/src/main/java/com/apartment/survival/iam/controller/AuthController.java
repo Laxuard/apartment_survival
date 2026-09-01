@@ -12,6 +12,8 @@ import com.apartment.survival.iam.dto.AuthResponse;
 import com.apartment.survival.iam.security.SecuritySessionHelper;
 import com.apartment.survival.iam.service.AuthService;
 
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +27,18 @@ public class AuthController {
     private final AuthService authService;
     private final SecuritySessionHelper securitySessionHelper;
     
+    @GetMapping("/csrf")
+    public ResponseEntity<AuthResponse.CsrfToken> getCsrfToken(CsrfToken csrfToken) {
+        if (csrfToken == null) {
+            return ResponseEntity.ok(new AuthResponse.CsrfToken("", "X-XSRF-TOKEN", "_csrf"));
+        }
+        return ResponseEntity.ok(new AuthResponse.CsrfToken(
+            csrfToken.getToken(),
+            csrfToken.getHeaderName(),
+            csrfToken.getParameterName()
+        ));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<AuthResponse.UserSummary> login(@Valid @RequestBody AuthRequest.Login request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
 

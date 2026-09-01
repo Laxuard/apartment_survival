@@ -28,12 +28,14 @@ const SHORTCUTS = [
     group: 'Quick Actions',
     items: [
       { keys: ['N'], desc: 'Log a new shared expense' },
+      { keys: ['B'], desc: 'Set up a recurring bill template' },
       { keys: ['S'], desc: 'Open quick settlement modal' },
       { keys: ['I'], desc: 'Open roommate invite modal' },
       { keys: ['?'], desc: 'Toggle keyboard shortcuts cheat sheet' },
       { keys: ['ESC'], desc: 'Close any active modal or drawer' },
     ],
   },
+
 ];
 
 export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({

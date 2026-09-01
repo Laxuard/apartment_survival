@@ -5,13 +5,14 @@ import { Sidebar } from '@/components/navigation/Sidebar';
 import { Topbar } from '@/components/navigation/Topbar';
 import { ExpenseModal, ReceiptDrawer, SettleModal } from '@/features/expenses';
 import { InviteModal } from '@/features/roommates';
+import { CreateBillModal, MarkBillPaidModal, ManageBillsModal } from '@/features/bills';
 import { useUIStore } from '@/stores/useUIStore';
 import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 
 export const AppLayout: React.FC = () => {
   const navigate = useNavigate();
-  const { openModal, openSettleModal } = useUIStore();
+  const { openModal, openSettleModal, openBillModal } = useUIStore();
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
   useEffect(() => {
@@ -36,6 +37,11 @@ export const AppLayout: React.FC = () => {
         case 'N':
           e.preventDefault();
           openModal('expense');
+          break;
+        case 'b':
+        case 'B':
+          e.preventDefault();
+          openBillModal();
           break;
         case 's':
         case 'S':
@@ -78,7 +84,7 @@ export const AppLayout: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigate, openModal, openSettleModal]);
+  }, [navigate, openModal, openSettleModal, openBillModal]);
 
   return (
     <>
@@ -102,6 +108,9 @@ export const AppLayout: React.FC = () => {
       <ExpenseModal />
       <SettleModal />
       <InviteModal />
+      <CreateBillModal />
+      <MarkBillPaidModal />
+      <ManageBillsModal />
       <CommandPalette />
       <ReceiptDrawer />
       <KeyboardShortcutsModal

@@ -1,6 +1,8 @@
 import React from 'react';
 import { IconPlus, IconTrendingUp, IconArrowsExchange } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { formatMoney, formatSignedMoney } from '@/domain';
 import { useUIStore } from '@/stores/useUIStore';
 import { useHouseholdLedger } from '@/features/roommates';
 
@@ -36,10 +38,10 @@ export const HeroBalance: React.FC<HeroBalanceProps> = ({
           <span className="uppercase tracking-wider text-xs font-bold text-[var(--muted)]">
             {ledger.statusLabel}
           </span>
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[var(--sage-tint)] text-[var(--sage)] border border-[var(--sage)]/40 shadow-2xs">
+          <Badge variant="secondary" className="gap-1.5 px-2.5 py-0.5 shadow-2xs">
             <IconTrendingUp size={13} />
-            Healthy Ledger
-          </span>
+            <span>Healthy Ledger</span>
+          </Badge>
         </div>
 
         <span className="text-xs text-[var(--muted)] hidden sm:inline-block font-medium">
@@ -79,11 +81,11 @@ export const HeroBalance: React.FC<HeroBalanceProps> = ({
           <div className="flex justify-between text-xs text-[var(--muted)] font-mono px-0.5">
             <span className="text-[var(--sage)] font-semibold flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-[var(--sage)] inline-block shadow-2xs" />
-              Lent: +{finalLent.toFixed(2)} {ledger.currency}
+              Lent: {formatSignedMoney(finalLent, ledger.currency)}
             </span>
             <span className="text-[var(--oak)] font-semibold flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-[var(--oak)] inline-block shadow-2xs" />
-              Borrowed: {finalBorrowed.toFixed(2)} {ledger.currency}
+              Borrowed: {formatMoney(finalBorrowed, ledger.currency)}
             </span>
           </div>
           <div className="h-3 w-full bg-[var(--canvas)] border border-[var(--border-strong)] rounded-full overflow-hidden flex shadow-inner">
@@ -110,7 +112,7 @@ export const HeroBalance: React.FC<HeroBalanceProps> = ({
         <div className="flex items-center justify-start lg:justify-end gap-3 shrink-0 lg:w-1/3">
           <Button
             onClick={() => openModal('expense')}
-            className="btn-tactile bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs sm:text-sm font-semibold shadow-sm cursor-pointer px-5 py-2.5 h-11 rounded-xl flex items-center gap-2"
+            size="lg"
           >
             <IconPlus size={17} aria-hidden="true" />
             <span>Log expense</span>
@@ -118,8 +120,8 @@ export const HeroBalance: React.FC<HeroBalanceProps> = ({
 
           <Button
             variant="outline"
+            size="lg"
             onClick={() => openSettleModal()}
-            className="btn-tactile border border-[var(--border-strong)] bg-[var(--card)] hover:bg-[var(--canvas)] text-[var(--text)] text-xs sm:text-sm font-semibold cursor-pointer px-5 py-2.5 h-11 rounded-xl shadow-2xs flex items-center gap-2"
           >
             <IconArrowsExchange size={17} aria-hidden="true" className="text-[var(--muted)]" />
             <span>Record payment</span>

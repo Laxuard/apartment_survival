@@ -77,6 +77,7 @@ public class BalanceService {
         return balanceCalculator.calculateBalances(
                 householdId,
                 household.currency(),
+                household.splitAlgorithm(),
                 memberUserIds,
                 expenses,
                 settlements,

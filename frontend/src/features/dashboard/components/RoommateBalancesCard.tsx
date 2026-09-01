@@ -1,5 +1,9 @@
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatMoney } from '@/domain';
+
+
+
 import { useHouseholdLedger } from '@/features/roommates';
 import { useUIStore } from '@/stores/useUIStore';
 import { IconUserPlus, IconUsers } from '@tabler/icons-react';
@@ -100,16 +104,21 @@ export const RoommateBalancesCard: React.FC = () => {
 
                   {/* Right: font-mono tabular-nums text-xs badge */}
                   <span
-                    className={`font-mono tabular-nums text-xs font-medium px-2 py-1 rounded-md transition-transform group-hover:translate-x-[-2px] ${rm.balance > 0
-                      ? 'bg-[var(--positive-bg)] text-[var(--positive-text)]'
-                      : rm.balance < 0
-                        ? 'bg-[var(--negative-bg)] text-[var(--negative-text)]'
-                        : 'bg-[var(--canvas)] text-[var(--muted)]'
-                      }`}
+                    className={`font-mono tabular-nums text-xs font-semibold px-2.5 py-1 rounded-lg transition-transform group-hover:translate-x-[-2px] ${
+                      rm.balance < -0.001
+                        ? 'bg-[var(--oak-tint)]/60 text-[var(--oak)] border border-[var(--oak)]/30'
+                        : rm.balance > 0.001
+                        ? 'bg-[var(--sage-tint)] text-[var(--sage)] border border-[var(--sage)]/30'
+                        : 'bg-[var(--canvas)] text-[var(--muted)] border border-[var(--border)]'
+                    }`}
                   >
-                    {rm.balance > 0 ? '+' : ''}
-                    {rm.balance.toFixed(2)} {ledger.currency}
+                    {rm.balance < -0.001
+                      ? `Owes ${formatMoney(Math.abs(rm.balance), ledger.currency)}`
+                      : rm.balance > 0.001
+                      ? `Is owed ${formatMoney(rm.balance, ledger.currency)}`
+                      : 'Settled'}
                   </span>
+
                 </div>
               ))}
             </div>

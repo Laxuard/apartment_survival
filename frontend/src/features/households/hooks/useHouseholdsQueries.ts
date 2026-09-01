@@ -28,6 +28,10 @@ export const useHouseholdsQuery = () => {
         wifiSsid: s.wifiSsid || '',
         wifiPassword: s.wifiPassword || '',
         splitAlgorithm: s.splitAlgorithm || 'DEBT_SIMPLIFIED',
+        defaultSplitMethod: s.defaultSplitMethod || 'EQUAL',
+        defaultSplitAllocations: typeof s.defaultSplitAllocations === 'string'
+          ? (() => { try { return JSON.parse(s.defaultSplitAllocations); } catch { return {}; } })()
+          : (s.defaultSplitAllocations || {}),
         autoRestockFromExpenses: s.autoRestockFromExpenses ?? true,
       }));
     },
@@ -45,25 +49,12 @@ export const useHouseholdDetailQuery = (householdId: string | null) => {
 
 export const useCreateHouseholdMutation = () => {
   const queryClient = useQueryClient();
-  const addHousehold = useHouseholdStore((s) => s.addHousehold);
+  const setActiveHousehold = useHouseholdStore((s) => s.setActiveHousehold);
 
   return useMutation({
     mutationFn: (dto: CreateHouseholdDto) => householdsApi.createHousehold(dto),
     onSuccess: (created) => {
-      addHousehold({
-        id: created.householdId,
-        name: created.name,
-        role: created.role || 'ADMIN',
-        currency: typeof created.currency === 'string' ? created.currency : 'MAD',
-        memberCount: 1,
-        description: created.description,
-        monthlyBudget: created.monthlyBudget ?? 0,
-        capacity: created.maxMembers ?? 4,
-        wifiSsid: created.wifiSsid || '',
-        wifiPassword: created.wifiPassword || '',
-        splitAlgorithm: created.splitAlgorithm || 'DEBT_SIMPLIFIED',
-        autoRestockFromExpenses: created.autoRestockFromExpenses ?? true,
-      });
+      setActiveHousehold(created.householdId);
       queryClient.invalidateQueries({ queryKey: HOUSEHOLDS_QUERY_KEY });
     },
   });
@@ -71,25 +62,11 @@ export const useCreateHouseholdMutation = () => {
 
 export const useUpdateHouseholdMutation = () => {
   const queryClient = useQueryClient();
-  const updateActiveHousehold = useHouseholdStore((s) => s.updateActiveHousehold);
 
   return useMutation({
     mutationFn: ({ householdId, dto }: { householdId: string; dto: UpdateHouseholdDto }) =>
       householdsApi.updateHousehold(householdId, dto),
     onSuccess: (updated) => {
-      updateActiveHousehold({
-        name: updated.name,
-        description: updated.description,
-        currency: typeof updated.currency === 'string' ? updated.currency : 'MAD',
-        memberCount: updated.memberCount,
-        capacity: updated.maxMembers,
-        monthlyBudget: updated.monthlyBudget,
-        wifiSsid: updated.wifiSsid,
-        wifiPassword: updated.wifiPassword,
-        splitAlgorithm: updated.splitAlgorithm,
-        autoRestockFromExpenses: updated.autoRestockFromExpenses,
-        role: updated.role,
-      });
       queryClient.invalidateQueries({ queryKey: HOUSEHOLDS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: HOUSEHOLD_DETAIL_KEY(updated.householdId) });
     },
@@ -98,18 +75,12 @@ export const useUpdateHouseholdMutation = () => {
 
 export const useJoinHouseholdMutation = () => {
   const queryClient = useQueryClient();
-  const addHousehold = useHouseholdStore((s) => s.addHousehold);
+  const setActiveHousehold = useHouseholdStore((s) => s.setActiveHousehold);
 
   return useMutation({
     mutationFn: (dto: JoinWithCodeDto) => householdsApi.joinWithCode(dto),
     onSuccess: (joined) => {
-      addHousehold({
-        id: joined.householdId,
-        name: joined.name,
-        role: 'MEMBER',
-        currency: typeof joined.currency === 'string' ? joined.currency : 'MAD',
-        memberCount: joined.memberCount,
-      });
+      setActiveHousehold(joined.householdId);
       queryClient.invalidateQueries({ queryKey: HOUSEHOLDS_QUERY_KEY });
     },
   });
@@ -131,18 +102,12 @@ export const usePendingInvitesQuery = () => {
 
 export const useAcceptInviteMutation = () => {
   const queryClient = useQueryClient();
-  const addHousehold = useHouseholdStore((s) => s.addHousehold);
+  const setActiveHousehold = useHouseholdStore((s) => s.setActiveHousehold);
 
   return useMutation({
     mutationFn: (inviteId: string) => householdsApi.acceptDirectInvite(inviteId),
     onSuccess: (joined) => {
-      addHousehold({
-        id: joined.householdId,
-        name: joined.name,
-        role: 'MEMBER',
-        currency: typeof joined.currency === 'string' ? joined.currency : 'MAD',
-        memberCount: joined.memberCount,
-      });
+      setActiveHousehold(joined.householdId);
       queryClient.invalidateQueries({ queryKey: HOUSEHOLDS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: PENDING_INVITES_KEY });
     },

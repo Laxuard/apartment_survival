@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { IconBuildingCommunity, IconMoon, IconSun } from '@tabler/icons-react';
 import React from 'react';
@@ -63,14 +64,18 @@ export const LandingNavbar: React.FC = () => {
         {/* Right Action Bar */}
         <div className="flex items-center space-x-3">
           {/* Light / Dark Mode Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="w-9 h-9 rounded-xl border border-[var(--border-strong)] bg-[var(--canvas)] text-[var(--muted)] hover:text-[var(--text)] flex items-center justify-center transition-colors cursor-pointer"
-            title="Toggle theme mode"
-            aria-label="Toggle theme mode"
-          >
-            {mode === 'dark' ? <IconSun size={17} /> : <IconMoon size={17} />}
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={toggleTheme}
+                className="w-9 h-9 rounded-xl border border-[var(--border-strong)] bg-[var(--canvas)] text-[var(--muted)] hover:text-[var(--text)] flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="Toggle theme mode"
+              >
+                {mode === 'dark' ? <IconSun size={17} /> : <IconMoon size={17} />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Toggle theme mode</TooltipContent>
+          </Tooltip>
 
           {/* Sign In Link */}
           <Link

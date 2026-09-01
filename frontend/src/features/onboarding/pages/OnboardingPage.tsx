@@ -5,7 +5,7 @@ import {
   IconHome,
   IconCoins,
   IconPlus,
-  IconTrash,
+  IconX,
   IconSparkles,
   IconArrowRight,
   IconArrowLeft,
@@ -14,6 +14,7 @@ import {
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DEFAULT_CURRENCY, getClientTimezone, SUPPORTED_CURRENCIES } from '@/domain';
 import { AuthPanel } from '@/features/auth';
 import { authApi } from '@/features/auth/api/authApi';
 import type { RegisterDto, LoginDto } from '@/features/auth/types';
@@ -23,34 +24,63 @@ import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { householdsApi } from '@/features/households/api/householdsApi';
 import { useCreateHouseholdMutation } from '@/features/households';
 
-const CURRENCIES = [
-  { code: 'MAD', label: 'Moroccan Dirham', symbol: 'MAD' },
-  { code: 'EUR', label: 'Euro', symbol: '€' },
-  { code: 'USD', label: 'US Dollar', symbol: '$' },
-  { code: 'GBP', label: 'British Pound', symbol: '£' },
-];
-
 export const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, setAuth } = useAuthStore();
-  const addHousehold = useHouseholdStore((s) => s.addHousehold);
-  const { draft, setDraft, addRoommateName, removeRoommateName, clearDraft } = useOnboardingStore();
+  const setActiveHousehold = useHouseholdStore((s) => s.setActiveHousehold);
+  const {
+    draft,
+    setDraft,
+    addRoommateName,
+    addRoommateNames,
+    removeRoommateName,
+    clearDraft,
+  } = useOnboardingStore();
   const createHouseholdMutation = useCreateHouseholdMutation();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [flatName, setFlatName] = useState(draft.householdName || '');
-  const [selectedCurrency, setSelectedCurrency] = useState(draft.currency || 'MAD');
+  const [selectedCurrency, setSelectedCurrency] = useState(draft.currency || DEFAULT_CURRENCY);
+  const [hostName, setHostName] = useState(draft.hostName || user?.name || '');
   const [roommateInput, setRoommateInput] = useState('');
   const [includeTemplates, setIncludeTemplates] = useState(draft.includeStarterTemplates ?? true);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const handleAddRoommate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!roommateInput.trim()) return;
-    addRoommateName(roommateInput.trim());
+  // Commit text into roommate tags (handles single name, comma-separated, or pasted lists)
+  const handleCommitRoommateText = (rawText: string) => {
+    const trimmed = rawText.trim();
+    if (!trimmed) return;
+
+    const splitNames = trimmed
+      .split(/[,;\n]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (splitNames.length > 1) {
+      addRoommateNames(splitNames);
+    } else if (splitNames.length === 1) {
+      addRoommateName(splitNames[0]);
+    }
     setRoommateInput('');
+  };
+
+  const handleRoommateKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      handleCommitRoommateText(roommateInput);
+    } else if (e.key === 'Backspace' && !roommateInput && draft.roommateNames.length > 0) {
+      removeRoommateName(draft.roommateNames.length - 1);
+    }
+  };
+
+  const handleRoommatePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasteData = e.clipboardData.getData('text');
+    if (pasteData && (pasteData.includes(',') || pasteData.includes('\n') || pasteData.includes(';'))) {
+      e.preventDefault();
+      handleCommitRoommateText(pasteData);
+    }
   };
 
   const handleStep1Next = (e: React.FormEvent) => {
@@ -61,7 +91,11 @@ export const OnboardingPage: React.FC = () => {
   };
 
   const handleStep2Next = () => {
-    setDraft({ includeStarterTemplates: includeTemplates });
+    // If user left uncommitted text in the roommate input, commit it automatically
+    if (roommateInput.trim()) {
+      handleCommitRoommateText(roommateInput);
+    }
+    setDraft({ hostName: hostName.trim(), includeStarterTemplates: includeTemplates });
     setStep(3);
   };
 
@@ -72,7 +106,7 @@ export const OnboardingPage: React.FC = () => {
       const res = await createHouseholdMutation.mutateAsync({
         name: flatName.trim() || 'My Apartment',
         currency: selectedCurrency,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        timezone: getClientTimezone(),
         maxMembers: Math.max(8, draft.roommateNames.length + 1),
       });
 
@@ -101,46 +135,26 @@ export const OnboardingPage: React.FC = () => {
       const created = await householdsApi.createHousehold({
         name: flatName.trim() || 'My Apartment',
         currency: selectedCurrency,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        timezone: getClientTimezone(),
         maxMembers: Math.max(8, draft.roommateNames.length + 1),
       });
 
-      addHousehold({
-        id: created.householdId,
-        name: created.name,
-        role: created.role || 'ADMIN',
-        currency: typeof created.currency === 'string' ? created.currency : 'MAD',
-        memberCount: 1,
-        description: created.description,
-        monthlyBudget: created.monthlyBudget ?? 0,
-        capacity: created.maxMembers ?? 4,
-        wifiSsid: created.wifiSsid || '',
-        wifiPassword: created.wifiPassword || '',
-        splitAlgorithm: created.splitAlgorithm || 'DEBT_SIMPLIFIED',
-        autoRestockFromExpenses: created.autoRestockFromExpenses ?? true,
-      });
-
+      setActiveHousehold(created.householdId);
       clearDraft();
 
       // 3. Mark Auth Session
-      setAuth(
-        {
-          id: userSummary.userId,
-          name: userSummary.username,
-          email: userSummary.email,
-        },
-        'session-cookie-active'
-      );
-
-      toast.success(`Welcome to ${created.name}, ${userSummary.username}!`, {
-        description: 'Your household is saved and your dashboard is live.',
+      setAuth({
+        id: userSummary.userId,
+        name: userSummary.username,
+        email: userSummary.email,
       });
 
+      toast.success(`Welcome aboard, ${userSummary.username}! Created "${created.name}".`);
       navigate('/dashboard', { replace: true });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Registration failed';
       setAuthError(msg);
-      toast.error('Unable to create account', {
+      toast.error('Registration failed', {
         description: msg,
       });
     } finally {
@@ -158,35 +172,18 @@ export const OnboardingPage: React.FC = () => {
       const created = await householdsApi.createHousehold({
         name: flatName.trim() || 'My Apartment',
         currency: selectedCurrency,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        timezone: getClientTimezone(),
         maxMembers: Math.max(8, draft.roommateNames.length + 1),
       });
 
-      addHousehold({
-        id: created.householdId,
-        name: created.name,
-        role: created.role || 'ADMIN',
-        currency: typeof created.currency === 'string' ? created.currency : 'MAD',
-        memberCount: 1,
-        description: created.description,
-        monthlyBudget: created.monthlyBudget ?? 0,
-        capacity: created.maxMembers ?? 4,
-        wifiSsid: created.wifiSsid || '',
-        wifiPassword: created.wifiPassword || '',
-        splitAlgorithm: created.splitAlgorithm || 'DEBT_SIMPLIFIED',
-        autoRestockFromExpenses: created.autoRestockFromExpenses ?? true,
-      });
-
+      setActiveHousehold(created.householdId);
       clearDraft();
 
-      setAuth(
-        {
-          id: userSummary.userId,
-          name: userSummary.username,
-          email: userSummary.email,
-        },
-        'session-cookie-active'
-      );
+      setAuth({
+        id: userSummary.userId,
+        name: userSummary.username,
+        email: userSummary.email,
+      });
 
       toast.success(`Welcome back, ${userSummary.username}! Created "${created.name}".`);
       navigate('/dashboard', { replace: true });
@@ -237,10 +234,6 @@ export const OnboardingPage: React.FC = () => {
           {step === 1 && (
             <form onSubmit={handleStep1Next} className="space-y-6">
               <div className="space-y-1.5">
-                <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-[var(--oak-tint)] text-[var(--oak)] border border-[var(--oak)]/30">
-                  <IconSparkles size={13} />
-                  <span>Household Setup</span>
-                </div>
                 <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[var(--text)] tracking-tight">
                   Name Your Shared Space
                 </h1>
@@ -271,7 +264,7 @@ export const OnboardingPage: React.FC = () => {
                     <span>Primary Currency</span>
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                    {CURRENCIES.map((c) => (
+                    {SUPPORTED_CURRENCIES.map((c) => (
                       <button
                         key={c.code}
                         type="button"
@@ -310,14 +303,14 @@ export const OnboardingPage: React.FC = () => {
             </form>
           )}
 
-          {/* STEP 2: Placeholder Flatmates & Templates */}
+          {/* STEP 2: Flatmates Tagging & Moroccan Preset */}
           {step === 2 && (
             <div className="space-y-6">
               <div className="space-y-1.5">
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="text-xs text-[var(--muted)] hover:text-[var(--text)] inline-flex items-center gap-1 mb-1 cursor-pointer"
+                  className="text-xs text-[var(--muted)] hover:text-[var(--text)] inline-flex items-center gap-1 mb-1 cursor-pointer transition-colors"
                 >
                   <IconArrowLeft size={13} /> Back to details
                 </button>
@@ -325,57 +318,110 @@ export const OnboardingPage: React.FC = () => {
                   Who Are You Splitting With?
                 </h2>
                 <p className="text-xs sm:text-sm text-[var(--muted)]">
-                  Add flatmate placeholder names. You can invite them with WhatsApp links anytime later.
+                  Confirm your host name and add any flatmates. You can invite them with WhatsApp links anytime later.
                 </p>
               </div>
 
-              {/* Add Roommate Input */}
-              <form onSubmit={handleAddRoommate} className="flex items-center gap-2">
+              {/* 1. Host Name Input (Clean display name semantics, no auth keyword triggers) */}
+              <div className="space-y-1.5 p-4 rounded-2xl bg-[var(--canvas)] border border-[var(--border)]">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="displayName" className="text-xs font-semibold text-[var(--text)] flex items-center gap-1.5">
+                    <span>Your Name</span>
+                  </label>
+                  <span className="text-[10px] text-[var(--oak)] font-bold px-2 py-0.5 rounded-full bg-[var(--oak-tint)]">
+                    Household Host
+                  </span>
+                </div>
                 <Input
+                  id="displayName"
+                  name="displayName"
                   type="text"
-                  placeholder="e.g. Sara, Omar, Alex..."
-                  value={roommateInput}
-                  onChange={(e) => setRoommateInput(e.target.value)}
-                  className="h-11 rounded-xl bg-[var(--canvas)] border-[var(--border-strong)] text-xs sm:text-sm px-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--oak)]/50 focus-visible:border-[var(--oak)] transition-all"
+                  autoComplete="name"
+                  autoCapitalize="words"
+                  spellCheck={false}
+                  placeholder="e.g. Laxuard, Alex, Sara..."
+                  value={hostName}
+                  onChange={(e) => setHostName(e.target.value)}
+                  className="h-11 rounded-xl bg-[var(--card)] border-[var(--border-strong)] text-xs sm:text-sm px-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--oak)]/50 focus-visible:border-[var(--oak)] transition-all"
                 />
-                <Button
-                  type="submit"
-                  disabled={!roommateInput.trim()}
-                  className="btn-tactile h-11 px-4 rounded-xl bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs font-semibold shrink-0 cursor-pointer inline-flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[var(--oak)]"
-                >
-                  <IconPlus size={14} />
-                  <span>Add</span>
-                </Button>
-              </form>
-
-              {/* Roommate Chips */}
-              <div className="min-h-[60px] p-3 rounded-2xl bg-[var(--canvas)] border border-[var(--border)] flex flex-wrap gap-2 items-center">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[var(--oak-tint)] text-[var(--oak)] text-xs font-bold border border-[var(--oak)]/30">
-                  <span>👤 You (Host)</span>
-                </span>
-                {draft.roommateNames.map((name, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[var(--card)] border border-[var(--border)] text-xs font-medium text-[var(--text)] shadow-2xs"
-                  >
-                    <span>{name}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeRoommateName(index)}
-                      className="text-[var(--muted)] hover:text-[var(--negative-text)] cursor-pointer"
-                    >
-                      <IconTrash size={12} />
-                    </button>
-                  </span>
-                ))}
-                {draft.roommateNames.length === 0 && (
-                  <span className="text-xs text-[var(--muted)]">
-                    Type a roommate name above and click Add (or skip if living solo).
-                  </span>
-                )}
+                <p className="text-[11px] text-[var(--muted)]">
+                  How you will be identified on the shared ledger and expense splits.
+                </p>
               </div>
 
-              {/* Starter Template Checkbox */}
+              {/* 2. Unified Integrated Tag Input & Roster */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="flatmate-tag-input" className="text-xs font-semibold text-[var(--text)]">
+                    Flatmate Roster
+                  </label>
+                  <span className="text-[11px] text-[var(--muted)] hidden sm:inline">
+                    Type and press <kbd className="px-1.5 py-0.5 rounded bg-[var(--canvas)] border border-[var(--border)] font-mono text-[10px] text-[var(--text)] font-semibold">Enter</kbd> or <kbd className="px-1.5 py-0.5 rounded bg-[var(--canvas)] border border-[var(--border)] font-mono text-[10px] text-[var(--text)] font-semibold">,</kbd>
+                  </span>
+                </div>
+
+                {/* Single Combined Tag Box */}
+                <div className="p-3.5 rounded-2xl bg-[var(--canvas)] border border-[var(--border-strong)] focus-within:border-[var(--oak)] focus-within:ring-2 focus-within:ring-[var(--oak)]/20 transition-all space-y-3">
+                  {/* Chips Stream */}
+                  <div className="flex flex-wrap gap-2 items-center min-h-[32px]">
+                    {/* Locked Host Chip */}
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[var(--oak-tint)] text-[var(--oak)] text-xs font-bold border border-[var(--oak)]/30 shadow-2xs">
+                      <span>👤 {hostName.trim() || 'You'} (Host)</span>
+                    </span>
+
+                    {/* Removable Flatmate Tags */}
+                    {draft.roommateNames.map((name, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-1 rounded-xl bg-[var(--card)] border border-[var(--border)] text-xs font-medium text-[var(--text)] shadow-2xs group hover:border-[var(--border-strong)] transition-all animate-fade-in"
+                      >
+                        <span>{name}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeRoommateName(index)}
+                          className="w-4 h-4 rounded-full flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--canvas)] transition-colors cursor-pointer"
+                          title={`Remove ${name}`}
+                          aria-label={`Remove ${name}`}
+                        >
+                          <IconX size={11} stroke={2.5} />
+                        </button>
+                      </span>
+                    ))}
+
+                    {draft.roommateNames.length === 0 && (
+                      <span className="text-[11.5px] text-[var(--muted)] pl-1">
+                        (Living solo so far — add flatmates below or paste a comma-separated list)
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Tag Input Field */}
+                  <div className="flex items-center gap-2 pt-2 border-t border-[var(--border)]/70">
+                    <Input
+                      id="flatmate-tag-input"
+                      type="text"
+                      placeholder={draft.roommateNames.length === 0 ? "e.g. Sara, Omar, Alex..." : "Add another flatmate..."}
+                      value={roommateInput}
+                      onChange={(e) => setRoommateInput(e.target.value)}
+                      onKeyDown={handleRoommateKeyDown}
+                      onPaste={handleRoommatePaste}
+                      autoComplete="off"
+                      className="h-9 border-0 bg-transparent px-1 text-xs sm:text-sm shadow-none focus-visible:ring-0 placeholder:text-[var(--muted)]"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => handleCommitRoommateText(roommateInput)}
+                      disabled={!roommateInput.trim()}
+                      className="btn-tactile h-8 px-3 rounded-lg bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs font-semibold shrink-0 cursor-pointer inline-flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    >
+                      <IconPlus size={13} />
+                      <span>Add</span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Moroccan Starter Preset Checkbox */}
               <div
                 onClick={() => setIncludeTemplates(!includeTemplates)}
                 className="p-3.5 rounded-2xl border border-[var(--border)] bg-[var(--canvas)] hover:border-[var(--border-strong)] transition-colors flex items-start gap-3 cursor-pointer select-none"
@@ -403,7 +449,8 @@ export const OnboardingPage: React.FC = () => {
               <div className="flex justify-end pt-2">
                 <Button
                   onClick={handleStep2Next}
-                  className="btn-tactile h-11 px-6 rounded-xl bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs sm:text-sm font-semibold shadow-sm cursor-pointer inline-flex items-center gap-1.5"
+                  disabled={!hostName.trim()}
+                  className="btn-tactile h-11 px-6 rounded-xl bg-[var(--oak)] hover:bg-[var(--oak-hover)] text-white text-xs sm:text-sm font-semibold shadow-sm cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[var(--oak)]"
                 >
                   <span>Review & Save</span>
                   <IconArrowRight size={15} />
@@ -419,7 +466,7 @@ export const OnboardingPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="text-xs text-[var(--muted)] hover:text-[var(--text)] inline-flex items-center gap-1 mb-1 cursor-pointer"
+                  className="text-xs text-[var(--muted)] hover:text-[var(--text)] inline-flex items-center gap-1 mb-1 cursor-pointer transition-colors"
                 >
                   <IconArrowLeft size={13} /> Back to flatmates
                 </button>
@@ -470,6 +517,7 @@ export const OnboardingPage: React.FC = () => {
               ) : (
                 <AuthPanel
                   initialMode="register"
+                  initialUsername={draft.hostName || hostName || ''}
                   allowToggleMode={true}
                   submitLabel={`Save "${flatName || 'Flat'}" & Launch`}
                   isSubmitting={isSubmitting}

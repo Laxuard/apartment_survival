@@ -37,6 +37,12 @@ public interface HouseholdRequest {
         @Size(max = 30, message = "Split algorithm cannot exceed 30 characters")
         String splitAlgorithm,
 
+        @Size(max = 30, message = "Default split method cannot exceed 30 characters")
+        String defaultSplitMethod,
+
+        @Size(max = 2048, message = "Default split allocations cannot exceed 2048 characters")
+        String defaultSplitAllocations,
+
         Boolean autoRestockFromExpenses,
 
         @Min(value = 1, message = "Max members must be at least 1")
@@ -44,7 +50,7 @@ public interface HouseholdRequest {
         Integer maxMembers
     ) {
         public Create(String name, String description, Currency currency, ZoneId timezone) {
-            this(name, description, currency, timezone, null, null, null, null, null, null);
+            this(name, description, currency, timezone, null, null, null, null, null, null, null, null);
         }
     }
 
@@ -73,6 +79,12 @@ public interface HouseholdRequest {
         @Size(max = 30, message = "Split algorithm cannot exceed 30 characters")
         String splitAlgorithm,
 
+        @Size(max = 30, message = "Default split method cannot exceed 30 characters")
+        String defaultSplitMethod,
+
+        @Size(max = 2048, message = "Default split allocations cannot exceed 2048 characters")
+        String defaultSplitAllocations,
+
         Boolean autoRestockFromExpenses,
 
         @Min(value = 1, message = "Max members must be at least 1")
@@ -80,7 +92,7 @@ public interface HouseholdRequest {
         Integer maxMembers
     ) {
         public Update(String name, String description, String avatarUrl, Currency currency, ZoneId timezone, Integer maxMembers) {
-            this(name, description, avatarUrl, currency, timezone, null, null, null, null, null, maxMembers);
+            this(name, description, avatarUrl, currency, timezone, null, null, null, null, null, null, null, maxMembers);
         }
     }
 

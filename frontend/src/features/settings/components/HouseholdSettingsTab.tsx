@@ -9,16 +9,21 @@ import {
   IconPigMoney,
   IconPlus,
   IconQrcode,
+  IconScale,
   IconShoppingCart,
   IconTrash,
   IconUsers,
   IconWifi,
 } from '@tabler/icons-react';
+import { formatSignedMoney, SPLIT_METHODS, type SplitMethod } from '@/domain';
 import { QRCodeSVG } from 'qrcode.react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { CURRENCIES } from '../constants/settings.constants';
-import { WelcomeKitModal } from './WelcomeKitModal';
+import type { Roommate } from '@/features/roommates';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 interface HouseholdSettingsTabProps {
   apartmentName: string;
@@ -30,6 +35,7 @@ interface HouseholdSettingsTabProps {
   capacity: number;
   onCapacityChange: (cap: number) => void;
   memberCount: number;
+  roommates?: Roommate[];
   userBalance?: number;
   wifiSsid: string;
   onWifiSsidChange: (ssid: string) => void;
@@ -39,6 +45,10 @@ interface HouseholdSettingsTabProps {
   onCurrencyChange: (curr: string) => void;
   splitAlgorithm: 'DEBT_SIMPLIFIED' | 'DIRECT';
   onSplitAlgorithmChange: (alg: 'DEBT_SIMPLIFIED' | 'DIRECT') => void;
+  defaultSplitMethod?: SplitMethod;
+  onDefaultSplitMethodChange?: (method: SplitMethod) => void;
+  defaultSplitAllocations?: Record<string, number>;
+  onDefaultSplitAllocationsChange?: (allocations: Record<string, number>) => void;
   autoRestockFromExpenses: boolean;
   onToggleAutoRestock: (enabled: boolean) => void;
   householdId?: string;
@@ -59,6 +69,7 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
   capacity,
   onCapacityChange,
   memberCount,
+  roommates = [],
   userBalance = 0,
   wifiSsid,
   onWifiSsidChange,
@@ -68,6 +79,10 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
   onCurrencyChange,
   splitAlgorithm,
   onSplitAlgorithmChange,
+  defaultSplitMethod = 'EQUAL',
+  onDefaultSplitMethodChange,
+  defaultSplitAllocations = {},
+  onDefaultSplitAllocationsChange,
   autoRestockFromExpenses,
   onToggleAutoRestock,
   copiedWifi,
@@ -81,15 +96,84 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
   // WiFi QR Code Preview state
   const [showWifiQr, setShowWifiQr] = useState(false);
 
-  // Welcome Kit Modal state
-  const [showWelcomeKit, setShowWelcomeKit] = useState(false);
-
   // Leave Confirmation Modal state
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+
 
   const perPersonBudget = memberCount > 0 ? Math.round(monthlyBudget / memberCount) : monthlyBudget;
   const isAtCapacity = memberCount >= capacity;
   const hasUnsettledDebt = Math.abs(userBalance) > 0.01;
+
+  const effectiveRoommates = roommates.length > 0 ? roommates : [
+    { id: 'host-user', name: 'You (Host)', email: '', avatarInitial: 'Y', avatarColor: 'oak' as const, balance: 0, currency, role: 'ADMIN' as const, isCurrentUser: true }
+  ];
+
+  const totalAllocated = effectiveRoommates.reduce((sum, r) => {
+    const defaultVal = defaultSplitMethod === 'PERCENTAGE'
+      ? Math.round((100 / effectiveRoommates.length) * 100) / 100
+      : 1;
+    const val = defaultSplitAllocations[r.id] !== undefined ? defaultSplitAllocations[r.id] : defaultVal;
+    return sum + val;
+  }, 0);
+
+  const roundedAllocated = Math.round(totalAllocated * 100) / 100;
+  const remainingAllocatedPct = Math.round((100 - roundedAllocated) * 100) / 100;
+  const isAllocatedPctValid = Math.abs(remainingAllocatedPct) < 0.05;
+
+  // Local state for split allocations (Tier 2: onBlur persistence)
+  const [dirtyAllocations, setDirtyAllocations] = useState<Record<string, number | string>>({});
+
+  const handleFlatmateAllocationChange = (userId: string, val: string) => {
+    setDirtyAllocations((prev) => ({
+      ...prev,
+      [userId]: val,
+    }));
+  };
+
+  const handleFlatmateAllocationBlur = (userId: string) => {
+    const rawVal = dirtyAllocations[userId];
+    if (rawVal === undefined) return;
+
+    const parsed = typeof rawVal === 'number' ? rawVal : parseFloat(rawVal as string);
+    const safeVal = isNaN(parsed) ? 0 : Math.max(0, parsed);
+
+    const merged = {
+      ...defaultSplitAllocations,
+      ...dirtyAllocations,
+      [userId]: safeVal,
+    };
+
+    const numericMap: Record<string, number> = {};
+    for (const [k, v] of Object.entries(merged)) {
+      const num = typeof v === 'number' ? v : parseFloat(v as string);
+      numericMap[k] = isNaN(num) ? 0 : num;
+    }
+
+    setDirtyAllocations((prev) => {
+      const next = { ...prev };
+      delete next[userId];
+      return next;
+    });
+    onDefaultSplitAllocationsChange?.(numericMap);
+  };
+
+  const handleDistributeEvenly = () => {
+    const count = effectiveRoommates.length;
+    const newMap: Record<string, number> = {};
+    if (defaultSplitMethod === 'PERCENTAGE') {
+      const base = Math.floor((100 / count) * 100) / 100;
+      const remainderCents = Math.round((100 - base * count) * 100);
+      effectiveRoommates.forEach((r, idx) => {
+        newMap[r.id] = idx < remainderCents ? Math.round((base + 0.01) * 100) / 100 : base;
+      });
+    } else {
+      effectiveRoommates.forEach((r) => {
+        newMap[r.id] = 1;
+      });
+    }
+    setDirtyAllocations({});
+    onDefaultSplitAllocationsChange?.(newMap);
+  };
 
   const handleDecrementCapacity = () => {
     if (capacity <= memberCount) {
@@ -130,14 +214,8 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
             <h3 className="card-title-custom">Living Space Identity & Capacity</h3>
             <div className="card-title-sub">Physical space parameters and flatmate occupancy limits</div>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowWelcomeKit(true)}
-            className="btn-spring flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--card)] hover:bg-[var(--canvas)] text-xs font-semibold text-[var(--text)] cursor-pointer shadow-2xs transition-all active:scale-95"
-          >
-            <span>📋 Welcome Kit</span>
-          </button>
         </div>
+
 
         <div className="divide-y divide-[var(--border)]">
           {/* Row: Apartment Name */}
@@ -392,6 +470,145 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Row: Default Splitting Strategy */}
+          <div className="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+            <div className="md:col-span-5 space-y-1">
+              <label className="text-xs font-bold text-[var(--text)] flex items-center gap-1.5">
+                <IconScale size={15} className="text-[var(--oak)]" />
+                Default Splitting Strategy
+              </label>
+              <p className="text-[11px] text-[var(--muted)] leading-relaxed">
+                Applied automatically to all new household expenses and recurring bills unless overridden per expense.
+              </p>
+            </div>
+            <div className="md:col-span-7 space-y-2.5" role="radiogroup" aria-label="Default Splitting Strategy">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {SPLIT_METHODS.map((method) => {
+                  const isSelected = defaultSplitMethod === method.id;
+                  return (
+                    <button
+                      key={method.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      onClick={() => onDefaultSplitMethodChange?.(method.id)}
+                      className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all active:scale-[0.98] ${isSelected
+                          ? 'bg-[var(--canvas)] border-[var(--oak)] ring-2 ring-[var(--oak)]/20 shadow-xs'
+                          : 'border-[var(--border)] bg-[var(--card)] hover:border-[var(--border-strong)]'
+                        }`}
+                    >
+                      <div className="flex items-center justify-between text-xs font-bold text-[var(--text)] mb-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-5 h-5 rounded-md bg-[var(--oak-tint)] text-[var(--oak)] flex items-center justify-center text-[10px] font-mono font-bold">
+                            {method.unitSymbol || '='}
+                          </span>
+                          <span>{method.label}</span>
+                        </div>
+                        {isSelected && <IconCheck size={15} className="text-[var(--oak)]" />}
+                      </div>
+                      <p className="text-[10.5px] text-[var(--muted)] leading-relaxed">
+                        {method.description}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Dynamic Flatmate Baseline Allocations (Percentage or Shares) */}
+              {(defaultSplitMethod === 'PERCENTAGE' || defaultSplitMethod === 'SHARES') && (
+                <div className="mt-3 p-4 rounded-xl bg-[var(--canvas)] border border-[var(--border)] space-y-3 animate-fade-in">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[var(--border)]/60">
+                    <div>
+                      <div className="text-xs font-bold text-[var(--text)]">
+                        {defaultSplitMethod === 'PERCENTAGE' ? 'Default Roommate Percentages' : 'Default Roommate Unit Shares'}
+                      </div>
+                      <p className="text-[10.5px] text-[var(--muted)]">
+                        {defaultSplitMethod === 'PERCENTAGE'
+                          ? 'Set default share % per flatmate. Automatically pre-populates on every newly logged expense.'
+                          : 'Set ratio weights (e.g. Master Bedroom = 2 shares, Single Bedroom = 1 share).'}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="xs"
+                        onClick={handleDistributeEvenly}
+                      >
+                        Distribute Evenly
+                      </Button>
+                      {defaultSplitMethod === 'PERCENTAGE' && (
+                        <Badge
+                          variant={isAllocatedPctValid ? 'positive' : 'warn'}
+                          className="font-mono text-[10px]"
+                        >
+                          {isAllocatedPctValid ? '✓ 100.00% Allocated' : `${remainingAllocatedPct > 0 ? `${remainingAllocatedPct}% remaining` : `Exceeds by ${Math.abs(remainingAllocatedPct)}%`}`}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 max-h-56 overflow-y-auto pr-0.5">
+                    {effectiveRoommates.map((r) => {
+                      const defaultVal = defaultSplitMethod === 'PERCENTAGE'
+                        ? Math.round((100 / effectiveRoommates.length) * 100) / 100
+                        : 1;
+                      const val = dirtyAllocations[r.id] !== undefined
+                        ? dirtyAllocations[r.id]
+                        : (defaultSplitAllocations[r.id] !== undefined ? defaultSplitAllocations[r.id] : defaultVal);
+
+                      return (
+                        <div
+                          key={r.id}
+                          className="flex items-center justify-between gap-3 p-2 rounded-xl bg-[var(--card)] border border-[var(--border)]"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${r.avatarColor === 'sage'
+                                  ? 'bg-[var(--sage-tint)] text-[var(--sage)]'
+                                  : 'bg-[var(--oak-tint)] text-[var(--oak)]'
+                                }`}
+                            >
+                              {r.avatarInitial || r.name.charAt(0).toUpperCase()}
+                            </span>
+                            <div className="truncate">
+                              <div className="text-xs font-semibold text-[var(--text)] flex items-center gap-1.5">
+                                <span className="truncate">{r.name}</span>
+                                {r.isCurrentUser && (
+                                  <span className="text-[10px] text-[var(--muted)] font-normal">(You)</span>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-[var(--muted)] truncate">{r.role || 'Flatmate'}</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <div className="relative flex items-center">
+                              <Input
+                                type="number"
+                                step={defaultSplitMethod === 'SHARES' ? '1' : '0.01'}
+                                min="0"
+                                max={defaultSplitMethod === 'PERCENTAGE' ? '100' : '100'}
+                                value={val}
+                                onChange={(e) => handleFlatmateAllocationChange(r.id, e.target.value)}
+                                onBlur={() => handleFlatmateAllocationBlur(r.id)}
+                                className="w-24 h-7 text-xs font-mono text-right pr-8 bg-[var(--canvas)] rounded-lg border-[var(--border)] font-bold text-[var(--text)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              />
+                              <span className="absolute right-2.5 text-[10px] text-[var(--muted)] font-mono pointer-events-none font-bold select-none">
+                                {defaultSplitMethod === 'PERCENTAGE' ? '%' : 'pts'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -576,7 +793,7 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
                 <p>
                   You cannot leave <strong>{apartmentName}</strong> while you have an active ledger balance of{' '}
                   <strong className="text-[var(--warn-text)] font-mono font-bold">
-                    {userBalance > 0 ? `+${userBalance.toFixed(2)}` : userBalance.toFixed(2)} {currency}
+                    {formatSignedMoney(userBalance, currency)}
                   </strong>.
                 </p>
                 <p className="text-[11px] text-[var(--muted)]">
@@ -611,15 +828,7 @@ export const HouseholdSettingsTab: React.FC<HouseholdSettingsTabProps> = ({
           </div>
         </div>
       )}
-      {/* Move-In / Welcome Kit Card Modal */}
-      <WelcomeKitModal
-        isOpen={showWelcomeKit}
-        onClose={() => setShowWelcomeKit(false)}
-        apartmentName={apartmentName}
-        description={description}
-        wifiSsid={wifiSsid}
-        wifiPassword={wifiPassword}
-      />
     </div>
   );
 };
+

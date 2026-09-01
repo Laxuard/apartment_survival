@@ -24,6 +24,8 @@ public interface HouseholdResponse {
         String wifiSsid,
         String wifiPassword,
         String splitAlgorithm,
+        String defaultSplitMethod,
+        String defaultSplitAllocations,
         boolean autoRestockFromExpenses,
         HouseholdRole role,
         boolean archived,
@@ -40,7 +42,7 @@ public interface HouseholdResponse {
             boolean archived,
             Instant createdAt
         ) {
-            this(householdId, name, description, avatarUrl, currency, timezone, memberCount, 10, BigDecimal.ZERO, null, null, "DEBT_SIMPLIFIED", true, null, archived, createdAt);
+            this(householdId, name, description, avatarUrl, currency, timezone, memberCount, 10, BigDecimal.ZERO, null, null, "DEBT_SIMPLIFIED", "EQUAL", null, true, null, archived, createdAt);
         }
     }
 
@@ -57,6 +59,8 @@ public interface HouseholdResponse {
         String wifiSsid,
         String wifiPassword,
         String splitAlgorithm,
+        String defaultSplitMethod,
+        String defaultSplitAllocations,
         boolean autoRestockFromExpenses,
         HouseholdRole role,
         boolean archived,
@@ -75,7 +79,7 @@ public interface HouseholdResponse {
             List<MemberSummary> members,
             Instant createdAt
         ) {
-            this(householdId, name, description, avatarUrl, currency, timezone, members != null ? members.size() : 0, maxMembers, BigDecimal.ZERO, null, null, "DEBT_SIMPLIFIED", true, null, archived, members, createdAt);
+            this(householdId, name, description, avatarUrl, currency, timezone, members != null ? members.size() : 0, maxMembers, BigDecimal.ZERO, null, null, "DEBT_SIMPLIFIED", "EQUAL", null, true, null, archived, members, createdAt);
         }
     }
 

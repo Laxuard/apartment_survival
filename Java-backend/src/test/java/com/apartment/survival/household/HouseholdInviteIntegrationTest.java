@@ -70,6 +70,7 @@ class HouseholdInviteIntegrationTest {
         private UUID createHousehold(HttpSession session, String name) throws Exception {
                 var createRequest = new HouseholdRequest.Create(name, "Nice place", null, null);
                 MvcResult result = mockMvc.perform(post("/api/households")
+                                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                                 .session((org.springframework.mock.web.MockHttpSession) session)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(createRequest)))
@@ -91,6 +92,7 @@ class HouseholdInviteIntegrationTest {
                 // 1. Alice creates shareable link
                 var linkRequest = new InviteRequest.CreateLink(5, 7);
                 MvcResult linkResult = mockMvc.perform(post("/api/households/" + householdId + "/invites/link")
+                                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                                 .session((org.springframework.mock.web.MockHttpSession) aliceSession)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(linkRequest)))
@@ -106,6 +108,7 @@ class HouseholdInviteIntegrationTest {
                 // 2. Bob joins with the code
                 var joinRequest = new InviteRequest.JoinWithCode(code);
                 mockMvc.perform(post("/api/households/join")
+                                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                                 .session((org.springframework.mock.web.MockHttpSession) bobSession)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(joinRequest)))
@@ -130,6 +133,7 @@ class HouseholdInviteIntegrationTest {
                 // 1. Alice invites Charlie by username
                 var directRequest = new InviteRequest.CreateDirect("charlie", 7);
                 mockMvc.perform(post("/api/households/" + householdId + "/invites/direct")
+                                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                                 .session((org.springframework.mock.web.MockHttpSession) aliceSession)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(directRequest)))
@@ -151,6 +155,7 @@ class HouseholdInviteIntegrationTest {
 
                 // 3. Charlie accepts the invite
                 mockMvc.perform(post("/api/me/invites/" + inviteId + "/accept")
+                                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                                 .session((org.springframework.mock.web.MockHttpSession) charlieSession))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.householdId").value(householdId.toString()));

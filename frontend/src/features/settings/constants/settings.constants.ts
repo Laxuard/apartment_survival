@@ -1,18 +1,13 @@
+import { SUPPORTED_CURRENCIES } from '@/domain';
 import {
   IconBuildingCommunity,
   IconUser,
   IconPalette,
   IconBell,
 } from '@tabler/icons-react';
-import type { CurrencyOption, SettingsTab } from '../types/settings.types';
+import type { SettingsTab } from '../types/settings.types';
 
-export const CURRENCIES: CurrencyOption[] = [
-  { code: 'MAD', symbol: 'MAD', label: 'Moroccan Dirham', country: 'Morocco' },
-  { code: 'USD', symbol: '$', label: 'US Dollar', country: 'United States' },
-  { code: 'EUR', symbol: '€', label: 'Euro', country: 'European Union' },
-  { code: 'GBP', symbol: '£', label: 'British Pound', country: 'United Kingdom' },
-  { code: 'CAD', symbol: 'CA$', label: 'Canadian Dollar', country: 'Canada' },
-];
+export const CURRENCIES = SUPPORTED_CURRENCIES;
 
 export const SETTINGS_TABS: Array<{
   id: SettingsTab;

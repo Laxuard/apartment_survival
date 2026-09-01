@@ -13,4 +13,10 @@ public interface AuthResponse {
     record Message(
         String message
     ) {}
+
+    record CsrfToken(
+        String token,
+        String headerName,
+        String parameterName
+    ) {}
 }

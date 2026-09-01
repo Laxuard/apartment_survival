@@ -9,7 +9,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -34,7 +33,6 @@ public interface ExpenseRequest {
         @NotNull(message = "Category is required")
         ExpenseCategory category,
 
-        @NotNull(message = "Split type is required")
         SplitType splitType,
 
         Instant expenseDate,
@@ -42,7 +40,6 @@ public interface ExpenseRequest {
         @Size(max = 512, message = "Receipt URL cannot exceed 512 characters")
         String receiptUrl,
 
-        @NotEmpty(message = "At least one participant split allocation is required")
         @Valid
         List<SplitItem> splits
     ) {}

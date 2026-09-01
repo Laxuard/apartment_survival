@@ -1,19 +1,20 @@
 import { useState, useCallback } from 'react';
-import { useHouseholdStore } from '@/stores/useHouseholdStore';
+import { formatMoney } from '@/domain';
+import { useActiveHousehold } from '@/features/households';
 import {
   useSettlementMatrixQuery,
   useUpdateMemberRoleMutation,
   useKickMemberMutation,
   useSettleMemberMutation,
+  useHouseholdInvitesQuery,
+  useCreateLinkInviteMutation,
 } from './useRoommatesQueries';
+
 import { useHouseholdLedger } from './useHouseholdLedger';
 import type { Roommate, InviteChannel } from '../types';
 
 export const useRoommates = () => {
-  const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
-  const { getActiveHousehold, getActiveCurrency } = useHouseholdStore();
-  const activeHousehold = getActiveHousehold();
-  const currency = getActiveCurrency();
+  const { activeHousehold, activeHouseholdId, activeCurrency: currency } = useActiveHousehold();
 
   // Centralized Household Ledger
   const ledger = useHouseholdLedger(currency);
@@ -47,28 +48,61 @@ export const useRoommates = () => {
   // Batch Settle Modal State
   const [isBatchSettleOpen, setIsBatchSettleOpen] = useState(false);
 
+  const { data: invites = [] } = useHouseholdInvitesQuery(activeHouseholdId);
+  const linkInviteMutation = useCreateLinkInviteMutation(activeHouseholdId);
+
+  const activeLink = invites.find(
+    (inv) => inv.type === 'LINK' && inv.status === 'PENDING'
+  );
+  const activeInviteCode = activeLink?.code || '';
+
   // Copy Invite URL
-  const copyInviteLink = useCallback(() => {
-    const inviteUrl = `${window.location.origin}/invite/${activeHouseholdId || ''}`;
+  const copyInviteLink = useCallback(async () => {
+    let codeToUse = activeInviteCode;
+    if (!codeToUse && activeHouseholdId) {
+      try {
+        const created = await linkInviteMutation.mutateAsync({ maxUses: 10, validDays: 7 });
+        codeToUse = created.code || '';
+      } catch {
+        // Fallback
+      }
+    }
+    const inviteUrl = codeToUse
+      ? `${window.location.origin}/invite/${codeToUse}`
+      : `${window.location.origin}/onboarding/join`;
+
     navigator.clipboard.writeText(inviteUrl);
     setCopiedInvite(true);
     setTimeout(() => setCopiedInvite(false), 2000);
-  }, [activeHouseholdId]);
+  }, [activeInviteCode, activeHouseholdId, linkInviteMutation]);
 
   // Send WhatsApp Invite
-  const sendWhatsAppInvite = useCallback(() => {
+  const sendWhatsAppInvite = useCallback(async () => {
     const aptName = activeHousehold?.name || 'our household';
-    const inviteUrl = `${window.location.origin}/invite/${activeHouseholdId || ''}`;
+    let codeToUse = activeInviteCode;
+    if (!codeToUse && activeHouseholdId) {
+      try {
+        const created = await linkInviteMutation.mutateAsync({ maxUses: 10, validDays: 7 });
+        codeToUse = created.code || '';
+      } catch {
+        // Fallback
+      }
+    }
+    const inviteUrl = codeToUse
+      ? `${window.location.origin}/invite/${codeToUse}`
+      : `${window.location.origin}/onboarding/join`;
+
     const text = `Hey! Join our ${aptName} living space on Apartment Survival to track shared expenses, groceries, and WiFi: ${inviteUrl}`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
-  }, [activeHousehold?.name, activeHouseholdId]);
+  }, [activeHousehold?.name, activeInviteCode, activeHouseholdId, linkInviteMutation]);
+
 
   // WhatsApp Debt Nudge
   const triggerWhatsAppNudge = useCallback(
     (debtorName: string, amount: number) => {
       const aptName = activeHousehold?.name || 'our household';
-      const text = `Hey ${debtorName}, just checking in on our ${aptName} tab. You currently have an unsettled balance of ${amount.toFixed(2)} ${currency}. Whenever you get a chance!`;
+      const text = `Hey ${debtorName}, just checking in on our ${aptName} tab. You currently have an unsettled balance of ${formatMoney(amount, currency)}. Whenever you get a chance!`;
       const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
       window.open(url, '_blank', 'noopener,noreferrer');
     },

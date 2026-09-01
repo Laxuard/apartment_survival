@@ -1,7 +1,7 @@
 import { usePantryStock } from '@/features/pantry';
 import { useHouseholdLedger } from '@/features/roommates';
+import { useActiveHousehold } from '@/features/households';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { useHouseholdStore } from '@/stores/useHouseholdStore';
 import {
   IconBuildingCommunity,
   IconCheck,
@@ -9,11 +9,9 @@ import {
   IconHome,
   IconLayoutDashboard,
   IconLogout,
-  IconPlus,
   IconReceipt2,
   IconSettings,
   IconShoppingCart,
-  IconUserPlus,
   IconUsers,
 } from '@tabler/icons-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -27,9 +25,8 @@ export const Sidebar: React.FC = () => {
   const [isHouseholdExpanded, setIsHouseholdExpanded] = useState(false);
 
   const { user, logout } = useAuthStore();
-  const { households, activeHouseholdId, setActiveHousehold, getActiveHousehold } =
-    useHouseholdStore();
-  const activeHousehold = getActiveHousehold();
+  const { households, activeHouseholdId, setActiveHousehold, activeHousehold } =
+    useActiveHousehold();
 
   // Dynamic unified feature hooks & centralized ledger
   const pantryStock = usePantryStock();
@@ -159,44 +156,20 @@ export const Sidebar: React.FC = () => {
                 );
               })}
 
-              <div className="border-t border-[var(--border)] pt-1 space-y-0.5">
+              <div className="border-t border-[var(--border)] pt-1">
                 <button
                   type="button"
                   onClick={() => {
                     setIsHouseholdExpanded(false);
                     navigate('/hub');
                   }}
-                  className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold bg-[var(--card)] hover:bg-[var(--oak-tint)] text-[var(--text)] hover:text-[var(--oak)] cursor-pointer transition-colors border border-[var(--border)] mb-1 shadow-2xs"
+                  className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold bg-[var(--card)] hover:bg-[var(--oak-tint)] text-[var(--text)] hover:text-[var(--oak)] cursor-pointer transition-colors border border-[var(--border)] shadow-2xs"
                 >
                   <div className="flex items-center gap-2">
                     <IconBuildingCommunity size={14} className="text-[var(--oak)]" />
                     <span>Command Hub</span>
                   </div>
                   <span className="text-[10px] text-[var(--muted)] font-mono">All Flats →</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsHouseholdExpanded(false);
-                    navigate('/hub');
-                  }}
-                  className="w-full flex items-center gap-2 p-1.5 rounded-xl text-[11px] font-medium text-[var(--oak)] hover:bg-[var(--oak-tint)] cursor-pointer transition-colors"
-                >
-                  <IconPlus size={13} />
-                  <span>Create new apartment...</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsHouseholdExpanded(false);
-                    navigate('/hub');
-                  }}
-                  className="w-full flex items-center gap-2 p-1.5 rounded-xl text-[11px] font-medium text-[var(--sage)] hover:bg-[var(--sage-tint)] cursor-pointer transition-colors"
-                >
-                  <IconUserPlus size={13} />
-                  <span>Join with invite code</span>
                 </button>
               </div>
             </div>
@@ -226,7 +199,7 @@ export const Sidebar: React.FC = () => {
 
                 {item.badge && (
                   <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tight shrink-0 ${item.badge.variant === 'sage'
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-normal shrink-0 ${item.badge.variant === 'sage'
                       ? 'bg-[var(--positive-bg)] text-[var(--positive-text)]'
                       : item.badge.variant === 'warn'
                         ? 'bg-[var(--warn-bg)] text-[var(--warn-text)]'

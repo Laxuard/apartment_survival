@@ -36,7 +36,12 @@ export const RoommatesPage: React.FC = () => {
   } = useRoommates();
 
   const handleSettlePath = (debtorName: string) => {
-    const target = roommates.find((r) => r.name.toLowerCase() === debtorName.toLowerCase());
+    // Pick the peer matching debtorName
+    const target = roommates.find(
+      (r) =>
+        !r.isCurrentUser &&
+        r.name.toLowerCase() === debtorName.toLowerCase()
+    );
     if (target) {
       openSettleModal(target);
     } else {
@@ -46,11 +51,8 @@ export const RoommatesPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
-      {/* ========================================================================= */}
-      {/* TOP SECTION: 2-COLUMN SPLIT (DIRECT SETTLE + DEDICATED INVITE HUB)        */}
-      {/* ========================================================================= */}
+      {/* Top Section: Direct Settle Matrix + Invite Hub */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        {/* Top-Left (7 Cols): Direct Settlement Matrix & Minimal Flow Debts */}
         <div className="lg:col-span-7">
           <DirectSettlementCard
             settlementPaths={settlementPaths}
@@ -64,7 +66,6 @@ export const RoommatesPage: React.FC = () => {
           />
         </div>
 
-        {/* Top-Right (5 Cols): Dedicated Multi-Channel Invite Hub */}
         <div className="lg:col-span-5">
           <InviteHubCard
             inviteChannel={inviteChannel}
@@ -79,9 +80,7 @@ export const RoommatesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* BOTTOM SECTION: FULL-WIDTH HOUSEHOLD MEMBERS ROSTER (3/4 OCCUPIED)        */}
-      {/* ========================================================================= */}
+      {/* Bottom Section: Household Members Roster */}
       <HouseholdMembersRoster
         roommates={roommates}
         isLoading={isLoadingRoommates}
@@ -94,14 +93,14 @@ export const RoommatesPage: React.FC = () => {
         onRequestKick={(member) => setKickTargetMember(member)}
       />
 
-      {/* Guarded Kick Confirmation Modal (Only shown upon explicit removal request) */}
+      {/* Guarded Kick Confirmation Modal */}
       <KickConfirmationModal
         member={kickTargetMember}
         onClose={() => setKickTargetMember(null)}
         onConfirmKick={kickMember}
       />
 
-      {/* Batch Settle All Modal (Multilateral Reconciliation) */}
+      {/* Batch Settle All Modal */}
       <BatchSettlementModal
         isOpen={isBatchSettleOpen}
         onClose={() => setIsBatchSettleOpen(false)}

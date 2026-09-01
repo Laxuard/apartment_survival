@@ -1,21 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DEFAULT_CURRENCY, getClientTimezone, SUPPORTED_CURRENCIES } from '@/domain';
 import { useCreateHouseholdMutation } from '@/features/households';
 import { IconArrowLeft, IconCheck, IconCoins, IconHome, IconSparkles } from '@tabler/icons-react';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-const CURRENCY_OPTIONS = [
-  { value: 'MAD', label: 'Moroccan Dirham (MAD)', symbol: 'MAD' },
-  { value: 'EUR', label: 'Euro (EUR)', symbol: '€' },
-  { value: 'USD', label: 'US Dollar (USD)', symbol: '$' },
-  { value: 'GBP', label: 'British Pound (GBP)', symbol: '£' },
-] as const;
-
 export const CreateHouseholdPage: React.FC = () => {
   const [name, setName] = useState('');
-  const [currency, setCurrency] = useState<string>('MAD');
+  const [currency, setCurrency] = useState<string>(DEFAULT_CURRENCY);
   const [includeStarterTemplates, setIncludeStarterTemplates] = useState(true);
   const navigate = useNavigate();
 
@@ -29,7 +23,7 @@ export const CreateHouseholdPage: React.FC = () => {
       {
         name: name.trim(),
         currency,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        timezone: getClientTimezone(),
         maxMembers: 10,
       },
       {
@@ -95,20 +89,20 @@ export const CreateHouseholdPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            {CURRENCY_OPTIONS.map((c) => {
-              const isSelected = currency === c.value;
+            {SUPPORTED_CURRENCIES.map((c) => {
+              const isSelected = currency === c.code;
               return (
                 <button
-                  key={c.value}
+                  key={c.code}
                   type="button"
-                  onClick={() => setCurrency(c.value)}
+                  onClick={() => setCurrency(c.code)}
                   className={`p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${isSelected
                       ? 'border-[var(--oak)] bg-[var(--oak-tint)]/80 ring-2 ring-[var(--oak)]/20 shadow-xs'
                       : 'border-[var(--border)] bg-[var(--canvas)] hover:border-[var(--border-strong)]'
                     }`}
                 >
                   <div>
-                    <div className="text-xs font-bold text-[var(--text)]">{c.value}</div>
+                    <div className="text-xs font-bold text-[var(--text)]">{c.code}</div>
                     <div className="text-[10px] text-[var(--muted)]">{c.label}</div>
                   </div>
                   <span className="font-mono text-xs font-bold text-[var(--oak)]">{c.symbol}</span>

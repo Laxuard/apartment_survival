@@ -5,6 +5,7 @@ import { NotificationsSettingsTab } from '../components/NotificationsSettingsTab
 import { ProfileSettingsTab } from '../components/ProfileSettingsTab';
 import { SettingsTabsNav } from '../components/SettingsTabsNav';
 import { useSettings } from '../hooks/useSettings';
+import { useRoommatesQuery } from '@/features/roommates';
 import type { SettingsTab } from '../types/settings.types';
 
 export const SettingsPage: React.FC = () => {
@@ -29,6 +30,8 @@ export const SettingsPage: React.FC = () => {
     updateWifiPassword,
     updateCurrency,
     updateSplitAlgorithm,
+    updateDefaultSplitMethod,
+    updateDefaultSplitAllocations,
     updateAutoRestock,
     saveProfile,
     changePassword,
@@ -36,6 +39,11 @@ export const SettingsPage: React.FC = () => {
     copyInviteLink,
     copyWifiPassword,
   } = useSettings();
+
+  const { data: roommates = [] } = useRoommatesQuery(
+    activeHousehold?.id || null,
+    activeHousehold?.currency || 'MAD'
+  );
 
   // Local notifications toggle state
   const [notifyLowStock, setNotifyLowStock] = useState(true);
@@ -64,6 +72,7 @@ export const SettingsPage: React.FC = () => {
           capacity={activeHousehold?.capacity ?? 4}
           onCapacityChange={updateCapacity}
           memberCount={activeHousehold?.memberCount ?? 1}
+          roommates={roommates}
           userBalance={userBalance}
           wifiSsid={activeHousehold?.wifiSsid || ''}
           onWifiSsidChange={updateWifiSsid}
@@ -73,6 +82,10 @@ export const SettingsPage: React.FC = () => {
           onCurrencyChange={updateCurrency}
           splitAlgorithm={activeHousehold?.splitAlgorithm || 'DEBT_SIMPLIFIED'}
           onSplitAlgorithmChange={updateSplitAlgorithm}
+          defaultSplitMethod={activeHousehold?.defaultSplitMethod || 'EQUAL'}
+          onDefaultSplitMethodChange={updateDefaultSplitMethod}
+          defaultSplitAllocations={activeHousehold?.defaultSplitAllocations || {}}
+          onDefaultSplitAllocationsChange={updateDefaultSplitAllocations}
           autoRestockFromExpenses={activeHousehold?.autoRestockFromExpenses ?? true}
           onToggleAutoRestock={updateAutoRestock}
           householdId={activeHousehold?.id}

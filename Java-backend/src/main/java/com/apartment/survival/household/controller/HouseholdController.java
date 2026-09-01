@@ -51,6 +51,14 @@ public class HouseholdController {
         return ResponseEntity.ok(response);
     }
 
+    // === 3b. Get household roommates list ===
+    @GetMapping("/{householdId}/members")
+    @PreAuthorize("@householdSecurity.isHouseholdMember(#householdId)")
+    public ResponseEntity<List<HouseholdResponse.MemberSummary>> getMembers(@PathVariable UUID householdId) {
+        List<HouseholdResponse.MemberSummary> response = householdService.getMembers(householdId);
+        return ResponseEntity.ok(response);
+    }
+
     // === 4. Update household settings (name, currency, timezone, capacity, budget,
     // wifi, etc.) ===
     @PutMapping("/{householdId}")

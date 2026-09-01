@@ -1,3 +1,4 @@
+import { DEFAULT_CURRENCY, formatMoney } from '@/domain';
 import type { HouseholdMembership } from '@/types';
 
 export interface HouseholdCalculations {
@@ -28,7 +29,7 @@ export const calculateHouseholdMetrics = (
 
   const monthlyBudget = household?.monthlyBudget ?? 6000;
   const perPersonBudget = memberCount > 0 ? Math.round(monthlyBudget / memberCount) : monthlyBudget;
-  const currency = household?.currency || 'MAD';
+  const currency = household?.currency || DEFAULT_CURRENCY;
 
   return {
     capacity,
@@ -38,8 +39,9 @@ export const calculateHouseholdMetrics = (
     occupancyPercentage,
     monthlyBudget,
     perPersonBudget,
-    formattedMonthlyBudget: `${monthlyBudget.toLocaleString()} ${currency}`,
-    formattedPerPersonBudget: `${perPersonBudget.toLocaleString()} ${currency}`,
+    formattedMonthlyBudget: formatMoney(monthlyBudget, currency, { decimals: 0 }),
+    formattedPerPersonBudget: formatMoney(perPersonBudget, currency, { decimals: 0 }),
   };
 };
+
 

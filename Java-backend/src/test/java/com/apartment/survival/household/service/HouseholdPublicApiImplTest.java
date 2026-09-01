@@ -19,7 +19,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.apartment.survival.household.api.HouseholdPublicDto;
 import com.apartment.survival.household.model.Household;
-import com.apartment.survival.household.model.HouseholdMember;
 import com.apartment.survival.household.repository.HouseholdMemberRepository;
 import com.apartment.survival.household.repository.HouseholdRepository;
 
@@ -122,15 +121,7 @@ class HouseholdPublicApiImplTest {
             UUID member1 = UUID.randomUUID();
             UUID member2 = UUID.randomUUID();
 
-            Household household = Household.builder()
-                    .id(HOUSEHOLD_ID)
-                    .members(Set.of(
-                            HouseholdMember.builder().userId(member1).build(),
-                            HouseholdMember.builder().userId(member2).build()
-                    ))
-                    .build();
-
-            when(householdRepository.findActiveWithMembers(HOUSEHOLD_ID)).thenReturn(Optional.of(household));
+            when(memberRepository.findActiveMemberUserIds(HOUSEHOLD_ID)).thenReturn(Set.of(member1, member2));
 
             Set<UUID> userIds = householdPublicApi.getActiveMemberUserIds(HOUSEHOLD_ID);
 
@@ -141,7 +132,7 @@ class HouseholdPublicApiImplTest {
         @DisplayName("Should return empty set when null or not found")
         void getActiveMemberUserIds_Empty() {
             assertThat(householdPublicApi.getActiveMemberUserIds(null)).isEmpty();
-            when(householdRepository.findActiveWithMembers(HOUSEHOLD_ID)).thenReturn(Optional.empty());
+            when(memberRepository.findActiveMemberUserIds(HOUSEHOLD_ID)).thenReturn(Set.of());
             assertThat(householdPublicApi.getActiveMemberUserIds(HOUSEHOLD_ID)).isEmpty();
         }
     }

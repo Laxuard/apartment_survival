@@ -1,7 +1,39 @@
 import { useAuthStore } from '@/stores/useAuthStore';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { authApi } from '../api/authApi';
 import type { LoginDto, RegisterDto } from '../types';
+
+export const useCurrentUserQuery = () => {
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const setInitialized = useAuthStore((s) => s.setInitialized);
+  const logout = useAuthStore((s) => s.logout);
+
+  const query = useQuery({
+    queryKey: ['auth', 'me'],
+    queryFn: async () => {
+      return await authApi.getProfile();
+    },
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (query.isSuccess && query.data) {
+      setAuth({
+        id: query.data.userId,
+        name: query.data.username,
+        email: query.data.email,
+      });
+    } else if (query.isError) {
+      logout();
+    } else if (!query.isLoading) {
+      setInitialized(true);
+    }
+  }, [query.isSuccess, query.isError, query.isLoading, query.data, setAuth, logout, setInitialized]);
+
+  return query;
+};
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
@@ -10,15 +42,13 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: (dto: LoginDto) => authApi.login(dto),
     onSuccess: (userSummary) => {
-      setAuth(
-        {
-          id: userSummary.userId,
-          name: userSummary.username,
-          email: userSummary.email,
-        },
-        'session-cookie-active'
-      );
-      queryClient.invalidateQueries({ queryKey: ['user', 'households'] });
+      setAuth({
+        id: userSummary.userId,
+        name: userSummary.username,
+        email: userSummary.email,
+      });
+      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['households'] });
     },
   });
 };
@@ -30,15 +60,13 @@ export const useRegister = () => {
   return useMutation({
     mutationFn: (dto: RegisterDto) => authApi.register(dto),
     onSuccess: (userSummary) => {
-      setAuth(
-        {
-          id: userSummary.userId,
-          name: userSummary.username,
-          email: userSummary.email,
-        },
-        'session-cookie-active'
-      );
-      queryClient.invalidateQueries({ queryKey: ['user', 'households'] });
+      setAuth({
+        id: userSummary.userId,
+        name: userSummary.username,
+        email: userSummary.email,
+      });
+      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['households'] });
     },
   });
 };
@@ -58,6 +86,7 @@ export const useLogout = () => {
 };
 
 export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
   const updateUser = useAuthStore((s) => s.updateUser);
 
   return useMutation({
@@ -67,6 +96,7 @@ export const useUpdateProfile = () => {
         name: updated.username,
         email: updated.email,
       });
+      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
     },
   });
 };

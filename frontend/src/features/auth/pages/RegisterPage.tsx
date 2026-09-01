@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
-import { IconEye, IconEyeOff, IconUserPlus, IconCheck } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { authApi } from '../api/authApi';
+import { DEFAULT_CURRENCY, getClientTimezone } from '@/domain';
+import { householdsApi } from '@/features/households/api/householdsApi';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useHouseholdStore } from '@/stores/useHouseholdStore';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
-import { householdsApi } from '@/features/households/api/householdsApi';
+import { IconCheck, IconEye, IconEyeOff, IconUserPlus } from '@tabler/icons-react';
 import { useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import { authApi } from '../api/authApi';
 
 export const RegisterPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -22,9 +23,8 @@ export const RegisterPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
   const setAuth = useAuthStore((s) => s.setAuth);
-  const addHousehold = useHouseholdStore((s) => s.addHousehold);
+  const setActiveHousehold = useHouseholdStore((s) => s.setActiveHousehold);
   const { hasDraft, draft, clearDraft } = useOnboardingStore();
   const redirectUrl = searchParams.get('redirect') || '/dashboard';
 
@@ -51,26 +51,12 @@ export const RegisterPage: React.FC = () => {
         try {
           const created = await householdsApi.createHousehold({
             name: draft.householdName.trim(),
-            currency: draft.currency || 'MAD',
-            timezone: draft.timezone || 'UTC',
+            currency: draft.currency || DEFAULT_CURRENCY,
+            timezone: draft.timezone || getClientTimezone(),
             maxMembers: Math.max(8, draft.roommateNames.length + 1),
           });
 
-          addHousehold({
-            id: created.householdId,
-            name: created.name,
-            role: created.role || 'ADMIN',
-            currency: typeof created.currency === 'string' ? created.currency : 'MAD',
-            memberCount: 1,
-            description: created.description,
-            monthlyBudget: created.monthlyBudget ?? 0,
-            capacity: created.maxMembers ?? 4,
-            wifiSsid: created.wifiSsid || '',
-            wifiPassword: created.wifiPassword || '',
-            splitAlgorithm: created.splitAlgorithm || 'DEBT_SIMPLIFIED',
-            autoRestockFromExpenses: created.autoRestockFromExpenses ?? true,
-          });
-
+          setActiveHousehold(created.householdId);
           clearDraft();
           toast.success(`Welcome to ${created.name}, ${userSummary.username}!`, {
             description: 'Your household is saved and your dashboard is live.',
@@ -83,14 +69,12 @@ export const RegisterPage: React.FC = () => {
       }
 
       // 3. Mark auth session as active in Zustand
-      setAuth(
-        {
-          id: userSummary.userId,
-          name: userSummary.username,
-          email: userSummary.email,
-        },
-        'session-cookie-active'
-      );
+      setAuth({
+        id: userSummary.userId,
+        name: userSummary.username,
+        email: userSummary.email,
+      });
+      await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
       await queryClient.invalidateQueries({ queryKey: ['user', 'households'] });
 
       // 4. Smoothly navigate into dashboard or target redirect

@@ -1,5 +1,7 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useBillsSummary } from '@/features/bills';
+import { formatMoney } from '@/domain';
+import { useBillsSummary, getBillDueInfo } from '@/features/bills';
+
 import { useExpensesQuery } from '@/features/expenses';
 import { usePantryStock, type PantryItem } from '@/features/pantry';
 import { useHouseholdLedger } from '@/features/roommates';
@@ -70,7 +72,7 @@ export const Topbar: React.FC<TopbarProps> = ({ notifications: propNotifs }) => 
       list.push({
         id: 'notif-debt',
         title: `${overdueRoommates[0].name} has an overdue tab`,
-        subtitle: `Balance of ${overdueRoommates[0].balance.toFixed(2)} ${ledger.currency} (${overdueRoommates[0].overdueDays}d overdue).`,
+        subtitle: `Balance of ${formatMoney(overdueRoommates[0].balance, ledger.currency)} (${overdueRoommates[0].overdueDays}d overdue).`,
         type: 'oak',
       });
     }
@@ -78,20 +80,22 @@ export const Topbar: React.FC<TopbarProps> = ({ notifications: propNotifs }) => 
     // Urgent bills
     if (billsSummary.urgentCount > 0) {
       const urgentBill = billsSummary.urgentBills[0];
+      const dueInfo = getBillDueInfo(urgentBill);
       list.push({
         id: 'notif-bill',
         title: `Bill due soon: ${urgentBill.title}`,
-        subtitle: `${urgentBill.amount.toFixed(2)} ${billsSummary.currency} (${urgentBill.dueText}).`,
+        subtitle: `${formatMoney(urgentBill.amount, billsSummary.currency)} (${dueInfo.dueText}).`,
         type: 'warn',
       });
     }
+
 
     // Recent expense logged
     if (expenses.length > 0) {
       list.push({
         id: 'notif-expense',
         title: `Recent expense logged`,
-        subtitle: `${expenses[0].description} (${expenses[0].amount.toFixed(2)} ${ledger.currency}) by ${expenses[0].payerName}.`,
+        subtitle: `${expenses[0].description} (${formatMoney(expenses[0].amount, ledger.currency)}) by ${expenses[0].payerName}.`,
         type: 'sage',
       });
     }
@@ -178,23 +182,30 @@ export const Topbar: React.FC<TopbarProps> = ({ notifications: propNotifs }) => 
             </Tooltip>
 
             {/* Flatmate Peers */}
-            {ledger.peers.map((rm) => (
-              <Tooltip key={rm.id}>
-                <TooltipTrigger asChild>
-                  <div
-                    className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center ring-2 ring-[var(--card)] shadow-xs hover:scale-110 hover:z-20 transition-all duration-150 cursor-pointer ${rm.avatarColor === 'oak'
-                        ? 'bg-gradient-to-br from-[#D98236] to-[#B86822] text-white'
-                        : 'bg-gradient-to-br from-[var(--sage)] to-[#7AA06D] text-white'
-                      }`}
-                  >
-                    {rm.avatarInitial}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {rm.name} · {rm.balance >= 0 ? `Owes you +${rm.balance.toFixed(2)} ${ledger.currency}` : `You owe ${Math.abs(rm.balance).toFixed(2)} ${ledger.currency}`}
-                </TooltipContent>
-              </Tooltip>
-            ))}
+            {ledger.peers
+              .filter(
+                (rm) =>
+                  !rm.isCurrentUser &&
+                  rm.id !== currentUser?.id &&
+                  rm.name.toLowerCase() !== (currentUser?.name || '').toLowerCase()
+              )
+              .map((rm) => (
+                <Tooltip key={rm.id}>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center ring-2 ring-[var(--card)] shadow-xs hover:scale-110 hover:z-20 transition-all duration-150 cursor-pointer ${rm.avatarColor === 'oak'
+                          ? 'bg-gradient-to-br from-[#D98236] to-[#B86822] text-white'
+                          : 'bg-gradient-to-br from-[var(--sage)] to-[#7AA06D] text-white'
+                        }`}
+                    >
+                      {rm.avatarInitial}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {rm.name} · {rm.balance >= 0 ? `Owes you +${formatMoney(rm.balance, ledger.currency)}` : `You owe ${formatMoney(Math.abs(rm.balance), ledger.currency)}`}
+                  </TooltipContent>
+                </Tooltip>
+              ))}
           </div>
 
           {/* Quick Invite Button */}

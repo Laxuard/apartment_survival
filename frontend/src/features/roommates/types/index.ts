@@ -34,3 +34,26 @@ export interface InviteRoommateDto {
   email: string;
   role: MemberRole;
 }
+
+export interface HouseholdInviteSummary {
+  inviteId: string;
+  type: 'DIRECT' | 'LINK';
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'REVOKED' | 'EXPIRED';
+  code: string;
+  targetUsername?: string;
+  maxUses?: number;
+  usedCount: number;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface CreateDirectInviteDto {
+  username: string;
+  validDays?: number;
+}
+
+export interface CreateLinkInviteDto {
+  maxUses?: number;
+  validDays?: number;
+}
+

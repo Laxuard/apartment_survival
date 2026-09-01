@@ -21,6 +21,17 @@ public class BalanceCalculator {
             List<Expense> expenses,
             List<Settlement> settlements,
             Map<UUID, String> usernames) {
+        return calculateBalances(householdId, currency, "DEBT_SIMPLIFIED", memberUserIds, expenses, settlements, usernames);
+    }
+
+    public BalanceResponse.HouseholdBalances calculateBalances(
+            UUID householdId,
+            Currency currency,
+            String splitAlgorithm,
+            Set<UUID> memberUserIds,
+            List<Expense> expenses,
+            List<Settlement> settlements,
+            Map<UUID, String> usernames) {
 
         // Multi-Currency Validation Guard
         if (currency != null) {
@@ -101,10 +112,95 @@ public class BalanceCalculator {
             ));
         }
 
-        // 5. Compute Simplified Debts (Min Cash Flow Algorithm)
-        List<BalanceResponse.DebtTransfer> simplifiedDebts = computeSimplifiedDebts(accumulators.values(), usernames);
+        // 5. Compute Debts based on Household Split Algorithm
+        List<BalanceResponse.DebtTransfer> debtTransfers;
+        if ("DIRECT".equalsIgnoreCase(splitAlgorithm)) {
+            debtTransfers = computeDirectDebts(expenses, settlements, usernames);
+        } else {
+            debtTransfers = computeSimplifiedDebts(accumulators.values(), usernames);
+        }
 
-        return new BalanceResponse.HouseholdBalances(householdId, currency, userBalances, simplifiedDebts);
+        return new BalanceResponse.HouseholdBalances(householdId, currency, userBalances, debtTransfers);
+    }
+
+    private List<BalanceResponse.DebtTransfer> computeDirectDebts(
+            List<Expense> expenses,
+            List<Settlement> settlements,
+            Map<UUID, String> usernames) {
+
+        Map<UUID, Map<UUID, BigDecimal>> pairwiseDebts = new HashMap<>();
+
+        // Helper to record debtor -> creditor amount
+        for (Expense expense : expenses) {
+            UUID payerId = expense.getPaidByUserId();
+            for (ExpenseSplit split : expense.getSplits()) {
+                UUID participantId = split.getUserId();
+                if (!participantId.equals(payerId)) {
+                    BigDecimal amount = split.getAssignedAmount();
+                    if (amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
+                        pairwiseDebts.computeIfAbsent(participantId, k -> new HashMap<>())
+                                .merge(payerId, amount, BigDecimal::add);
+                    }
+                }
+            }
+        }
+
+        // Settlements reduce direct debtor liability
+        for (Settlement settlement : settlements) {
+            UUID payerId = settlement.getPayerUserId();
+            UUID recipientId = settlement.getRecipientUserId();
+            BigDecimal amount = settlement.getAmount();
+            if (!payerId.equals(recipientId) && amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
+                // Payer paying recipient reduces what payer owes recipient (or increases what recipient owes payer)
+                pairwiseDebts.computeIfAbsent(recipientId, k -> new HashMap<>())
+                        .merge(payerId, amount, BigDecimal::add);
+            }
+        }
+
+        // Consolidate pairwise net debts
+        List<BalanceResponse.DebtTransfer> transfers = new ArrayList<>();
+        Set<String> processedPairs = new HashSet<>();
+
+        Set<UUID> allUsers = new HashSet<>(pairwiseDebts.keySet());
+        for (Map<UUID, BigDecimal> creditors : pairwiseDebts.values()) {
+            allUsers.addAll(creditors.keySet());
+        }
+
+        List<UUID> userList = new ArrayList<>(allUsers);
+        for (int i = 0; i < userList.size(); i++) {
+            for (int j = i + 1; j < userList.size(); j++) {
+                UUID userA = userList.get(i);
+                UUID userB = userList.get(j);
+
+                BigDecimal aOwesB = pairwiseDebts.getOrDefault(userA, Collections.emptyMap()).getOrDefault(userB, BigDecimal.ZERO);
+                BigDecimal bOwesA = pairwiseDebts.getOrDefault(userB, Collections.emptyMap()).getOrDefault(userA, BigDecimal.ZERO);
+
+                BigDecimal net = aOwesB.subtract(bOwesA);
+                if (net.compareTo(new BigDecimal("0.005")) > 0) {
+                    String fromName = usernames.getOrDefault(userA, "Unknown User");
+                    String toName = usernames.getOrDefault(userB, "Unknown User");
+                    transfers.add(new BalanceResponse.DebtTransfer(
+                            userA,
+                            fromName,
+                            userB,
+                            toName,
+                            net.setScale(2, RoundingMode.HALF_EVEN)
+                    ));
+                } else if (net.compareTo(new BigDecimal("-0.005")) < 0) {
+                    String fromName = usernames.getOrDefault(userB, "Unknown User");
+                    String toName = usernames.getOrDefault(userA, "Unknown User");
+                    transfers.add(new BalanceResponse.DebtTransfer(
+                            userB,
+                            fromName,
+                            userA,
+                            toName,
+                            net.abs().setScale(2, RoundingMode.HALF_EVEN)
+                    ));
+                }
+            }
+        }
+
+        return transfers;
     }
 
     private List<BalanceResponse.DebtTransfer> computeSimplifiedDebts(

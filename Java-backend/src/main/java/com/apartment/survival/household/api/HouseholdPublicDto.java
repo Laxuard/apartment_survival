@@ -10,5 +10,8 @@ public record HouseholdPublicDto(
     Currency currency,
     ZoneId timezone,
     boolean archived,
-    int maxMembers
+    int maxMembers,
+    String splitAlgorithm,
+    String defaultSplitMethod,
+    String defaultSplitAllocations
 ) {}

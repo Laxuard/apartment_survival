@@ -1,3 +1,5 @@
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { DataCard } from '@/components/ui/DataCard';
 import {
   DropdownMenu,
@@ -12,6 +14,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { formatMoney } from '@/domain';
+
+
 import {
   IconBrandWhatsapp,
   IconCrown,
@@ -80,14 +85,12 @@ export const HouseholdMembersRoster: React.FC<HouseholdMembersRosterProps> = ({
         </span>
       </div>
 
-      <span
-        className={`text-xs font-semibold px-2.5 py-1 rounded-lg border hidden sm:inline-flex ${openSlots > 0
-            ? 'bg-[var(--positive-bg)] text-[var(--positive-text)] border-[var(--positive-text)]/30'
-            : 'bg-[var(--warn-bg)] text-[var(--warn-text)] border-[var(--warn-text)]/30'
-          }`}
+      <Badge
+        variant={openSlots > 0 ? 'positive' : 'warn'}
+        className="hidden sm:inline-flex"
       >
         {openSlots > 0 ? `${openSlots} Room${openSlots > 1 ? 's' : ''} Open` : 'Full Occupancy'}
-      </span>
+      </Badge>
     </div>
   );
 
@@ -135,15 +138,15 @@ export const HouseholdMembersRoster: React.FC<HouseholdMembersRosterProps> = ({
                     </span>
 
                     {member.role === 'ADMIN' ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.2 rounded-md bg-[var(--oak-tint)] text-[var(--oak)] border border-[var(--oak)]/30">
+                      <Badge variant="default" className="gap-1 text-[10px] py-0.5">
                         <IconCrown size={10} />
-                        {member.isCurrentUser ? 'Primary Admin' : 'Co-Admin'}
-                      </span>
+                        <span>{member.isCurrentUser ? 'Primary Admin' : 'Co-Admin'}</span>
+                      </Badge>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.2 rounded-md bg-[var(--canvas)] text-[var(--muted)] border border-[var(--border)]">
+                      <Badge variant="neutral" className="gap-1 text-[10px] py-0.5">
                         <IconUser size={10} />
-                        Resident
-                      </span>
+                        <span>Resident</span>
+                      </Badge>
                     )}
 
                     {member.isCurrentUser && (
@@ -164,8 +167,11 @@ export const HouseholdMembersRoster: React.FC<HouseholdMembersRosterProps> = ({
                     className={`pill-balance ${member.balance > 0 ? 'pos' : member.balance < 0 ? 'neg' : ''
                       } ${member.balance === 0 ? 'bg-[var(--canvas)] text-[var(--muted)] border border-[var(--border)]' : ''}`}
                   >
-                    {member.balance > 0 ? '+' : ''}
-                    {member.balance.toFixed(2)} {member.currency}
+                    {member.balance < -0.001
+                      ? `Owes ${formatMoney(Math.abs(member.balance), member.currency)}`
+                      : member.balance > 0.001
+                      ? `Is owed ${formatMoney(member.balance, member.currency)}`
+                      : 'Settled'}
                   </span>
                   <div className="text-[10px] text-[var(--muted)] mt-1">
                     {member.isCurrentUser
@@ -183,39 +189,43 @@ export const HouseholdMembersRoster: React.FC<HouseholdMembersRosterProps> = ({
                 </div>
 
                 {/* WhatsApp Nudge (Only for flatmates who owe) */}
-                {!member.isCurrentUser && member.balance > 0 && (
-                  <button
+                {!member.isCurrentUser && member.balance < -0.001 && (
+                  <Button
                     type="button"
-                    onClick={() => onNudge(member.name, member.balance)}
+                    variant="outline"
+                    size="icon-sm"
+                    onClick={() => onNudge(member.name, Math.abs(member.balance))}
                     title={`Send WhatsApp debt reminder to ${member.name}`}
-                    className="btn-spring w-8 h-8 rounded-xl border border-[var(--border)] hover:border-[#25D366] hover:bg-[#25D366]/10 text-[#25D366] flex items-center justify-center cursor-pointer text-xs transition-all shadow-2xs"
+                    className="border-[var(--border)] hover:border-[#25D366] hover:bg-[#25D366]/10 text-[#25D366]"
                   >
                     <IconBrandWhatsapp size={15} />
-                  </button>
+                  </Button>
                 )}
+
 
                 {/* Settle Action */}
                 {!member.isCurrentUser && (
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => onSettle(member)}
-                    className="btn-spring px-3 py-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--card)] hover:bg-[var(--oak)] hover:border-[var(--oak)] hover:text-white text-xs font-semibold text-[var(--text)] cursor-pointer shadow-2xs transition-all"
                     title={
                       member.balance > 0
                         ? `Record payment received from ${member.name}`
                         : `Record payment sent to ${member.name}`
                     }
                   >
-                    Settle
-                  </button>
+                    <span>Settle</span>
+                  </Button>
                 )}
 
                 {/* Admin Actions Dropdown */}
                 {!member.isCurrentUser && (
                   <DropdownMenu>
                     <DropdownMenuTrigger
+                      className={buttonVariants({ variant: 'outline', size: 'icon-sm' })}
                       aria-label={`Manage ${member.name}`}
-                      className="btn-spring w-8 h-8 rounded-xl border border-[var(--border)] hover:bg-[var(--canvas)] data-popup-open:bg-[var(--canvas)] data-popup-open:border-[var(--border-strong)] data-popup-open:text-[var(--text)] flex items-center justify-center cursor-pointer text-xs font-bold text-[var(--muted)] hover:text-[var(--text)] transition-colors shadow-2xs focus:outline-none"
                     >
                       <IconDots size={15} />
                     </DropdownMenuTrigger>

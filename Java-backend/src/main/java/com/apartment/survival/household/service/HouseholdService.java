@@ -113,6 +113,11 @@ public class HouseholdService {
         return getHousehold(householdId, null);
     }
 
+    @Transactional(readOnly = true)
+    public List<HouseholdResponse.MemberSummary> getMembers(UUID householdId) {
+        return getHousehold(householdId, null).members();
+    }
+
     // === 4. Update Household Settings ===
     @Transactional
 

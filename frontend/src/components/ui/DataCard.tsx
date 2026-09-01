@@ -1,7 +1,8 @@
 import React, { type ReactNode } from 'react';
+import { Card, CardHeader, CardTitle, CardAction, CardContent } from './card';
 
 interface DataCardProps {
-  title: string;
+  title: ReactNode;
   headerAction?: ReactNode;
   isLoading: boolean;
   isEmpty: boolean;
@@ -9,6 +10,7 @@ interface DataCardProps {
   emptyState: ReactNode;
   children: ReactNode;
   className?: string;
+  noPadding?: boolean;
 }
 
 export const DataCard: React.FC<DataCardProps> = ({
@@ -20,20 +22,17 @@ export const DataCard: React.FC<DataCardProps> = ({
   emptyState,
   children,
   className = '',
+  noPadding = false,
 }) => {
   return (
-    <div className={`bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius)] p-5 flex flex-col ${className}`}>
-      <div className="flex justify-between items-center pb-4 mb-4 border-b border-[var(--border)]/40 dark:border-white/5">
-        <h3 className="text-sm font-semibold text-[var(--text)]">{title}</h3>
-        {headerAction && (
-          <div className="text-xs text-[var(--oak)] hover:text-[var(--oak-hover)] cursor-pointer">
-            {headerAction}
-          </div>
-        )}
-      </div>
-      <div className="flex-1 flex flex-col">
+    <Card className={`flex flex-col ${className}`}>
+      <CardHeader className="border-b border-[var(--border)]/60">
+        <CardTitle>{title}</CardTitle>
+        {headerAction && <CardAction>{headerAction}</CardAction>}
+      </CardHeader>
+      <CardContent noPadding={noPadding} className="flex-1 flex flex-col pt-4">
         {isLoading ? skeleton : isEmpty ? emptyState : children}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };

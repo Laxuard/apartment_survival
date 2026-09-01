@@ -1,5 +1,4 @@
 import React from 'react';
-import { toast } from 'sonner';
 import { IconAlertTriangle, IconUserX } from '@tabler/icons-react';
 import {
   AlertDialog,
@@ -11,6 +10,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
+import { formatSignedMoney } from '@/domain';
 import type { Roommate } from '../types';
 
 interface KickConfirmationModalProps {
@@ -27,9 +27,6 @@ export const KickConfirmationModal: React.FC<KickConfirmationModalProps> = ({
   if (!member) return null;
 
   const handleConfirm = () => {
-    toast.error(`Removed ${member.name} from apartment`, {
-      description: 'Member access revoked and ledger archived.',
-    });
     onConfirmKick(member.id);
   };
 
@@ -47,7 +44,7 @@ export const KickConfirmationModal: React.FC<KickConfirmationModalProps> = ({
             </div>
           </div>
           <AlertDialogDescription>
-            Are you sure you want to remove <strong>{member.name}</strong> from this household? They will immediately lose access to shared grocery checklists, settlement tabs, and house notes. Their current balance of <strong>{member.balance.toFixed(2)} {member.currency}</strong> will be archived.
+            Are you sure you want to remove <strong>{member.name}</strong> from this household? They will immediately lose access to shared grocery checklists, settlement tabs, and house notes. Their current balance of <strong>{formatSignedMoney(member.balance, member.currency)}</strong> will be archived.
           </AlertDialogDescription>
         </AlertDialogHeader>
 

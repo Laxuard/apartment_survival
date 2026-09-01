@@ -7,6 +7,10 @@ import { OnboardingLayout } from '@/app/layouts/OnboardingLayout';
 import { AuthGuard, PublicGuard } from '@/features/auth';
 import { HouseholdRequiredGuard } from '@/features/households';
 import { LoadingScreen } from '@/components/common/LoadingScreen';
+import { RouteErrorPage } from '@/components/common/RouteErrorPage';
+import { NotFoundPage } from '@/components/common/NotFoundPage';
+
+
 
 // ─── Lazy Loaded Feature Pages ───────────────────────────────────────────────
 const LandingPage = lazy(() =>
@@ -71,6 +75,8 @@ const SettingsPage = lazy(() =>
 );
 
 const renderLazy = (Component: React.LazyExoticComponent<React.FC>) => (
+
+
   <Suspense fallback={<LoadingScreen />}>
     <Component />
   </Suspense>
@@ -80,6 +86,7 @@ export const router = createBrowserRouter([
   // ─── 0. PUBLIC MARKETING & AUTH ROUTES (Redirects to /hub if authenticated) ───
   {
     element: <PublicGuard />,
+    errorElement: <RouteErrorPage />,
     children: [
       {
         path: '/',
@@ -106,9 +113,11 @@ export const router = createBrowserRouter([
   {
     path: '/onboarding',
     element: renderLazy(OnboardingPage),
+    errorElement: <RouteErrorPage />,
   },
   {
     element: <OnboardingLayout />,
+    errorElement: <RouteErrorPage />,
     children: [
       { path: '/onboarding/create', element: renderLazy(CreateHouseholdPage) },
       { path: '/onboarding/join', element: renderLazy(JoinHouseholdPage) },
@@ -117,15 +126,18 @@ export const router = createBrowserRouter([
   {
     path: '/invite/:inviteToken',
     element: renderLazy(InviteAcceptPage),
+    errorElement: <RouteErrorPage />,
   },
   {
     path: '/invite',
     element: renderLazy(InviteAcceptPage),
+    errorElement: <RouteErrorPage />,
   },
 
   // ─── 2. PROTECTED MACRO & MICRO ROUTES (Requires valid Auth Token) ──────────────
   {
     element: <AuthGuard />,
+    errorElement: <RouteErrorPage />,
     children: [
       // 2A. MACRO COMMAND CENTER (All user households & pending invites)
       {
@@ -152,9 +164,12 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // ─── 3. CATCH-ALL ROUTE ─────────────────────────────────────────────────────
+  // ─── 3. CATCH-ALL ROUTE (Themed 404 Room Not Found) ─────────────────────────
   {
     path: '*',
-    element: <Navigate to="/" replace />,
+    element: <NotFoundPage />,
+    errorElement: <RouteErrorPage />,
   },
 ]);
+
+

@@ -1,4 +1,4 @@
-import type { Role } from '@/types';
+import type { Role, SplitAlgorithm, SplitMethod } from '@/types';
 
 export interface BackendHouseholdSummary {
   householdId: string;
@@ -12,7 +12,9 @@ export interface BackendHouseholdSummary {
   monthlyBudget?: number;
   wifiSsid?: string;
   wifiPassword?: string;
-  splitAlgorithm?: 'DEBT_SIMPLIFIED' | 'DIRECT';
+  splitAlgorithm?: SplitAlgorithm;
+  defaultSplitMethod?: SplitMethod;
+  defaultSplitAllocations?: Record<string, number>;
   autoRestockFromExpenses?: boolean;
   role?: Role;
   archived: boolean;
@@ -40,7 +42,9 @@ export interface BackendHouseholdDetail {
   monthlyBudget?: number;
   wifiSsid?: string;
   wifiPassword?: string;
-  splitAlgorithm?: 'DEBT_SIMPLIFIED' | 'DIRECT';
+  splitAlgorithm?: SplitAlgorithm;
+  defaultSplitMethod?: SplitMethod;
+  defaultSplitAllocations?: Record<string, number>;
   autoRestockFromExpenses?: boolean;
   role?: Role;
   archived: boolean;
@@ -57,7 +61,9 @@ export interface CreateHouseholdDto {
   monthlyBudget?: number;
   wifiSsid?: string;
   wifiPassword?: string;
-  splitAlgorithm?: 'DEBT_SIMPLIFIED' | 'DIRECT';
+  splitAlgorithm?: SplitAlgorithm;
+  defaultSplitMethod?: SplitMethod;
+  defaultSplitAllocations?: Record<string, number>;
   autoRestockFromExpenses?: boolean;
 }
 
@@ -71,7 +77,9 @@ export interface UpdateHouseholdDto {
   monthlyBudget?: number;
   wifiSsid?: string;
   wifiPassword?: string;
-  splitAlgorithm?: 'DEBT_SIMPLIFIED' | 'DIRECT';
+  splitAlgorithm?: SplitAlgorithm;
+  defaultSplitMethod?: SplitMethod;
+  defaultSplitAllocations?: Record<string, number>;
   autoRestockFromExpenses?: boolean;
 }
 

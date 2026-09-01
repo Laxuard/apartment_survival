@@ -1,6 +1,5 @@
-/**
- * Expense & Balance Domain Types & DTOs
- */
+import type { SplitMethod } from '@/domain';
+export type { SplitMethod };
 
 export type ExpenseCategory =
   | 'GROCERIES'
@@ -8,8 +7,6 @@ export type ExpenseCategory =
   | 'RENT'
   | 'HOUSEHOLD'
   | 'OTHER';
-
-export type SplitMethod = 'EQUAL' | 'EXACT' | 'PERCENTAGE';
 
 export interface ExpenseSplit {
   userId: string;
@@ -79,12 +76,15 @@ export interface CreateExpenseBackendDto {
   description?: string;
   amount: number;
   category: string;
-  splitType: SplitMethod;
+  splitType?: SplitMethod;
   expenseDate?: string;
   splits?: Array<{
     userId: string;
+    amount?: number;
     assignedAmount?: number;
     splitValue?: number;
+    percentage?: number;
+    shares?: number;
   }>;
 }
 
