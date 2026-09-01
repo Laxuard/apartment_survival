@@ -59,6 +59,7 @@ CREATE TABLE household_members (
 
 CREATE INDEX idx_household_members_user_id ON household_members(user_id);
 CREATE INDEX idx_household_members_household_id ON household_members(household_id);
+CREATE INDEX idx_household_members_auth ON household_members(household_id, user_id, role);
 
 -- 4. Household Invites Table
 CREATE TABLE household_invites (

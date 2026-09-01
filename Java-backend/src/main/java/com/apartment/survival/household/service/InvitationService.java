@@ -246,12 +246,14 @@ public class InvitationService {
                 .role(HouseholdRole.MEMBER)
                 .build();
         household.addMember(newMember);
+        householdRepository.save(household);
 
         // Update invite lifecycle state
         invite.incrementUsage();
         if (invite.getType() == InviteType.DIRECT_USER) {
             invite.setStatus(InviteStatus.ACCEPTED);
         }
+        inviteRepository.save(invite);
 
         // Publish decoupled domain event
         eventPublisher.publishEvent(new HouseholdInviteAcceptedEvent(invite.getId(), household.getId(), userId));

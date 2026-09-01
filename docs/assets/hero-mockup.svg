@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 580" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradients -->
+    <radialGradient id="terracottaGlow" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#C1793D" stop-opacity="0.16" />
+      <stop offset="50%" stop-color="#C1793D" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="#C1793D" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="canvasGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F6F1E7" />
+      <stop offset="100%" stop-color="#EDE6D8" />
+    </linearGradient>
+    <linearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C1793D" />
+      <stop offset="100%" stop-color="#A8632C" />
+    </linearGradient>
+    <linearGradient id="waBtnGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#25D366" />
+      <stop offset="100%" stop-color="#1EBE5D" />
+    </linearGradient>
+
+    <!-- Clean Window Shadow Filter -->
+    <filter id="windowShadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#2B2420" flood-opacity="0.10" />
+    </filter>
+  </defs>
+
+  <style>
+    .font-sans { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .font-serif { font-family: 'Fraunces', "Newsreader", Georgia, serif; }
+    .font-mono { font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace; }
+  </style>
+
+  <!-- Canvas Background (--canvas: #F6F1E7) -->
+  <rect width="1000" height="580" rx="16" fill="url(#canvasGrad)" />
+  <rect width="1000" height="580" fill="url(#terracottaGlow)" />
+
+  <!-- Window Container -->
+  <g transform="translate(40, 30)">
+    <!-- Browser Frame Background with shadow -->
+    <rect width="920" height="520" rx="14" fill="#FFFFFF" stroke="#DCCFB4" stroke-width="1.2" filter="url(#windowShadow)" />
+
+    <!-- Window Titlebar -->
+    <path d="M 0 14 Q 0 0 14 0 L 906 0 Q 920 0 920 14 L 920 46 L 0 46 Z" fill="#F6F1E7" />
+    <line x1="0" y1="46" x2="920" y2="46" stroke="#E8DFCF" stroke-width="1" />
+
+    <!-- macOS Window Action Dots -->
+    <circle cx="24" cy="23" r="5.5" fill="#B5482F" />
+    <circle cx="42" cy="23" r="5.5" fill="#C1793D" />
+    <circle cx="60" cy="23" r="5.5" fill="#6B7A5E" />
+
+    <!-- Browser URL Search Pill -->
+    <g transform="translate(290, 10)">
+      <rect width="340" height="26" rx="6" fill="#FFFFFF" stroke="#DCCFB4" stroke-width="1" />
+      <!-- Lock Icon -->
+      <path d="M 16 14 L 16 11 A 3 3 0 0 1 22 11 L 22 14 M 14 14 L 24 14 L 24 20 L 14 20 Z" fill="none" stroke="#6B7A5E" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="32" y="17.5" fill="#2B2420" class="font-mono" font-size="11" font-weight="600">app.apartmentsurvival.com</text>
+      <text x="196" y="17.5" fill="#8A7F6E" class="font-mono" font-size="11">/flat-4b</text>
+    </g>
+
+    <!-- Active Household Badge (--sage-tint: #EAEFE3, --sage: #6B7A5E) -->
+    <g transform="translate(775, 12)">
+      <rect width="125" height="22" rx="11" fill="#EAEFE3" stroke="#6B7A5E" stroke-width="0.8" />
+      <circle cx="12" cy="11" r="3.5" fill="#6B7A5E" />
+      <text x="22" y="14.5" fill="#3F6E52" class="font-sans" font-size="10.5" font-weight="600">Active Household</text>
+    </g>
+
+    <!-- App Main Interior Canvas -->
+    <path d="M 1 47 L 919 47 L 919 505 Q 919 519 905 519 L 15 519 Q 1 519 1 505 Z" fill="#F6F1E7" />
+
+    <!-- ─── APP HEADER ROW ─── -->
+    <g transform="translate(24, 66)">
+      <!-- Household Title -->
+      <text x="0" y="18" fill="#2B2420" class="font-serif" font-size="20" font-weight="500">Flat 4B &#8226; Sunset Heights</text>
+      <text x="0" y="34" fill="#8A7F6E" class="font-sans" font-size="11.5">3 Roommates &#8226; 4 Active Recurring Bills</text>
+
+      <!-- Action Buttons -->
+      <g transform="translate(680, 0)">
+        <rect width="190" height="34" rx="10" fill="url(#btnGrad)" />
+        <text x="95" y="21.5" fill="#FFFFFF" class="font-sans" font-size="12" font-weight="600" text-anchor="middle">+ Log Shared Expense</text>
+      </g>
+    </g>
+
+    <!-- ─── GRID CONTENT ─── -->
+
+    <!-- LEFT COLUMN (Main Balance & Breakdown) -->
+    <g transform="translate(24, 120)">
+      <rect width="520" height="375" rx="12" fill="#FFFFFF" stroke="#E8DFCF" stroke-width="1" />
+
+      <!-- Top Header Row -->
+      <g transform="translate(20, 20)">
+        <text x="0" y="12" fill="#8A7F6E" class="font-sans" font-size="10.5" font-weight="700" letter-spacing="0.8">LIVING SPACE LEDGER</text>
+        <g transform="translate(400, -2)">
+          <rect width="80" height="20" rx="5" fill="#EAEFE3" stroke="#6B7A5E" stroke-width="0.8" />
+          <text x="40" y="13.5" fill="#3F6E52" class="font-mono" font-size="9.5" font-weight="700" text-anchor="middle">&#10003; BALANCED</text>
+        </g>
+        <line x1="0" y1="24" x2="480" y2="24" stroke="#E8DFCF" stroke-width="1" />
+      </g>
+
+      <!-- Net Balance Highlight (--positive-text: #3F6E52) -->
+      <g transform="translate(20, 68)">
+        <text x="0" y="12" fill="#8A7F6E" class="font-sans" font-size="11.5">Your Net Position across all flatmates:</text>
+        <g transform="translate(0, 42)">
+          <text x="0" y="0" fill="#3F6E52" class="font-mono" font-size="34" font-weight="700">+450.00</text>
+          <text x="148" y="-4" fill="#8A7F6E" class="font-sans" font-size="14" font-weight="600">MAD</text>
+        </g>
+      </g>
+
+      <!-- Sparkline Ratio Bar -->
+      <g transform="translate(20, 140)">
+        <rect width="480" height="48" rx="8" fill="#F6F1E7" stroke="#E8DFCF" stroke-width="1" />
+        <g transform="translate(14, 16)">
+          <circle cx="4" cy="4" r="3.5" fill="#6B7A5E" />
+          <text x="14" y="7" fill="#3F6E52" class="font-mono" font-size="11" font-weight="600">Lent: +600.00 MAD</text>
+        </g>
+        <g transform="translate(330, 16)">
+          <circle cx="4" cy="4" r="3.5" fill="#C1793D" />
+          <text x="14" y="7" fill="#C1793D" class="font-mono" font-size="11" font-weight="600">Your Share: 150.00 MAD</text>
+        </g>
+        <!-- Bar Meter -->
+        <rect x="14" y="30" width="345" height="6" rx="3" fill="#6B7A5E" />
+        <rect x="363" y="30" width="103" height="6" rx="3" fill="#C1793D" />
+      </g>
+
+      <!-- Roommates Sub-Balances -->
+      <g transform="translate(20, 210)">
+        <text x="0" y="10" fill="#8A7F6E" class="font-sans" font-size="10.5" font-weight="700" letter-spacing="0.5">ROOMMATE BREAKDOWN</text>
+
+        <!-- Roommate 1 -->
+        <g transform="translate(0, 24)">
+          <rect width="480" height="56" rx="8" fill="#FFFFFF" stroke="#E8DFCF" stroke-width="1" />
+          <circle cx="28" cy="28" r="16" fill="#F6E8D6" />
+          <text x="28" y="33" fill="#C1793D" class="font-sans" font-size="12" font-weight="700" text-anchor="middle">SK</text>
+          <text x="56" y="24" fill="#2B2420" class="font-sans" font-size="12.5" font-weight="600">Sarah Karim</text>
+          <text x="56" y="40" fill="#8A7F6E" class="font-sans" font-size="10.5">Wi-Fi Fiber &amp; Water Bill share</text>
+          <text x="464" y="24" fill="#3F6E52" class="font-mono" font-size="13" font-weight="700" text-anchor="end">+300.00 MAD</text>
+          <text x="464" y="40" fill="#6B7A5E" class="font-sans" font-size="10" text-anchor="end">Owes you</text>
+        </g>
+
+        <!-- Roommate 2 -->
+        <g transform="translate(0, 88)">
+          <rect width="480" height="56" rx="8" fill="#FFFFFF" stroke="#E8DFCF" stroke-width="1" />
+          <circle cx="28" cy="28" r="16" fill="#EAEFE3" />
+          <text x="28" y="33" fill="#3F6E52" class="font-sans" font-size="12" font-weight="700" text-anchor="middle">YM</text>
+          <text x="56" y="24" fill="#2B2420" class="font-sans" font-size="12.5" font-weight="600">Yassine Mansour</text>
+          <text x="56" y="40" fill="#8A7F6E" class="font-sans" font-size="10.5">Weekly grocery market run</text>
+          <text x="464" y="24" fill="#3F6E52" class="font-mono" font-size="13" font-weight="700" text-anchor="end">+150.00 MAD</text>
+          <text x="464" y="40" fill="#6B7A5E" class="font-sans" font-size="10" text-anchor="end">Owes you</text>
+        </g>
+      </g>
+    </g>
+
+    <!-- RIGHT COLUMN (WhatsApp Nudge + Smart Pantry) -->
+    <g transform="translate(562, 120)">
+
+      <!-- CARD 1: Authentic WhatsApp Nudge Generator -->
+      <g>
+        <rect width="334" height="175" rx="12" fill="#FFFFFF" stroke="#E8DFCF" stroke-width="1" />
+        <g transform="translate(16, 16)">
+          <!-- Header -->
+          <g transform="translate(0, 0)">
+            <circle cx="7" cy="7" r="7" fill="#25D366" />
+            <path d="M 4.5 4.5 C 4 5 4 6 5.5 8 C 7 10 8 10 8.5 9.5 L 9.2 8.8 C 9.4 8.6 9.4 8.3 9.2 8.1 L 8.2 7.1 C 8 6.9 7.7 6.9 7.5 7.1 L 7.2 7.4 C 7 7.2 6.5 6.7 6.3 6.5 L 6.6 6.2 C 6.8 6 6.8 5.7 6.6 5.5 L 5.6 4.5 C 5.4 4.3 5.1 4.3 4.9 4.5 Z" fill="#FFFFFF" />
+            <text x="20" y="11" fill="#1E9B48" class="font-sans" font-size="11.5" font-weight="700">WhatsApp Nudge</text>
+            <rect x="235" y="0" width="65" height="18" rx="4" fill="#F6F1E7" stroke="#E8DFCF" stroke-width="0.8" />
+            <text x="267" y="12.5" fill="#8A7F6E" class="font-mono" font-size="9" font-weight="600" text-anchor="middle">1-Tap Send</text>
+          </g>
+
+          <line x1="0" y1="24" x2="302" y2="24" stroke="#E8DFCF" stroke-width="1" />
+
+          <!-- Speech Bubble Message -->
+          <g transform="translate(0, 34)">
+            <rect width="302" height="52" rx="8" fill="#EDF9F1" stroke="#25D366" stroke-opacity="0.35" stroke-width="1" />
+            <text x="10" y="20" fill="#2B2420" class="font-sans" font-size="10.5" font-style="italic">&#8220;Hey Sarah, here&#8217;s our Flat 4B tab (</text>
+            <text x="206" y="20" fill="#1E9B48" class="font-mono" font-size="10.5" font-weight="700">300 MAD</text>
+            <text x="257" y="20" fill="#2B2420" class="font-sans" font-size="10.5" font-style="italic">for</text>
+            <text x="10" y="38" fill="#2B2420" class="font-sans" font-size="10.5" font-style="italic">Wi-Fi &amp; Water). Ready to settle!&#8221;</text>
+          </g>
+
+          <!-- Action Footer -->
+          <g transform="translate(0, 96)">
+            <text x="0" y="24" fill="#8A7F6E" class="font-sans" font-size="10">Auto-calculated split</text>
+            <!-- WhatsApp Nudge Button -->
+            <g transform="translate(182, 6)">
+              <rect width="120" height="30" rx="8" fill="url(#waBtnGrad)" />
+              <text x="60" y="19" fill="#FFFFFF" class="font-sans" font-size="11" font-weight="700" text-anchor="middle">Send Nudge &#8594;</text>
+            </g>
+          </g>
+        </g>
+      </g>
+
+      <!-- CARD 2: Smart Pantry Inventory -->
+      <g transform="translate(0, 190)">
+        <rect width="334" height="185" rx="12" fill="#FFFFFF" stroke="#E8DFCF" stroke-width="1" />
+        <g transform="translate(18, 16)">
+          <text x="0" y="12" fill="#8A7F6E" class="font-sans" font-size="10" font-weight="700" letter-spacing="0.8">SMART PANTRY INVENTORY</text>
+          <line x1="0" y1="20" x2="298" y2="20" stroke="#E8DFCF" stroke-width="1" />
+
+          <!-- Item 1: Low -->
+          <g transform="translate(0, 32)">
+            <circle cx="6" cy="7" r="4" fill="#B5482F" />
+            <text x="18" y="10" fill="#2B2420" class="font-sans" font-size="11.5" font-weight="600">Extra Virgin Olive Oil</text>
+            <rect x="220" y="-1" width="78" height="18" rx="5" fill="#FBEAE3" stroke="#B5482F" stroke-width="0.8" />
+            <text x="259" y="11.5" fill="#B5482F" class="font-mono" font-size="9" font-weight="700" text-anchor="middle">RUNNING LOW</text>
+          </g>
+
+          <!-- Item 2: Restocked -->
+          <g transform="translate(0, 64)">
+            <circle cx="6" cy="7" r="4" fill="#3F6E52" />
+            <text x="18" y="10" fill="#2B2420" class="font-sans" font-size="11.5" font-weight="600">Ground Espresso Beans</text>
+            <rect x="226" y="-1" width="72" height="18" rx="5" fill="#E3EFE1" stroke="#3F6E52" stroke-width="0.8" />
+            <text x="262" y="11.5" fill="#3F6E52" class="font-mono" font-size="9" font-weight="700" text-anchor="middle">RESTOCKED</text>
+          </g>
+
+          <!-- Item 3: In Stock -->
+          <g transform="translate(0, 96)">
+            <circle cx="6" cy="7" r="4" fill="#6B7A5E" />
+            <text x="18" y="10" fill="#2B2420" class="font-sans" font-size="11.5" font-weight="600">Dishwasher Pods (50x)</text>
+            <rect x="236" y="-1" width="62" height="18" rx="5" fill="#F6F1E7" stroke="#E8DFCF" stroke-width="0.8" />
+            <text x="267" y="11.5" fill="#8A7F6E" class="font-mono" font-size="9" font-weight="600" text-anchor="middle">IN STOCK</text>
+          </g>
+        </g>
+      </g>
+    </g>
+
+  </g>
+</svg>

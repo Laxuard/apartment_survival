@@ -28,7 +28,7 @@ import { useUIStore } from '@/stores/useUIStore';
 import { useActiveHousehold } from '@/features/households';
 import { useRoommatesQuery } from '@/features/roommates';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { formatMoney } from '@/domain';
+import { formatMoney, calculateEqualSplit } from '@/domain';
 import { useBillsSummary } from '../hooks/useBillsSummary';
 import { getCurrentMonthName, getCurrentPeriod } from '../utils/billsCalculations';
 
@@ -84,7 +84,7 @@ export const MarkBillPaidModal: React.FC = () => {
 
   const numAmount = parseFloat(actualAmount) || 0;
   const memberCount = Math.max(1, roommates.length || 1);
-  const perPersonAmount = numAmount / memberCount;
+  const perPersonAmount = calculateEqualSplit(numAmount, memberCount);
 
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();

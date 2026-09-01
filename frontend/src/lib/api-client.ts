@@ -9,6 +9,7 @@ interface ProblemDetailResponse {
   message?: string;
   status?: number;
   errors?: Record<string, string>;
+  invalid_params?: Record<string, string>;
 }
 
 /**
@@ -70,7 +71,7 @@ apiClient.interceptors.response.use(
     };
     errObj.status = status;
     errObj.response = error.response;
-    errObj.errors = data?.errors;
+    errObj.errors = data?.invalid_params || data?.errors;
 
     if (status === 401) {
       console.warn('Session expired or unauthorized request (401)');

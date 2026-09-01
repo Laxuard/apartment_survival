@@ -51,7 +51,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse.UserSummary> register(@Valid @RequestBody AuthRequest.Register request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
-
+        securitySessionHelper.destroySession(httpRequest, httpResponse);
         AuthResponse.UserSummary userSummary = authService.register(request);
         securitySessionHelper.authenticateAndCreateSession(request.email(), request.password(), httpRequest, httpResponse);
         

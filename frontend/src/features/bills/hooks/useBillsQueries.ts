@@ -38,16 +38,10 @@ export const useBillsQuery = (householdId: string | null) => {
     queryFn: async () => {
       if (!householdId) return [];
 
-      const stored = getStoredBills(householdId);
-      if (stored.length > 0) {
-        return stored;
-      }
-
-      // If nothing in storage, try backend
       try {
         const backendBills = await billsApi.getBills(householdId);
         if (backendBills && backendBills.length > 0) {
-          const mapped: RecurringBill[] = backendBills.map((b) => ({
+          return backendBills.map((b) => ({
             id: b.id,
             householdId,
             title: b.title,
@@ -61,8 +55,6 @@ export const useBillsQuery = (householdId: string | null) => {
             lastPaidPeriod: b.isPaid ? getCurrentPeriod() : undefined,
             iconName: b.iconName || 'home',
           }));
-          saveStoredBills(householdId, mapped);
-          return mapped;
         }
       } catch (err) {
         console.warn('Could not fetch backend bills, using empty list:', err);
@@ -71,7 +63,7 @@ export const useBillsQuery = (householdId: string | null) => {
       return [];
     },
     enabled: !!householdId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 30, // 30s fresh server state
   });
 };
 
@@ -82,36 +74,28 @@ export const useCreateRecurringBillMutation = (householdId: string | null) => {
     mutationFn: async (dto: CreateRecurringBillDto) => {
       if (!householdId) throw new Error('No active household selected');
 
-      const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `bill-${Date.now()}`;
-      const newBill: RecurringBill = {
-        id,
-        householdId,
+      const dueDays = Math.max(0, dto.dueDayOfMonth - new Date().getDate());
+      const backendCreated = await billsApi.createBill(householdId, {
         title: dto.title.trim(),
         amount: dto.amount,
+        dueDays,
+        autoSplit: true,
+        iconName: dto.iconName || (dto.category === 'RENT' ? 'home' : dto.category === 'UTILITIES' ? 'bolt' : 'other'),
+      });
+
+      const newBill: RecurringBill = {
+        id: backendCreated.id,
+        householdId,
+        title: backendCreated.title,
+        amount: backendCreated.amount,
+        currency: backendCreated.currency,
         category: dto.category,
         dueDayOfMonth: dto.dueDayOfMonth,
         responsiblePayerId: dto.responsiblePayerId,
         splitStrategy: 'EQUAL',
-        iconName: dto.iconName || (dto.category === 'RENT' ? 'home' : dto.category === 'UTILITIES' ? 'bolt' : 'other'),
+        iconName: backendCreated.iconName,
         createdAt: new Date().toISOString(),
       };
-
-      // Also try creating in backend if available
-      try {
-        await billsApi.createBill(householdId, {
-          title: newBill.title,
-          amount: newBill.amount,
-          dueDays: Math.max(0, newBill.dueDayOfMonth - new Date().getDate()),
-          autoSplit: true,
-          iconName: newBill.iconName as any,
-        });
-      } catch (err) {
-        console.warn('Backend bill sync warning:', err);
-      }
-
-      const existing = getStoredBills(householdId);
-      const updated = [...existing, newBill];
-      saveStoredBills(householdId, updated);
 
       return newBill;
     },
@@ -134,9 +118,6 @@ export const useDeleteRecurringBillMutation = (householdId: string | null) => {
   return useMutation({
     mutationFn: async (billId: string) => {
       if (!householdId) throw new Error('No active household selected');
-      const existing = getStoredBills(householdId);
-      const updated = existing.filter((b) => b.id !== billId);
-      saveStoredBills(householdId, updated);
       return billId;
     },
     onSuccess: (billId) => {

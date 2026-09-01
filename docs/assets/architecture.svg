@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="100%" height="100%">
+  <defs>
+    <linearGradient id="archGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F6F1E7" />
+      <stop offset="100%" stop-color="#EDE6D8" />
+    </linearGradient>
+    <filter id="boxShadow" x="-3%" y="-2%" width="106%" height="108%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#2B2420" flood-opacity="0.05" />
+    </filter>
+  </defs>
+
+  <style>
+    .font-sans { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace; }
+  </style>
+
+  <!-- Canvas Background (--canvas: #F6F1E7, --border: #E8DFCF) -->
+  <rect width="960" height="480" rx="14" fill="url(#archGrad)" stroke="#E8DFCF" stroke-width="1.2" />
+
+  <!-- ─── 1. FRONTEND TIER ─── -->
+  <g transform="translate(30, 24)" filter="url(#boxShadow)">
+    <rect width="900" height="110" rx="10" fill="#FFFFFF" stroke="#DCCFB4" stroke-width="1.2" />
+    <!-- Header -->
+    <path d="M 0 10 Q 0 0 10 0 L 890 0 Q 900 0 900 10 L 900 30 L 0 30 Z" fill="#F6F1E7" />
+    <text x="16" y="20" fill="#2B2420" class="font-sans" font-size="11.5" font-weight="700" letter-spacing="0.5">REACT 19 CLIENT LAYER (TypeScript &#8226; Vite &#8226; TanStack Query v5 &#8226; Zustand)</text>
+
+    <!-- Feature Modules -->
+    <g transform="translate(16, 42)">
+      <!-- Auth -->
+      <g transform="translate(0, 0)">
+        <rect width="160" height="52" rx="6" fill="#F6F1E7" stroke="#E8DFCF" stroke-width="1" />
+        <text x="12" y="22" fill="#2B2420" class="font-sans" font-size="11" font-weight="600">Auth &amp; Session</text>
+        <text x="12" y="38" fill="#8A7F6E" class="font-mono" font-size="9.5">Stateful Cookies</text>
+      </g>
+      <!-- Households -->
+      <g transform="translate(176, 0)">
+        <rect width="160" height="52" rx="6" fill="#F6F1E7" stroke="#E8DFCF" stroke-width="1" />
+        <text x="12" y="22" fill="#2B2420" class="font-sans" font-size="11" font-weight="600">Households</text>
+        <text x="12" y="38" fill="#8A7F6E" class="font-mono" font-size="9.5">Rosters &amp; Invites</text>
+      </g>
+      <!-- Expenses -->
+      <g transform="translate(352, 0)">
+        <rect width="160" height="52" rx="6" fill="#F6E8D6" stroke="#C1793D" stroke-width="1.2" />
+        <text x="12" y="22" fill="#C1793D" class="font-sans" font-size="11" font-weight="700">Expenses &amp; Splits</text>
+        <text x="12" y="38" fill="#8A7F6E" class="font-mono" font-size="9.5">Debt Graph Engine</text>
+      </g>
+      <!-- Bills -->
+      <g transform="translate(528, 0)">
+        <rect width="160" height="52" rx="6" fill="#F6F1E7" stroke="#E8DFCF" stroke-width="1" />
+        <text x="12" y="22" fill="#2B2420" class="font-sans" font-size="11" font-weight="600">Recurring Bills</text>
+        <text x="12" y="38" fill="#8A7F6E" class="font-mono" font-size="9.5">Rent &amp; Utilities</text>
+      </g>
+      <!-- Pantry -->
+      <g transform="translate(704, 0)">
+        <rect width="164" height="52" rx="6" fill="#F6F1E7" stroke="#E8DFCF" stroke-width="1" />
+        <text x="12" y="22" fill="#2B2420" class="font-sans" font-size="11" font-weight="600">Smart Pantry</text>
+        <text x="12" y="38" fill="#8A7F6E" class="font-mono" font-size="9.5">Inventory &amp; Groceries</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- REST Protocol Arrow -->
+  <g transform="translate(480, 142)">
+    <line x1="0" y1="0" x2="0" y2="28" stroke="#8A7F6E" stroke-width="1.5" stroke-dasharray="3 3" />
+    <polygon points="0,32 -4,24 4,24" fill="#8A7F6E" />
+    <rect x="-85" y="6" width="170" height="18" rx="4" fill="#FFFFFF" stroke="#E8DFCF" stroke-width="1" />
+    <text x="0" y="19" fill="#8A7F6E" class="font-mono" font-size="9" font-weight="600" text-anchor="middle">HTTP REST &#8226; RFC 7807</text>
+  </g>
+
+  <!-- ─── 2. BACKEND MODULITH TIER ─── -->
+  <g transform="translate(30, 180)" filter="url(#boxShadow)">
+    <rect width="900" height="150" rx="10" fill="#FFFFFF" stroke="#DCCFB4" stroke-width="1.2" />
+    <!-- Header -->
+    <path d="M 0 10 Q 0 0 10 0 L 890 0 Q 900 0 900 10 L 900 30 L 0 30 Z" fill="#F6F1E7" />
+    <text x="16" y="20" fill="#2B2420" class="font-sans" font-size="11.5" font-weight="700" letter-spacing="0.5">SPRING BOOT 3 + SPRING MODULITH (DDD Bounded Contexts &#8226; Java 21)</text>
+
+    <!-- Modulith Modules -->
+    <g transform="translate(16, 42)">
+      <!-- IAM Module -->
+      <g transform="translate(0, 0)">
+        <rect width="160" height="88" rx="6" fill="#F6F1E7" stroke="#E8DFCF" stroke-width="1" />
+        <rect x="8" y="8" width="45" height="16" rx="3" fill="#EDE6D8" />
+        <text x="12" y="20" fill="#8A7F6E" class="font-mono" font-size="9" font-weight="700">:iam</text>
+        <text x="8" y="42" fill="#2B2420" class="font-sans" font-size="11" font-weight="600">Identity &amp; Auth</text>
+        <text x="8" y="58" fill="#8A7F6E" class="font-sans" font-size="9.5">BCrypt &#8226; Session Mgr</text>
+        <text x="8" y="74" fill="#8A7F6E" class="font-sans" font-size="9.5">Security Context</text>
+      </g>
+      <!-- Household Module -->
+      <g transform="translate(176, 0)">
+        <rect width="160" height="88" rx="6" fill="#F6F1E7" stroke="#E8DFCF" stroke-width="1" />
+        <rect x="8" y="8" width="85" height="16" rx="3" fill="#EDE6D8" />
+        <text x="12" y="20" fill="#8A7F6E" class="font-mono" font-size="9" font-weight="700">:household</text>
+        <text x="8" y="42" fill="#2B2420" class="font-sans" font-size="11" font-weight="600">Households &amp; Roster</text>
+        <text x="8" y="58" fill="#8A7F6E" class="font-sans" font-size="9.5">Member Roles &amp; Invites</text>
+        <text x="8" y="74" fill="#8A7F6E" class="font-sans" font-size="9.5">Contextual Security</text>
+      </g>
+      <!-- Expense Module (Core Engine) -->
+      <g transform="translate(352, 0)">
+        <rect width="160" height="88" rx="6" fill="#F6E8D6" stroke="#C1793D" stroke-width="1.3" />
+        <rect x="8" y="8" width="68" height="16" rx="3" fill="#F6E8D6" />
+        <text x="12" y="20" fill="#A8632C" class="font-mono" font-size="9" font-weight="700">:expense</text>
+        <text x="8" y="42" fill="#C1793D" class="font-sans" font-size="11" font-weight="700">Financial Engine</text>
+        <text x="8" y="58" fill="#8A7F6E" class="font-sans" font-size="9.5">Split Calculations</text>
+        <text x="8" y="74" fill="#8A7F6E" class="font-sans" font-size="9.5">Debt Simplification</text>
+      </g>
+      <!-- Bill Module -->
+      <g transform="translate(528, 0)">
+        <rect width="160" height="88" rx="6" fill="#F6F1E7" stroke="#E8DFCF" stroke-width="1" />
+        <rect x="8" y="8" width="45" height="16" rx="3" fill="#EDE6D8" />
+        <text x="12" y="20" fill="#8A7F6E" class="font-mono" font-size="9" font-weight="700">:bill</text>
+        <text x="8" y="42" fill="#2B2420" class="font-sans" font-size="11" font-weight="600">Recurring Bills</text>
+        <text x="8" y="58" fill="#8A7F6E" class="font-sans" font-size="9.5">Rent Schedules</text>
+        <text x="8" y="74" fill="#8A7F6E" class="font-sans" font-size="9.5">Payment Ledger</text>
+      </g>
+      <!-- Pantry Module -->
+      <g transform="translate(704, 0)">
+        <rect width="164" height="88" rx="6" fill="#F6F1E7" stroke="#E8DFCF" stroke-width="1" />
+        <rect x="8" y="8" width="58" height="16" rx="3" fill="#EDE6D8" />
+        <text x="12" y="20" fill="#8A7F6E" class="font-mono" font-size="9" font-weight="700">:pantry</text>
+        <text x="8" y="42" fill="#2B2420" class="font-sans" font-size="11" font-weight="600">Pantry &amp; Groceries</text>
+        <text x="8" y="58" fill="#8A7F6E" class="font-sans" font-size="9.5">Inventory Tracking</text>
+        <text x="8" y="74" fill="#8A7F6E" class="font-sans" font-size="9.5">Item State Toggles</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- JDBC Connection Arrow -->
+  <g transform="translate(480, 338)">
+    <line x1="0" y1="0" x2="0" y2="28" stroke="#8A7F6E" stroke-width="1.5" stroke-dasharray="3 3" />
+    <polygon points="0,32 -4,24 4,24" fill="#8A7F6E" />
+    <rect x="-85" y="6" width="170" height="18" rx="4" fill="#FFFFFF" stroke="#E8DFCF" stroke-width="1" />
+    <text x="0" y="19" fill="#8A7F6E" class="font-mono" font-size="9" font-weight="600" text-anchor="middle">Spring Data JPA &#8226; Flyway</text>
+  </g>
+
+  <!-- ─── 3. POSTGRESQL PERSISTENCE TIER ─── -->
+  <g transform="translate(30, 376)" filter="url(#boxShadow)">
+    <rect width="900" height="76" rx="10" fill="#FFFFFF" stroke="#DCCFB4" stroke-width="1.2" />
+    <!-- Header -->
+    <path d="M 0 10 Q 0 0 10 0 L 890 0 Q 900 0 900 10 L 900 26 L 0 26 Z" fill="#F6F1E7" />
+    <text x="16" y="18" fill="#2B2420" class="font-sans" font-size="11" font-weight="700" letter-spacing="0.5">POSTGRESQL 16 RELATIONAL PERSISTENCE (Schema Migration via Flyway)</text>
+
+    <!-- Schema Tables Pill Line -->
+    <g transform="translate(16, 36)">
+      <text x="0" y="20" fill="#8A7F6E" class="font-mono" font-size="10.5">
+        <tspan fill="#3F6E52" font-weight="600">users</tspan> &#8226; 
+        <tspan fill="#3F6E52" font-weight="600">households</tspan> &#8226; 
+        <tspan fill="#3F6E52" font-weight="600">household_members</tspan> &#8226; 
+        <tspan fill="#C1793D" font-weight="700">expenses</tspan> &#8226; 
+        <tspan fill="#C1793D" font-weight="700">expense_splits</tspan> &#8226; 
+        <tspan fill="#C1793D" font-weight="700">settlements</tspan> &#8226; 
+        <tspan fill="#3F6E52" font-weight="600">bills</tspan> &#8226; 
+        <tspan fill="#3F6E52" font-weight="600">pantry_items</tspan> &#8226; 
+        <tspan fill="#8A7F6E">event_publication</tspan>
+      </text>
+    </g>
+  </g>
+</svg>
